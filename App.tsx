@@ -55,6 +55,8 @@ const AppContent = () => {
   
   // Search State
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResultDocs, setSearchResultDocs] = useState<Document[] | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   
   // Data State
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -164,37 +166,86 @@ const AppContent = () => {
 
   // Computed Properties
   const categoryTree = useMemo(() => buildCategoryTree(categories), [categories]);
+  
+  // Separate pure active/trash from local state for admin management
   const activeDocuments = useMemo(() => documents.filter(d => !d.deletedAt), [documents]);
   const trashDocuments = useMemo(() => documents.filter(d => d.deletedAt), [documents]);
 
+  // --- SEARCH LOGIC (BACKEND) ---
+  useEffect(() => {
+    const performSearch = async () => {
+        if (!searchQuery.trim()) {
+            setSearchResultDocs(null); // Clear search results, revert to default view
+            return;
+        }
+
+        setIsSearching(true);
+        try {
+            // Call Supabase RPC 'search_documents'
+            const { data, error } = await supabase.rpc('search_documents', {
+                query_text: searchQuery
+            });
+
+            if (error) throw error;
+
+            // Map Backend Results (snake_case) to Frontend Model (camelCase)
+            const mappedResults: Document[] = (data || []).map((d: any) => ({
+                id: d.id,
+                title: d.title,
+                content: d.content,
+                categoryId: d.category_id,
+                status: d.status,
+                authorId: d.author_id,
+                createdAt: d.created_at,
+                updatedAt: d.updated_at,
+                deletedAt: d.deleted_at,
+                views: d.views,
+                tags: d.tags || [],
+                categoryPath: getCategoryPath(d.category_id, categories), // Recalculate path
+                versions: [] // Versions aren't returned by search usually
+            }));
+
+            setSearchResultDocs(mappedResults);
+        } catch (error) {
+            console.error("Erro na busca:", error);
+            // Silent fail or toast
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    // Debounce search by 500ms
+    const debounceTimer = setTimeout(performSearch, 500);
+    return () => clearTimeout(debounceTimer);
+
+  }, [searchQuery, categories]); // Re-run if query or categories (for path) change
+
+  // --- VISIBLE DOCUMENTS CALCULATION ---
   const visibleDocuments = useMemo(() => {
     if (!currentUser) return [];
     
-    // 1. Role-based filtering
-    const roleFiltered = activeDocuments.filter(doc => {
+    // 1. Determine Source: Search Results OR Default Active Documents
+    // If there is a query string, we use the results from the backend.
+    // Otherwise, we use the full list loaded in memory.
+    const sourceDocs = (searchQuery.trim() && searchResultDocs) 
+        ? searchResultDocs 
+        : activeDocuments;
+
+    // 2. Filter by Role & Soft Delete
+    // Note: The RPC might return deleted docs if the SQL doesn't filter them.
+    // We strictly filter deletedAt here to be safe.
+    const roleFiltered = sourceDocs.filter(doc => {
+      // Must not be in trash (unless we want to search trash, but usually not in main view)
+      if (doc.deletedAt) return false;
+
       if (currentUser.role === 'ADMIN') return true;
       if (currentUser.role === 'EDITOR') return true;
       if (currentUser.role === 'READER') return doc.status === 'PUBLISHED';
       return false;
     });
 
-    // 2. Search query filtering
-    if (!searchQuery.trim()) {
-      return roleFiltered;
-    }
-
-    const query = searchQuery.toLowerCase();
-    return roleFiltered.filter(doc => {
-      const matchTitle = doc.title.toLowerCase().includes(query);
-      // Strip HTML tags for content search to check text body
-      const plainContent = doc.content.replace(/<[^>]+>/g, '').toLowerCase();
-      const matchContent = plainContent.includes(query);
-      const matchTags = doc.tags.some(tag => tag.toLowerCase().includes(query));
-      
-      return matchTitle || matchContent || matchTags;
-    });
-
-  }, [activeDocuments, currentUser, searchQuery]);
+    return roleFiltered;
+  }, [activeDocuments, searchResultDocs, currentUser, searchQuery]);
 
   // Apply Theme Effect
   useEffect(() => {
@@ -239,6 +290,19 @@ const AppContent = () => {
         if (catsRes.error) throw new Error(`Erro Cats: ${catsRes.error.message}`);
         if (usersRes.error) throw new Error(`Erro Users: ${usersRes.error.message}`);
 
+        // Mapper Categories (Needed first for getCategoryPath)
+        const mappedCats = (catsRes.data || []).map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            parentId: c.parent_id,
+            department_id: c.department_id,
+            order: c.order,
+            docCount: c.doc_count,
+            description: c.description,
+            icon: c.icon
+        }));
+
         // Mapper Documents
         const mappedDocs = (docsRes.data || []).map((d: any) => ({
           id: d.id,
@@ -252,21 +316,8 @@ const AppContent = () => {
           deletedAt: d.deleted_at,
           views: d.views,
           tags: d.tags || [],
-          categoryPath: '...',
+          categoryPath: getCategoryPath(d.category_id, mappedCats),
           versions: [] 
-        }));
-
-        // Mapper Categories
-        const mappedCats = (catsRes.data || []).map((c: any) => ({
-            id: c.id,
-            name: c.name,
-            slug: c.slug,
-            parentId: c.parent_id,
-            department_id: c.department_id,
-            order: c.order,
-            docCount: c.doc_count,
-            description: c.description,
-            icon: c.icon
         }));
 
         // Mapper Users
@@ -954,6 +1005,12 @@ const AppContent = () => {
         )}
 
         <main className="flex-1 overflow-y-auto">
+          {isSearching && (
+             <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-center text-sm text-blue-600 dark:text-blue-300">
+                <span className="animate-pulse">Buscando documentos...</span>
+             </div>
+          )}
+
           {currentView === 'HOME' && (
             <div className="p-12 text-center animate-in fade-in duration-500">
               <img 
