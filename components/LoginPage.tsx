@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { BookOpen, Shield, Users, Search, Lock, Mail, ArrowLeft, Send } from 'lucide-react';
 import { Button } from './Button';
@@ -6,7 +7,7 @@ import { sendPasswordResetEmail } from '../lib/email';
 import { Modal } from './Modal';
 
 interface LoginPageProps {
-  onLogin: (username: string) => void;
+  onLogin: (username: string, password: string) => void;
   settings: SystemSettings;
 }
 
@@ -23,11 +24,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, settings }) => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === 'admin' && password === 'admin') {
-      onLogin(username);
-    } else if (username && password) {
-       // Allow other mock users to login if they exist in the mock list in App.tsx
-       onLogin(username); 
+    setError('');
+    
+    if (username && password) {
+       // Passa as credenciais para o App.tsx validar contra o banco de dados
+       onLogin(username, password); 
     } else {
       setError('Por favor, insira usuário e senha');
     }
@@ -118,7 +119,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, settings }) => {
                 </div>
               </div>
 
-              {error && <div className="text-red-500 text-sm">{error}</div>}
+              {error && <div className="text-red-500 text-sm bg-red-50 dark:bg-red-900/20 p-2 rounded">{error}</div>}
               
               <div className="pt-2">
                 <Button className="w-full py-3 text-lg" type="submit">
@@ -127,10 +128,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, settings }) => {
               </div>
 
               <div className="text-center text-xs text-gray-400 mt-4">
-                <p>Credenciais de Demonstração:</p>
+                <p>Credencial Inicial:</p>
                 <p>Admin: <strong>admin / admin</strong></p>
-                <p>Editor: <strong>sarah / 123</strong></p>
-                <p>Leitor: <strong>bob / 123</strong></p>
               </div>
             </form>
           </div>

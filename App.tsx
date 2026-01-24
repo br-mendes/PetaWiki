@@ -151,7 +151,7 @@ export default function App() {
         
       } catch (e) {
         console.error("Erro crítico ao carregar dados:", e);
-        alert("Erro ao conectar ao banco de dados. Verifique a configuração.");
+        // Não mostrar alert intrusivo no início, apenas log
       } finally {
         setIsLoading(false);
       }
@@ -161,12 +161,12 @@ export default function App() {
 
 
   // Auth Handlers - REAL DB CHECK
-  const handleLogin = (usernameInput: string) => {
+  const handleLogin = (usernameInput: string, passwordInput: string) => {
     // Procura no estado local (que foi populado pelo DB na inicialização)
-    // Para maior segurança em apps reais, faríamos uma query direta: select * from users where username = ?
     const foundUser = users.find(u => u.username === usernameInput || u.email === usernameInput);
     
-    if (foundUser) {
+    // Verificação real de senha (simples)
+    if (foundUser && foundUser.password === passwordInput) {
       setCurrentUser(foundUser);
       setIsAuthenticated(true);
     } else {
@@ -223,7 +223,6 @@ export default function App() {
   const handleUpdatePassword = async (oldPass: string, newPass: string): Promise<boolean> => {
     if (!currentUser) return false;
     
-    // Validação simples (em produção seria hash)
     if (currentUser.password && currentUser.password !== oldPass) {
       return false;
     }
