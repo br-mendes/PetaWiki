@@ -41,8 +41,18 @@ CREATE TABLE IF NOT EXISTS public.documents (
   updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 4. Seed Inicial (Admin Persistente)
--- Insere o admin apenas se não existir ninguém com este email
+-- 4. Tabela de Reações (Feedback)
+CREATE TABLE IF NOT EXISTS public.document_reactions (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  document_id text REFERENCES public.documents(id) ON DELETE CASCADE,
+  user_id text REFERENCES public.users(id) ON DELETE CASCADE,
+  reaction_type text NOT NULL CHECK (reaction_type IN ('THUMBS_UP', 'THUMBS_DOWN', 'HEART')),
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+  -- Garante que um usuário só pode ter um tipo de reação por vez (se quiser permitir heart + like, remova a unique constraint total e trate via app, mas a constraint abaixo evita duplicatas do MESMO tipo)
+  UNIQUE(document_id, user_id, reaction_type)
+);
+
+-- 5. Seed Inicial (Admin Persistente)
 INSERT INTO public.users (id, username, email, password, name, role, department, avatar)
 VALUES (
   'u_admin_seed', 

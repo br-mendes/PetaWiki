@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Edit2, Clock, Eye, Download, ThumbsUp, FileText, FileType, Globe, AlertTriangle, History, RotateCcw, Trash2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Edit2, Clock, Eye, Download, ThumbsUp, ThumbsDown, Heart, FileText, FileType, Globe, AlertTriangle, History, RotateCcw, Trash2 } from 'lucide-react';
 import { Document, User, DocumentTranslation, SupportedLanguage, SystemSettings, DocumentVersion } from '../types';
 import { Button } from './Button';
 import { StatusBadge } from './Badge';
@@ -8,6 +8,7 @@ import { canExportDocument, generateMarkdown, generatePDF } from '../lib/export'
 import { LANGUAGES } from '../lib/translate';
 import { Modal } from './Modal';
 import { useToast } from './Toast';
+import { supabase } from '../lib/supabase';
 
 interface DocumentViewProps {
   document: Document;
@@ -18,6 +19,8 @@ interface DocumentViewProps {
   systemSettings: SystemSettings;
   onRestoreVersion?: (version: DocumentVersion) => void;
 }
+
+type ReactionType = 'THUMBS_UP' | 'THUMBS_DOWN' | 'HEART';
 
 export const DocumentView: React.FC<DocumentViewProps> = ({ 
   document, 
@@ -33,6 +36,14 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
   const [isExporting, setIsExporting] = useState(false);
   const [selectedLang, setSelectedLang] = useState<string>('original');
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+
+  // Reaction State
+  const [userReactions, setUserReactions] = useState<ReactionType[]>([]);
+  const [reactionCounts, setReactionCounts] = useState<Record<ReactionType, number>>({
+    THUMBS_UP: 0,
+    THUMBS_DOWN: 0,
+    HEART: 0
+  });
   
   const canEdit = user.role === 'ADMIN' || (user.role === 'EDITOR' && document.authorId === user.id);
   const canDelete = user.role === 'ADMIN' || (user.role === 'EDITOR' && document.authorId === user.id);
@@ -45,6 +56,101 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
   const displayTitle = currentTranslation ? currentTranslation.translatedTitle : document.title;
   const displayContent = currentTranslation ? currentTranslation.translatedContent : document.content;
   const isOutOfSync = currentTranslation?.status === 'OUT_OF_SYNC';
+
+  // --- Feedback Logic ---
+
+  useEffect(() => {
+    fetchReactions();
+  }, [document.id, user.id]);
+
+  const fetchReactions = async () => {
+    try {
+        // 1. Fetch user's current reactions
+        const { data: userData } = await supabase
+            .from('document_reactions')
+            .select('reaction_type')
+            .eq('document_id', document.id)
+            .eq('user_id', user.id);
+        
+        if (userData) {
+            setUserReactions(userData.map((r: any) => r.reaction_type));
+        }
+
+        // 2. Fetch total counts
+        const { data: allReactions } = await supabase
+            .from('document_reactions')
+            .select('reaction_type')
+            .eq('document_id', document.id);
+
+        const newCounts = { THUMBS_UP: 0, THUMBS_DOWN: 0, HEART: 0 };
+        allReactions?.forEach((r: any) => {
+            if (newCounts[r.reaction_type as ReactionType] !== undefined) {
+                newCounts[r.reaction_type as ReactionType]++;
+            }
+        });
+        setReactionCounts(newCounts);
+
+    } catch (error) {
+        console.error("Erro ao carregar feedbacks", error);
+    }
+  };
+
+  const handleToggleReaction = async (type: ReactionType) => {
+    // Optimistic Update Setup
+    const oldReactions = [...userReactions];
+    const oldCounts = { ...reactionCounts };
+    let newReactions = [...userReactions];
+    let newCounts = { ...reactionCounts };
+
+    // Logic: 
+    // - Heart is independent.
+    // - Up/Down are mutually exclusive.
+
+    const isActive = newReactions.includes(type);
+
+    if (isActive) {
+        // Remove reaction
+        newReactions = newReactions.filter(r => r !== type);
+        newCounts[type] = Math.max(0, newCounts[type] - 1);
+        
+        // DB Call: Delete
+        await supabase.from('document_reactions').delete()
+            .eq('document_id', document.id)
+            .eq('user_id', user.id)
+            .eq('reaction_type', type);
+    } else {
+        // Add reaction
+        
+        // If adding UP or DOWN, remove the opposite if it exists
+        if (type === 'THUMBS_UP' && newReactions.includes('THUMBS_DOWN')) {
+            newReactions = newReactions.filter(r => r !== 'THUMBS_DOWN');
+            newCounts['THUMBS_DOWN'] = Math.max(0, newCounts['THUMBS_DOWN'] - 1);
+            await supabase.from('document_reactions').delete()
+                .eq('document_id', document.id).eq('user_id', user.id).eq('reaction_type', 'THUMBS_DOWN');
+        }
+        if (type === 'THUMBS_DOWN' && newReactions.includes('THUMBS_UP')) {
+            newReactions = newReactions.filter(r => r !== 'THUMBS_UP');
+            newCounts['THUMBS_UP'] = Math.max(0, newCounts['THUMBS_UP'] - 1);
+            await supabase.from('document_reactions').delete()
+                .eq('document_id', document.id).eq('user_id', user.id).eq('reaction_type', 'THUMBS_UP');
+        }
+
+        newReactions.push(type);
+        newCounts[type]++;
+        
+        // DB Call: Insert
+        await supabase.from('document_reactions').insert({
+            document_id: document.id,
+            user_id: user.id,
+            reaction_type: type
+        });
+    }
+
+    // Apply Optimistic State
+    setUserReactions(newReactions);
+    setReactionCounts(newCounts);
+  };
+
 
   const handleExport = async (format: 'PDF' | 'MARKDOWN') => {
     setIsExporting(true);
@@ -205,14 +311,50 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
         />
         
         <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Você achou isso útil?</h3>
-          <div className="flex gap-4">
+          <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Este artigo foi útil?</h3>
+          <div className="flex flex-wrap gap-3">
+            {/* THUMBS UP */}
             <button 
-                onClick={() => toast.success('Obrigado pelo seu feedback!')}
-                className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-300"
+                onClick={() => handleToggleReaction('THUMBS_UP')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-colors ${
+                    userReactions.includes('THUMBS_UP')
+                    ? 'bg-green-100 border-green-300 text-green-700 dark:bg-green-900/40 dark:border-green-800 dark:text-green-300' 
+                    : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+                }`}
             >
-              <ThumbsUp size={18} className="text-gray-500 dark:text-gray-400" />
+              <ThumbsUp size={18} className={userReactions.includes('THUMBS_UP') ? "fill-current" : ""} />
               <span>Sim</span>
+              <span className="ml-1 text-xs opacity-70">({reactionCounts.THUMBS_UP})</span>
+            </button>
+
+             {/* THUMBS DOWN */}
+            <button 
+                onClick={() => handleToggleReaction('THUMBS_DOWN')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-colors ${
+                    userReactions.includes('THUMBS_DOWN')
+                    ? 'bg-red-100 border-red-300 text-red-700 dark:bg-red-900/40 dark:border-red-800 dark:text-red-300' 
+                    : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+                }`}
+            >
+              <ThumbsDown size={18} className={userReactions.includes('THUMBS_DOWN') ? "fill-current" : ""} />
+              <span>Não</span>
+              <span className="ml-1 text-xs opacity-70">({reactionCounts.THUMBS_DOWN})</span>
+            </button>
+
+            <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-2 hidden sm:block"></div>
+
+            {/* HEART */}
+            <button 
+                onClick={() => handleToggleReaction('HEART')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-colors ${
+                    userReactions.includes('HEART')
+                    ? 'bg-pink-100 border-pink-300 text-pink-600 dark:bg-pink-900/40 dark:border-pink-800 dark:text-pink-300' 
+                    : 'border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+                }`}
+                title="Amei este artigo"
+            >
+              <Heart size={18} className={userReactions.includes('HEART') ? "fill-current" : ""} />
+              <span className="ml-1 text-xs opacity-70">({reactionCounts.HEART})</span>
             </button>
           </div>
         </div>
