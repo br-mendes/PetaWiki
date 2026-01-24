@@ -11,7 +11,7 @@ import { LoginPage } from './components/LoginPage';
 import { AdminSettings } from './components/AdminSettings';
 import { UserProfile } from './components/UserProfile';
 import { Role, Document, Category, User, DocumentTemplate, DocumentTranslation, SupportedLanguage, SystemSettings, DocumentVersion } from './types';
-import { MOCK_DOCUMENTS, MOCK_CATEGORIES, MOCK_TEMPLATES, MOCK_USERS, DEFAULT_SYSTEM_SETTINGS } from './constants';
+import { MOCK_TEMPLATES, DEFAULT_SYSTEM_SETTINGS } from './constants';
 import { supabase } from './lib/supabase';
 import { 
   buildCategoryTree, 
@@ -25,7 +25,7 @@ export default function App() {
   // Auth & System State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<User[]>(MOCK_USERS);
+  const [users, setUsers] = useState<User[]>([]);
   const [systemSettings, setSystemSettings] = useState<SystemSettings>(DEFAULT_SYSTEM_SETTINGS);
   
   // Theme State
@@ -84,23 +84,25 @@ export default function App() {
     document.title = systemSettings.appName || 'Peta Wiki';
   }, [systemSettings.logoCollapsedUrl, systemSettings.appName]);
 
-  // Initial Fetch
+  // Initial Fetch - REAL DATA ONLY
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
       try {
         console.log("Iniciando conexão com Supabase...");
         
-        // Tenta buscar dados reais
-        const { data: dbDocs, error: docsError } = await supabase.from('documents').select('*');
-        const { data: dbCats, error: catsError } = await supabase.from('categories').select('*');
+        const [docsRes, catsRes, usersRes] = await Promise.all([
+            supabase.from('documents').select('*'),
+            supabase.from('categories').select('*'),
+            supabase.from('users').select('*')
+        ]);
 
-        // Se houver erro CRÍTICO de conexão, lança erro para cair no catch e usar Mock
-        if (docsError) throw new Error(`Erro Docs: ${docsError.message}`);
-        if (catsError) throw new Error(`Erro Cats: ${catsError.message}`);
+        if (docsRes.error) throw new Error(`Erro Docs: ${docsRes.error.message}`);
+        if (catsRes.error) throw new Error(`Erro Cats: ${catsRes.error.message}`);
+        if (usersRes.error) throw new Error(`Erro Users: ${usersRes.error.message}`);
 
-        // Mapeamento dos documentos do DB para o formato da UI
-        const mappedDocs = (dbDocs || []).map((d: any) => ({
+        // Mapper Documents
+        const mappedDocs = (docsRes.data || []).map((d: any) => ({
           id: d.id,
           title: d.title,
           content: d.content,
@@ -112,29 +114,44 @@ export default function App() {
           views: d.views,
           tags: d.tags || [],
           categoryPath: '...',
-          versions: [] // Inicializa vazio, histórico é carregado sob demanda se necessário
+          versions: [] 
         }));
 
-        const mappedCats = (dbCats || []) as any;
+        // Mapper Categories
+        const mappedCats = (catsRes.data || []).map((c: any) => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            parentId: c.parent_id,
+            departmentId: c.department_id,
+            order: c.order,
+            docCount: c.doc_count,
+            description: c.description,
+            icon: c.icon
+        }));
 
-        // Se o banco estiver vazio (primeiro deploy), podemos optar por usar Mocks ou iniciar limpo.
-        // Aqui, se estiver vazio, carregamos os Mocks para demonstração.
-        if (mappedDocs.length === 0 && mappedCats.length === 0) {
-            console.log("Banco vazio. Carregando dados de exemplo (Mocks) para demonstração.");
-            throw new Error("DB Vazio - Trigger Mock Fallback");
-        }
+        // Mapper Users
+        const mappedUsers = (usersRes.data || []).map((u: any) => ({
+            id: u.id,
+            username: u.username,
+            email: u.email,
+            password: u.password,
+            name: u.name,
+            role: u.role,
+            department: u.department,
+            avatar: u.avatar
+        }));
 
         setDocuments(mappedDocs);
         setCategories(mappedCats); 
-        setTemplates(MOCK_TEMPLATES); 
-        console.log(`Conectado ao Supabase! ${mappedDocs.length} documentos carregados.`);
+        setUsers(mappedUsers);
+        setTemplates(MOCK_TEMPLATES); // Mantemos templates estáticos por enquanto ou podemos criar tabela no futuro
+        
+        console.log(`Dados carregados: ${mappedDocs.length} docs, ${mappedUsers.length} usuários.`);
         
       } catch (e) {
-        console.warn("Usando Mock Data (Fallback/Demo Mode):", e);
-        // Fallback para dados locais caso Supabase falhe ou esteja vazio
-        setDocuments(MOCK_DOCUMENTS);
-        setCategories(MOCK_CATEGORIES.flatMap(flattenCategoryTree)); 
-        setTemplates(MOCK_TEMPLATES);
+        console.error("Erro crítico ao carregar dados:", e);
+        alert("Erro ao conectar ao banco de dados. Verifique a configuração.");
       } finally {
         setIsLoading(false);
       }
@@ -142,25 +159,18 @@ export default function App() {
     fetchData();
   }, []);
 
-  function flattenCategoryTree(cat: Category): Category[] {
-    const { children, ...rest } = cat;
-    let list = [rest];
-    if (children) {
-      children.forEach(child => {
-        list = [...list, ...flattenCategoryTree(child)];
-      });
-    }
-    return list;
-  }
 
-  // Auth Handlers
-  const handleLogin = (username: string) => {
-    const foundUser = users.find(u => u.username === username || u.email === username);
+  // Auth Handlers - REAL DB CHECK
+  const handleLogin = (usernameInput: string) => {
+    // Procura no estado local (que foi populado pelo DB na inicialização)
+    // Para maior segurança em apps reais, faríamos uma query direta: select * from users where username = ?
+    const foundUser = users.find(u => u.username === usernameInput || u.email === usernameInput);
+    
     if (foundUser) {
       setCurrentUser(foundUser);
       setIsAuthenticated(true);
     } else {
-      alert('Usuário não encontrado na base de dados.');
+      alert('Usuário ou senha inválidos.');
     }
   };
 
@@ -170,11 +180,17 @@ export default function App() {
     setCurrentView('HOME');
   };
 
-  const handleUpdateUserRole = (userId: string, newRole: Role) => {
+  const handleUpdateUserRole = async (userId: string, newRole: Role) => {
+    // 1. Update Local
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+    
+    // 2. Update DB
+    try {
+        await supabase.from('users').update({ role: newRole }).eq('id', userId);
+    } catch (e) { console.error("Erro update role", e); }
   };
 
-  const handleAddUser = (userData: Partial<User>) => {
+  const handleAddUser = async (userData: Partial<User>) => {
     const newUser: User = {
       id: `u${Date.now()}`,
       username: userData.email?.split('@')[0] || 'user',
@@ -183,34 +199,69 @@ export default function App() {
       role: userData.role || 'READER',
       department: userData.department || 'Geral',
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=random`,
-      password: '123' 
+      password: '123' // Senha padrão inicial
     };
+    
+    // 1. Update Local
     setUsers(prev => [...prev, newUser]);
+
+    // 2. Insert DB
+    try {
+        await supabase.from('users').insert({
+            id: newUser.id,
+            username: newUser.username,
+            password: newUser.password,
+            email: newUser.email,
+            name: newUser.name,
+            role: newUser.role,
+            department: newUser.department,
+            avatar: newUser.avatar
+        });
+    } catch (e) { console.error("Erro add user", e); }
   };
 
   const handleUpdatePassword = async (oldPass: string, newPass: string): Promise<boolean> => {
     if (!currentUser) return false;
+    
+    // Validação simples (em produção seria hash)
     if (currentUser.password && currentUser.password !== oldPass) {
       return false;
     }
+    
     const updatedUser = { ...currentUser, password: newPass };
+    
+    // 1. Update Local
     setCurrentUser(updatedUser);
     setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedUser : u));
-    return true;
+
+    // 2. Update DB
+    try {
+        const { error } = await supabase.from('users').update({ password: newPass }).eq('id', currentUser.id);
+        if (error) throw error;
+        return true;
+    } catch (e) {
+        console.error("Erro ao alterar senha", e);
+        return false;
+    }
   };
   
-  const handleUpdateAvatar = (base64: string) => {
+  const handleUpdateAvatar = async (base64: string) => {
     if (!currentUser) return;
     const updatedUser = { ...currentUser, avatar: base64 };
+    
     setCurrentUser(updatedUser);
     setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedUser : u));
+
+    try {
+        await supabase.from('users').update({ avatar: base64 }).eq('id', currentUser.id);
+    } catch(e) { console.error("Erro update avatar", e); }
   };
 
   const handleRoleChange = (role: Role) => {
+    // Apenas simulação visual temporária para o usuário atual na sessão
     if (currentUser) {
       const updated = { ...currentUser, role };
       setCurrentUser(updated);
-      setUsers(prev => prev.map(u => u.id === currentUser.id ? updated : u));
     }
   };
 
@@ -257,10 +308,8 @@ export default function App() {
       icon: data.icon
     };
     
-    // Atualiza estado local
     setCategories([...categories, newCategory]);
 
-    // Persiste no Supabase
     try {
         await supabase.from('categories').insert({
             id: newCategory.id,
@@ -270,7 +319,8 @@ export default function App() {
             department_id: newCategory.departmentId,
             description: newCategory.description,
             icon: newCategory.icon,
-            doc_count: 0
+            doc_count: 0,
+            order: newCategory.order
         });
     } catch(e) { console.error("Erro ao salvar categoria no DB", e); }
   };
@@ -278,10 +328,9 @@ export default function App() {
   const handleUpdateCategory = async (id: string, data: Partial<Category>) => {
     setCategories(prev => prev.map(c => c.id === id ? { ...c, ...data } : c));
     try {
-        // Mapeia campos camelCase para snake_case do DB se necessário
         const dbData: any = {};
         if (data.name) dbData.name = data.name;
-        // Adicionar outros campos conforme necessário
+        // Adicionar outros campos conforme necessário para sync
         if (Object.keys(dbData).length > 0) {
             await supabase.from('categories').update(dbData).eq('id', id);
         }
@@ -334,8 +383,6 @@ export default function App() {
   const handleCreateTranslation = async (targetLangs: SupportedLanguage[]) => {
     if (!selectedDocument) return;
 
-    const newTranslations: DocumentTranslation[] = [];
-    
     for (const lang of targetLangs) {
       const result = await translateDocument(selectedDocument.title, selectedDocument.content, lang);
       
@@ -360,7 +407,7 @@ export default function App() {
     if (!currentUser) return;
     let updatedDocs = [...documents];
     let newDocId = selectedDocument?.id;
-    const targetCategoryId = data.categoryId || selectedDocument?.categoryId || 'c1'; 
+    const targetCategoryId = data.categoryId || selectedDocument?.categoryId || (categories[0]?.id || 'c1'); 
     const path = getCategoryPath(targetCategoryId, categories);
 
     if (currentView === 'DOCUMENT_CREATE') {
@@ -399,6 +446,13 @@ export default function App() {
             tags: newDoc.tags,
             views: 0
         });
+        
+        // Update category doc count in DB
+        const currentCat = categories.find(c => c.id === targetCategoryId);
+        if (currentCat) {
+             await supabase.from('categories').update({ doc_count: currentCat.docCount + 1 }).eq('id', targetCategoryId);
+        }
+
       } catch (e) { console.error("Falha ao salvar no DB", e); }
 
       setSelectedDocId(newDocId);
@@ -436,7 +490,6 @@ export default function App() {
       ));
       
       try {
-        // Update Document in DB
         await supabase.from('documents').update({ 
             title: data.title,
             content: data.content,
@@ -468,7 +521,7 @@ export default function App() {
     return (
         <div className="flex flex-col h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 text-blue-600 gap-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="animate-pulse">Conectando ao Peta Wiki Seguro...</p>
+            <p className="animate-pulse">Conectando ao Supabase...</p>
         </div>
     );
   }
