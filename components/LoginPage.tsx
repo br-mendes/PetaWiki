@@ -21,14 +21,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
   // Login State
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false); // New state for password visibility
+  const [showPassword, setShowPassword] = useState(false); 
   
   // Sign Up State
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showSignUpPassword, setShowSignUpPassword] = useState(false); // Visibilidade senha cadastro
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false); 
   
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -44,6 +44,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
   const [callbackParams, setCallbackParams] = useState<{action: string, email: string, token: string} | null>(null);
   const [newCallbackPassword, setNewCallbackPassword] = useState('');
   const [confirmCallbackPassword, setConfirmCallbackPassword] = useState('');
+  const [showResetPassword, setShowResetPassword] = useState(false); // Visibilidade senha reset
   const [isSavingPassword, setIsSavingPassword] = useState(false);
 
   // Check URL for callback actions (reset-password, setup-password)
@@ -61,44 +62,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
     }
   }, []);
 
-  const handleCallbackSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (newCallbackPassword !== confirmCallbackPassword) {
-          toast.error('As senhas não coincidem.');
-          return;
-      }
-      if (newCallbackPassword.length < 3) {
-          toast.error('A senha deve ter pelo menos 3 caracteres.');
-          return;
-      }
-      if (!callbackParams?.email) return;
-
-      setIsSavingPassword(true);
-      try {
-          // Atualiza senha no Supabase
-          const { error } = await supabase
-              .from('users')
-              .update({ password: newCallbackPassword })
-              .eq('email', callbackParams.email);
-
-          if (error) throw error;
-
-          toast.success('Senha definida com sucesso! Você já pode fazer login.');
-          setIsResetCallbackOpen(false);
-          setNewCallbackPassword('');
-          setConfirmCallbackPassword('');
-          
-          // Pre-fill login
-          setUsername(callbackParams.email);
-          
-      } catch (err) {
-          console.error(err);
-          toast.error('Erro ao atualizar a senha. Tente novamente.');
-      } finally {
-          setIsSavingPassword(false);
-      }
-  };
-
   const calculatePasswordStrength = (pass: string) => {
     let score = 0;
     if (pass.length > 7) score++;
@@ -110,6 +73,57 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
   };
 
   const passwordStrength = calculatePasswordStrength(newPassword);
+  const resetPasswordStrength = calculatePasswordStrength(newCallbackPassword);
+
+  const handleCallbackSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      
+      if (!callbackParams?.email) return;
+
+      if (newCallbackPassword !== confirmCallbackPassword) {
+          toast.error('As senhas não coincidem.');
+          return;
+      }
+      
+      // Mesma validação do cadastro
+      if (resetPasswordStrength < 3) {
+          toast.error('A senha é muito fraca. Use letras maiúsculas, números e símbolos.');
+          return;
+      }
+
+      setIsSavingPassword(true);
+      try {
+          console.log(`Atualizando senha para: ${callbackParams.email}`);
+          
+          // Atualiza senha no Supabase
+          const { data, error } = await supabase
+              .from('users')
+              .update({ password: newCallbackPassword })
+              .eq('email', callbackParams.email.trim()) // Trim é importante aqui
+              .select(); // Select confirma se houve update
+
+          if (error) throw error;
+          
+          // Se data vier vazio, significa que o email não foi encontrado ou RLS bloqueou
+          if (!data || data.length === 0) {
+             throw new Error("Usuário não encontrado ou erro de permissão. Verifique o e-mail.");
+          }
+
+          toast.success('Senha definida com sucesso! Você já pode fazer login.');
+          setIsResetCallbackOpen(false);
+          setNewCallbackPassword('');
+          setConfirmCallbackPassword('');
+          
+          // Pre-fill login
+          setUsername(callbackParams.email);
+          
+      } catch (err: any) {
+          console.error("Erro Reset Senha:", err);
+          toast.error(err.message || 'Erro ao atualizar a senha no banco de dados.');
+      } finally {
+          setIsSavingPassword(false);
+      }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -189,9 +203,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12">
           <div className="flex-1 text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-6 mb-6">
-              {/* Logo aumentado para h-24 (mobile) e h-32 (desktop) para alinhar com texto de 2 linhas */}
               <img src={displayLogo} alt="Logo" className="h-24 w-24 md:h-32 md:w-32 bg-white rounded-xl p-3 object-contain shrink-0 shadow-lg" />
-              {/* Regra 1 & 2: Ocupar até 2 linhas, alinhado ao centro (flex items-center no pai) */}
               <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight line-clamp-2 overflow-hidden text-ellipsis leading-tight">
                 {displayTitle}
               </h1>
@@ -306,7 +318,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        // Regra 3: Alteração do Placeholder
                         placeholder="seunome@empresa.com.br"
                       />
                       <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
@@ -325,10 +336,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
                         className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         placeholder="••••••••"
                       />
-                      {/* Left Icon (Lock) */}
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                      
-                      {/* Right Icon (Toggle Show) */}
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
@@ -469,27 +477,51 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nova Senha</label>
                     <div className="relative">
                         <input 
-                            type="password" 
+                            type={showResetPassword ? "text" : "password"} 
                             value={newCallbackPassword}
                             onChange={(e) => setNewCallbackPassword(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                            placeholder="Mínimo 3 caracteres"
+                            className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            placeholder="Mínimo 8 caracteres"
                             required
                         />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                        <button
+                          type="button"
+                          onClick={() => setShowResetPassword(!showResetPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                          title={showResetPassword ? "Ocultar senha" : "Mostrar senha"}
+                        >
+                           {showResetPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
                     </div>
+                     {/* Password Strength Meter */}
+                     {newCallbackPassword && (
+                        <div className="mt-2 flex gap-1 h-1">
+                            {[1, 2, 3, 4, 5].map(step => (
+                                <div 
+                                    key={step} 
+                                    className={`flex-1 rounded-full ${resetPasswordStrength >= step 
+                                        ? (resetPasswordStrength < 3 ? 'bg-red-500' : resetPasswordStrength < 4 ? 'bg-yellow-500' : 'bg-green-500') 
+                                        : 'bg-gray-200 dark:bg-gray-600'}`} 
+                                />
+                            ))}
+                        </div>
+                    )}
+                    <p className="text-xs text-gray-500 mt-1">Mínimo 8 caracteres, números e símbolos.</p>
                 </div>
                 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirmar Senha</label>
                     <div className="relative">
                         <input 
-                            type="password" 
+                            type={showResetPassword ? "text" : "password"}
                             value={confirmCallbackPassword}
                             onChange={(e) => setConfirmCallbackPassword(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                             placeholder="Repita a senha"
                             required
                         />
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     </div>
                 </div>
 
