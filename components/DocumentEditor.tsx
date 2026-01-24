@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Save, Sparkles, X, Type, Tag, Globe, ChevronDown, CheckCircle, AlertCircle, Copy, Plus } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
+import { generateAiResponse } from '../lib/ai';
 import { Document, User, Category, SupportedLanguage } from '../types';
 import { Button } from './Button';
 import { CategoryTreeSelect } from './CategoryTreeSelect';
@@ -68,39 +68,25 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   }, []);
 
   const handleAiSuggest = async () => {
-    if (!process.env.API_KEY) {
-      setAiSuggestion("Chave da API ausente. Por favor, configure o ambiente.");
-      return;
-    }
-
     setIsGenerating(true);
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const plainText = content.replace(/<[^>]+>/g, '');
       
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: `Analise o seguinte conteúdo de documentação e forneça 2-3 sugestões específicas para melhoria, focando em clareza, completude e estrutura. Seja conciso e responda em Português.\n\nTítulo: ${title}\nConteúdo: ${plainText}`,
-        config: {
-          systemInstruction: "Você é um editor técnico sênior de uma wiki corporativa. Responda em Português do Brasil.",
-        },
-      });
+      // Prompt específico para Mistral ser direto
+      const systemPrompt = "Você é um editor técnico sênior de uma wiki corporativa. Seu objetivo é melhorar a clareza e estrutura.";
+      const userPrompt = `Analise o seguinte conteúdo e forneça 3 sugestões pontuais de melhoria em Português do Brasil.\n\nTítulo: ${title}\nConteúdo: ${plainText}`;
+
+      const response = await generateAiResponse(systemPrompt, userPrompt);
       
-      setAiSuggestion(response.text || "Nenhuma sugestão gerada.");
-    } catch (error) {
-      console.error("Erro na IA:", error);
-      toast.error("Falha ao gerar sugestões com IA.");
+      setAiSuggestion(response || "Nenhuma sugestão gerada.");
+    } catch (error: any) {
+      toast.error(error.message || "Falha ao gerar sugestões com IA.");
     } finally {
       setIsGenerating(false);
     }
   };
 
   const handleGenerateTags = async () => {
-    if (!process.env.API_KEY) {
-      toast.error("Chave da API ausente.");
-      return;
-    }
-    
     if (!content && !title) {
         toast.warning("Preencha o título ou conteúdo antes de gerar tags.");
         return;
@@ -108,26 +94,33 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
 
     setIsGeneratingTags(true);
     try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const plainText = content.replace(/<[^>]+>/g, '');
         
-        const response = await ai.models.generateContent({
-            model: 'gemini-3-flash-preview',
-            contents: `Gere 5 a 8 tags (palavras-chave) relevantes para categorização deste documento. Retorne APENAS as tags separadas por vírgula, sem numeração ou texto adicional. Exemplo: rh, onboarding, politica.\n\nTítulo: ${title}\nConteúdo: ${plainText}`,
-        });
+        // Mistral tende a ser verboso, então o prompt precisa ser muito restritivo
+        const systemPrompt = "Você é uma API que gera tags JSON. Responda APENAS com as palavras-chave separadas por vírgula.";
+        const userPrompt = `Gere 5 tags relevantes para este documento. Retorne APENAS as tags separadas por vírgula (ex: rh, onboarding, normas). Não use numeração.\n\nTítulo: ${title}\nConteúdo: ${plainText}`;
 
-        if (response.text) {
-            const newTags = response.text
-                .split(',')
-                .map(t => t.trim().toLowerCase())
-                .filter(t => t.length > 0 && !tags.includes(t));
+        const responseText = await generateAiResponse(systemPrompt, userPrompt, 0.3); // Temp baixa para precisão
+
+        if (responseText) {
+            // Limpeza extra para garantir que o Mistral não enviou texto introdutório
+            const cleanText = responseText.replace(/Tags:|Aqui estão as tags:|Note que/gi, '');
             
-            setTags(prev => [...new Set([...prev, ...newTags])]); // Merge unique
-            toast.success(`${newTags.length} tags geradas.`);
+            const newTags = cleanText
+                .split(',')
+                .map(t => t.trim().toLowerCase().replace('.', ''))
+                .filter(t => t.length > 1 && !tags.includes(t))
+                .slice(0, 8); // Limite de segurança
+            
+            if (newTags.length > 0) {
+              setTags(prev => [...new Set([...prev, ...newTags])]);
+              toast.success(`${newTags.length} tags geradas.`);
+            } else {
+              toast.warning("A IA não retornou tags válidas. Tente adicionar mais conteúdo.");
+            }
         }
-    } catch (e) {
-        console.error("Erro ao gerar tags", e);
-        toast.error("Erro ao conectar com a IA.");
+    } catch (e: any) {
+        toast.error(e.message || "Erro ao conectar com a IA.");
     } finally {
         setIsGeneratingTags(false);
     }
@@ -195,9 +188,10 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${isGenerating ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20'}`}
             onClick={handleAiSuggest}
             disabled={isGenerating}
+            title="Usa Mistral 7B via Ollama"
           >
             <Sparkles size={16} />
-            {isGenerating ? 'Analisando...' : 'Sugestão IA'}
+            {isGenerating ? 'Pensando (Ollama)...' : 'Sugestão IA'}
           </button>
           
           {document && onTranslate && (
@@ -215,7 +209,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
           <div className="bg-purple-50 dark:bg-purple-900/20 border-b border-purple-100 dark:border-purple-800 p-4 flex items-start gap-3">
             <Sparkles className="text-purple-600 dark:text-purple-400 mt-1 shrink-0" size={18} />
             <div className="flex-1">
-              <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-300">Sugestão IA (Gemini)</h4>
+              <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-300">Sugestão IA (Mistral 7B)</h4>
               <p className="text-sm text-purple-800 dark:text-purple-200 mt-1 whitespace-pre-line">{aiSuggestion}</p>
             </div>
             <button onClick={() => setAiSuggestion(null)} className="text-purple-400 hover:text-purple-700 dark:hover:text-purple-300">
@@ -292,7 +286,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                         onClick={handleGenerateTags}
                         disabled={isGeneratingTags}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${isGeneratingTags ? 'bg-purple-100 text-purple-400 cursor-not-allowed' : 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 shadow-sm'}`}
-                        title="Gerar tags com IA baseadas no conteúdo"
+                        title="Gerar tags com IA (Mistral 7B)"
                     >
                         {isGeneratingTags ? (
                             <span className="animate-pulse">Gerando...</span>
