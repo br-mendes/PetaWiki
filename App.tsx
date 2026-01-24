@@ -528,16 +528,23 @@ const AppContent = () => {
     }
   };
 
-  const handleUpdateUserDetails = async (userId: string, data: { name: string, email: string }) => {
-    const emailExists = users.some(u => u.email === data.email && u.id !== userId);
-    if (emailExists) {
-        toast.error("Este e-mail já está sendo usado por outro usuário.");
-        return;
+  const handleUpdateUserDetails = async (userId: string, data: Partial<User>) => {
+    // Check email uniqueness if email is changing
+    if (data.email) {
+        const emailExists = users.some(u => u.email === data.email && u.id !== userId);
+        if (emailExists) {
+            toast.error("Este e-mail já está sendo usado por outro usuário.");
+            return;
+        }
     }
+
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...data } : u));
+    
+    // Update current user if it's them
     if (currentUser && currentUser.id === userId) {
         const updated = { ...currentUser, ...data };
         setCurrentUser(updated);
+        // Update storage
         const stored = localStorage.getItem(SESSION_KEY);
         if (stored) {
              const s = JSON.parse(stored);
@@ -545,17 +552,24 @@ const AppContent = () => {
              localStorage.setItem(SESSION_KEY, JSON.stringify(s));
         }
     }
+
     try {
         if (userId === 'mock_admin') {
-           toast.success("Simulação: Detalhes atualizados.");
+           toast.success("Simulação: Dados atualizados.");
            return;
         }
-        const { error } = await supabase.from('users').update({ 
-            name: data.name, 
-            email: data.email 
-        }).eq('id', userId);
-        if (error) throw error;
-        toast.success('Dados do usuário atualizados.');
+        
+        // Construct DB update object (snake_case)
+        const dbData: any = {};
+        if (data.name) dbData.name = data.name;
+        if (data.email) dbData.email = data.email;
+        if (data.department) dbData.department = data.department;
+
+        if (Object.keys(dbData).length > 0) {
+            const { error } = await supabase.from('users').update(dbData).eq('id', userId);
+            if (error) throw error;
+        }
+        toast.success('Dados atualizados.');
     } catch (e) {
         toast.error('Erro ao salvar dados no banco.');
     }
@@ -1148,7 +1162,7 @@ const AppContent = () => {
           user={currentUser}
           onUpdatePassword={handleUpdatePassword}
           onUpdateAvatar={handleUpdateAvatar}
-          onUpdateRole={(role) => handleUpdateUserRole(currentUser.id, role)} 
+          onUpdateUser={(data) => handleUpdateUserDetails(currentUser.id, data)}
         />
       )}
 

@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { User, Role } from '../types';
-import { Lock, Save, Camera, Upload, Eye, EyeOff } from 'lucide-react';
+import { Lock, Save, Camera, Upload, Eye, EyeOff, User as UserIcon, Briefcase } from 'lucide-react';
 
 interface UserProfileProps {
   isOpen: boolean;
@@ -11,7 +11,7 @@ interface UserProfileProps {
   user: User;
   onUpdatePassword: (oldPass: string, newPass: string) => Promise<boolean>;
   onUpdateAvatar?: (base64: string) => void;
-  onUpdateRole?: (newRole: Role) => void;
+  onUpdateUser?: (data: Partial<User>) => Promise<void>;
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -26,8 +26,11 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   user,
   onUpdatePassword,
   onUpdateAvatar,
-  onUpdateRole
+  onUpdateUser
 }) => {
+  const [activeTab, setActiveTab] = useState<'PROFILE' | 'PASSWORD'>('PROFILE');
+
+  // Password State
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -36,6 +39,10 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Profile Edit State
+  const [editName, setEditName] = useState(user.name);
+  const [editDepartment, setEditDepartment] = useState(user.department || '');
 
   const [msg, setMsg] = useState<{type: 'success'|'error', text: string} | null>(null);
   
@@ -70,7 +77,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
 
   const passwordStrength = calculatePasswordStrength(newPassword);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMsg(null);
 
@@ -91,14 +98,27 @@ export const UserProfile: React.FC<UserProfileProps> = ({
       setOldPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      setTimeout(onClose, 1500);
+      setTimeout(() => {
+         setMsg(null);
+         setActiveTab('PROFILE');
+      }, 1500);
     } else {
       setMsg({ type: 'error', text: 'Senha atual incorreta.' });
     }
   };
 
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setMsg(null);
+      if (onUpdateUser) {
+          await onUpdateUser({ name: editName, department: editDepartment });
+          setMsg({ type: 'success', text: 'Dados atualizados com sucesso.' });
+          setTimeout(() => setMsg(null), 2000);
+      }
+  };
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Perfil do Usuário" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Meu Perfil" size="md">
       <div className="space-y-6">
         {/* Header Profile */}
         <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -131,44 +151,77 @@ export const UserProfile: React.FC<UserProfileProps> = ({
             <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{user.email || user.username}</p>
             
             <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-600 dark:text-gray-200 border border-gray-200 dark:border-gray-500">
-                    {user.department || 'Geral'}
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border border-blue-200 dark:border-blue-800 uppercase">
+                    {ROLE_LABELS[user.role] || user.role}
                 </span>
-                
-                {/* Permite que qualquer usuário altere seu cargo para fins de teste/demo, desde que a função seja passada */}
-                {onUpdateRole ? (
-                    <div className="relative inline-flex">
-                        <select 
-                            value={user.role} 
-                            onChange={(e) => onUpdateRole(e.target.value as Role)}
-                            className="appearance-none pl-2.5 pr-6 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border border-blue-200 dark:border-blue-800 cursor-pointer focus:outline-none focus:ring-1 focus:ring-blue-500 hover:bg-blue-200 dark:hover:bg-blue-800 uppercase"
-                        >
-                            <option value="READER">Leitor</option>
-                            <option value="EDITOR">Editor</option>
-                            <option value="ADMIN">Admin</option>
-                        </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-blue-800 dark:text-blue-200">
-                            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </div>
-                    </div>
-                ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border border-blue-200 dark:border-blue-800 uppercase">
-                        {ROLE_LABELS[user.role] || user.role}
-                    </span>
-                )}
             </div>
           </div>
         </div>
 
-        {/* Change Password Section */}
-        <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-          <h4 className="text-md font-semibold text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
-            <Lock size={16} /> Alterar Senha
-          </h4>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Tabs */}
+        <div className="flex border-b border-gray-200 dark:border-gray-700">
+           <button
+             onClick={() => setActiveTab('PROFILE')}
+             className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'PROFILE' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+           >
+             Dados Pessoais
+           </button>
+           <button
+             onClick={() => setActiveTab('PASSWORD')}
+             className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${activeTab === 'PASSWORD' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'}`}
+           >
+             Alterar Senha
+           </button>
+        </div>
+
+        {/* Profile Form */}
+        {activeTab === 'PROFILE' && (
+             <form onSubmit={handleProfileSubmit} className="space-y-4 pt-2">
+                <div>
+                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome Completo</label>
+                   <div className="relative">
+                      <input 
+                         type="text" 
+                         value={editName}
+                         onChange={(e) => setEditName(e.target.value)}
+                         className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-blue-500 outline-none"
+                      />
+                      <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                   </div>
+                </div>
+
+                <div>
+                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cargo / Departamento</label>
+                   <div className="relative">
+                      <input 
+                         type="text" 
+                         value={editDepartment}
+                         onChange={(e) => setEditDepartment(e.target.value)}
+                         className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-blue-500 outline-none"
+                         placeholder="Ex: Recursos Humanos"
+                      />
+                      <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                   </div>
+                   <p className="text-xs text-gray-500 mt-1">Este cargo será exibido em seus documentos.</p>
+                </div>
+                
+                {msg && (
+                    <div className={`text-sm p-3 rounded-lg flex items-center gap-2 ${msg.type === 'success' ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
+                        {msg.text}
+                    </div>
+                )}
+
+                <div className="flex justify-end pt-2">
+                   <Button type="submit">
+                      <Save size={16} className="mr-2" /> Salvar Dados
+                   </Button>
+                </div>
+             </form>
+        )}
+
+        {/* Change Password Form */}
+        {activeTab === 'PASSWORD' && (
+          <form onSubmit={handlePasswordSubmit} className="space-y-4 pt-2">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Senha Atual</label>
               <div className="relative">
@@ -256,7 +309,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
               </Button>
             </div>
           </form>
-        </div>
+        )}
       </div>
     </Modal>
   );
