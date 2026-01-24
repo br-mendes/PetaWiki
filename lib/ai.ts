@@ -16,9 +16,6 @@ export async function generateAiResponse(
   temperature: number = 0.7
 ): Promise<string> {
   
-  // Combinação simples de System + User para o modelo
-  const fullPrompt = `${systemInstruction}\n\n${userPrompt}`;
-
   try {
     const response = await fetch('/api/chat', {
       method: 'POST',
@@ -26,11 +23,9 @@ export async function generateAiResponse(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama3', // Modelo atualizado conforme solicitação
-        prompt: fullPrompt,
-        options: {
-          temperature: temperature,
-        }
+        systemInstruction,
+        prompt: userPrompt,
+        temperature
       })
     });
 

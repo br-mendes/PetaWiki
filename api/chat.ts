@@ -1,4 +1,6 @@
 
+import { GoogleGenAI } from "@google/genai";
+
 export default async function handler(req: any, res: any) {
   // Configurar CORS
   res.setHeader('Access-Control-Allow-Credentials', true);
@@ -18,47 +20,32 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { prompt, model = 'llama3' } = req.body;
+    const { prompt, systemInstruction, temperature = 0.7 } = req.body;
 
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt is required' });
     }
 
-    // Chamar API da Ollama.com
-    const response = await fetch('https://api.ollama.com/api/generate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OLLAMA_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: model,
-        prompt: prompt,
-        stream: false,
-        options: {
-          temperature: 0.7,
-          top_p: 0.9,
-          frequency_penalty: 0.5,
-          presence_penalty: 0.5
-        }
-      })
+    // Inicializa o cliente Gemini com a chave de ambiente
+    // Certifique-se de que a variável API_KEY está definida no seu ambiente Vercel (.env)
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+    // Usa o modelo recomendado para tarefas de texto rápidas e sugestões
+    const modelId = 'gemini-3-flash-preview';
+
+    const response = await ai.models.generateContent({
+      model: modelId,
+      contents: prompt,
+      config: {
+        systemInstruction: systemInstruction,
+        temperature: temperature,
+      }
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('API Error:', errorText);
-      return res.status(response.status).json({ 
-        error: 'Failed to generate response',
-        details: errorText 
-      });
-    }
-
-    const data = await response.json();
-    
     return res.status(200).json({
       success: true,
-      response: data.response,
-      model: model
+      response: response.text,
+      model: modelId
     });
 
   } catch (error: any) {
