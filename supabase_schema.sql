@@ -71,7 +71,27 @@ CREATE TABLE IF NOT EXISTS public.system_settings (
   CONSTRAINT single_row CHECK (id = 1)
 );
 
--- 7. Seed Inicial (Admin Persistente)
+-- 7. Função de Busca de Documentos (RPC)
+-- Permite busca por título, conteúdo ou tags
+CREATE OR REPLACE FUNCTION search_documents(query_text text)
+RETURNS SETOF documents AS $$
+BEGIN
+  RETURN QUERY
+  SELECT *
+  FROM documents
+  WHERE 
+    deleted_at IS NULL AND (
+      to_tsvector('portuguese', title || ' ' || COALESCE(content, '')) @@ plainto_tsquery('portuguese', query_text)
+      OR title ILIKE '%' || query_text || '%'
+      OR content ILIKE '%' || query_text || '%'
+      -- Busca simples em array de tags (converte array para string)
+      OR array_to_string(tags, ',') ILIKE '%' || query_text || '%'
+    )
+  ORDER BY created_at DESC;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 8. Seed Inicial (Admin Persistente)
 INSERT INTO public.users (id, username, email, password, name, role, department, avatar)
 VALUES (
   'u_admin_seed', 

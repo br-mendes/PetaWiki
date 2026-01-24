@@ -171,7 +171,7 @@ const AppContent = () => {
   const activeDocuments = useMemo(() => documents.filter(d => !d.deletedAt), [documents]);
   const trashDocuments = useMemo(() => documents.filter(d => d.deletedAt), [documents]);
 
-  // --- SEARCH LOGIC (BACKEND) ---
+  // --- SEARCH LOGIC (Hybrid: Backend First -> Client Fallback) ---
   useEffect(() => {
     const performSearch = async () => {
         if (!searchQuery.trim()) {
@@ -181,12 +181,15 @@ const AppContent = () => {
 
         setIsSearching(true);
         try {
-            // Call Supabase RPC 'search_documents'
+            // 1. Tentar busca no Backend via RPC
             const { data, error } = await supabase.rpc('search_documents', {
                 query_text: searchQuery
             });
 
-            if (error) throw error;
+            if (error) {
+                console.warn("RPC 'search_documents' falhou (pode não existir ainda). Usando fallback local.", error.message);
+                throw error; // Força cair no catch para fallback local
+            }
 
             // Map Backend Results (snake_case) to Frontend Model (camelCase)
             const mappedResults: Document[] = (data || []).map((d: any) => ({
@@ -202,13 +205,24 @@ const AppContent = () => {
                 views: d.views,
                 tags: d.tags || [],
                 categoryPath: getCategoryPath(d.category_id, categories), // Recalculate path
-                versions: [] // Versions aren't returned by search usually
+                versions: [] 
             }));
 
             setSearchResultDocs(mappedResults);
+
         } catch (error) {
-            console.error("Erro na busca:", error);
-            // Silent fail or toast
+            // 2. Fallback: Busca Client-Side (usando dados já carregados em memória)
+            // Isso garante que a busca funcione mesmo se a função SQL não tiver sido criada.
+            const queryLower = searchQuery.toLowerCase();
+            const localResults = documents.filter(d => {
+                if (d.deletedAt) return false;
+                const matchTitle = d.title.toLowerCase().includes(queryLower);
+                const matchContent = d.content.toLowerCase().includes(queryLower);
+                const matchTags = d.tags.some(t => t.toLowerCase().includes(queryLower));
+                return matchTitle || matchContent || matchTags;
+            });
+            console.log(`Busca local realizada: ${localResults.length} encontrados.`);
+            setSearchResultDocs(localResults);
         } finally {
             setIsSearching(false);
         }
@@ -218,22 +232,25 @@ const AppContent = () => {
     const debounceTimer = setTimeout(performSearch, 500);
     return () => clearTimeout(debounceTimer);
 
-  }, [searchQuery, categories]); // Re-run if query or categories (for path) change
+  }, [searchQuery, categories, documents]); // Re-run if query or data changes
 
   // --- VISIBLE DOCUMENTS CALCULATION ---
   const visibleDocuments = useMemo(() => {
     if (!currentUser) return [];
     
     // 1. Determine Source: Search Results OR Default Active Documents
-    // If there is a query string, we use the results from the backend.
-    // Otherwise, we use the full list loaded in memory.
-    const sourceDocs = (searchQuery.trim() && searchResultDocs) 
+    // Se houver uma query, usamos searchResultDocs. Se searchResultDocs for null, significa que não há busca ativa ou está carregando (mas se query existir, consideramos estado de busca).
+    // Se searchQuery existe mas searchResultDocs é vazio ([]), é um resultado válido de "nenhum item encontrado".
+    const isSearchingActive = searchQuery.trim().length > 0;
+    
+    // Se está buscando e temos resultados (mesmo que vazio), usamos eles.
+    // Se não está buscando, usamos activeDocuments.
+    const sourceDocs = (isSearchingActive && searchResultDocs !== null) 
         ? searchResultDocs 
         : activeDocuments;
 
-    // 2. Filter by Role & Soft Delete
-    // Note: The RPC might return deleted docs if the SQL doesn't filter them.
-    // We strictly filter deletedAt here to be safe.
+    // 2. Filter by Role
+    // Note: The RPC/Local search might return deleted docs. We strictly filter here.
     const roleFiltered = sourceDocs.filter(doc => {
       // Must not be in trash (unless we want to search trash, but usually not in main view)
       if (doc.deletedAt) return false;
