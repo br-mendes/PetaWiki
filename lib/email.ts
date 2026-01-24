@@ -1,53 +1,52 @@
 
 import { SystemSettings, User } from '../types';
 
-// Chave de API Real
-const RESEND_API_KEY = 're_6fMYtT9F_AHdtPaNyqFRNixYtNCyRwrRv';
-const SENDER_EMAIL = 'onboarding@resend.dev'; // Domínio de teste padrão do Resend (funciona até configurar domínio próprio)
-
 interface EmailResult {
   success: boolean;
   message?: string;
+  id?: string;
 }
 
 /**
- * Envia um e-mail usando a API do Resend.
- * Nota: Chamadas diretas do navegador para a API do Resend podem sofrer bloqueio de CORS.
- * O ideal é mover esta lógica para uma Vercel Function (/api/send-email).
+ * Envia um e-mail usando a API Route interna (/api/send-email).
  */
 async function sendEmail(to: string, subject: string, htmlContent: string): Promise<EmailResult> {
   try {
-    const response = await fetch('https://api.resend.com/emails', {
+    // Chama o endpoint server-side criado em api/send-email.ts
+    const response = await fetch('/api/send-email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${RESEND_API_KEY}`
       },
       body: JSON.stringify({
-        from: `Peta Wiki <${SENDER_EMAIL}>`,
-        to: [to], // No modo de teste do Resend, só envia para o email cadastrado na conta Resend
-        subject: subject,
+        to,
+        subject,
         html: htmlContent
       })
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.warn('Resend API Warning (Provável CORS ou Domínio não verificado):', errorData);
-      // Retorna sucesso falso mas permite que a UI continue via simulação no catch ou tratamento superior
-      return { success: false, message: 'Falha na comunicação direta com Resend (CORS).' };
+      console.warn('Falha no envio de e-mail:', data);
+      return { 
+          success: false, 
+          message: data.error?.message || data.error || 'Erro desconhecido no envio.' 
+      };
     }
 
-    return { success: true };
-  } catch (error) {
-    // Erros de CORS (Network Error) são esperados no frontend puro.
-    // Simulamos sucesso para não travar a experiência do usuário na demo.
-    console.warn('Simulando envio de e-mail (Bloqueio CORS ou Falha de Rede):', error);
-    console.log(`[SIMULAÇÃO EMAIL PROD] Para: ${to} | Assunto: ${subject}`);
-    
+    console.log('E-mail enviado com sucesso. ID:', data.data?.id);
     return { 
-      success: true, 
-      message: 'E-mail simulado (Envio real requer Backend/Vercel Function)' 
+        success: true, 
+        message: 'E-mail enviado com sucesso!',
+        id: data.data?.id // Retorna o ID real (UUID) para validação
+    };
+
+  } catch (error: any) {
+    console.error('Erro de rede ao enviar e-mail:', error);
+    return { 
+      success: false, 
+      message: 'Erro de conexão com o servidor de e-mail.' 
     };
   }
 }
