@@ -12,6 +12,8 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
   // Dashboard Interno
   homeTitle: 'Bem-vindo ao Peta Wiki',
   homeDescription: 'Selecione uma categoria na barra lateral para navegar pela documentação.',
+  showWelcomeCard: true,
+  homeContent: '',
 
   // Landing Page (Pública)
   landingTitle: 'Peta Wiki Corporativo',

@@ -3,12 +3,13 @@ import React, { useState, useRef, useMemo } from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { User, SystemSettings, Role, Category, Document, FooterColumn, LandingFeature, HeroTag } from '../types';
-import { Image, Save, UserCog, UserPlus, FolderTree, Upload, Trash2, Plus, CornerDownRight, ShieldCheck, X, Layout, Sidebar as SidebarIcon, PanelTop, RotateCcw, FileX, Edit, Link, ExternalLink, Columns, Star, Zap, Globe, Lock, BookOpen, Users, Search } from 'lucide-react';
+import { Image, Save, UserCog, UserPlus, FolderTree, Upload, Trash2, Plus, CornerDownRight, ShieldCheck, X, Layout, Sidebar as SidebarIcon, PanelTop, RotateCcw, FileX, Edit, Link, ExternalLink, Columns, Star, Zap, Globe, Lock, BookOpen, Users, Search, ToggleLeft, ToggleRight, LayoutTemplate } from 'lucide-react';
 import { generateSlug } from '../lib/hierarchy';
 import { sendWelcomeEmail } from '../lib/email';
 import { useToast } from './Toast';
 import { compressImage } from '../lib/image';
 import { DEFAULT_SYSTEM_SETTINGS } from '../constants';
+import { RichTextEditor } from './RichTextEditor';
 
 interface AdminSettingsProps {
   isOpen: boolean;
@@ -60,6 +61,8 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   // Internal Home State
   const [homeTitle, setHomeTitle] = useState(settings.homeTitle || `Bem-vindo ao ${settings.appName}`);
   const [homeDescription, setHomeDescription] = useState(settings.homeDescription || 'Selecione uma categoria na barra lateral para navegar pela documentação.');
+  const [showWelcomeCard, setShowWelcomeCard] = useState<boolean>(settings.showWelcomeCard !== false);
+  const [homeContent, setHomeContent] = useState<string>(settings.homeContent || '');
 
   // Public Landing State
   const [landingTitle, setLandingTitle] = useState(settings.landingTitle || settings.appName || 'Peta Wiki');
@@ -125,6 +128,8 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
         layoutMode,
         homeTitle,
         homeDescription,
+        showWelcomeCard,
+        homeContent,
         landingTitle,
         landingDescription,
         heroTags,
@@ -370,8 +375,71 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
 
                    <hr className="border-gray-200 dark:border-gray-700 my-4" />
                    
-                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Personalização de Textos</h3>
+                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Personalização de Textos & Dashboard</h3>
                    
+                   {/* Seção 2: Dashboard (Privada) */}
+                   <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 mb-4">
+                     <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 uppercase tracking-wide flex items-center gap-2">
+                        <LayoutTemplate size={16} /> Dashboard Interno (Privado)
+                     </h4>
+                     
+                     <div className="space-y-4">
+                        {/* Toggle Card Welcome */}
+                        <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
+                            <div className="flex flex-col">
+                                <span className="font-medium text-gray-900 dark:text-white text-sm">Exibir Card de Boas-vindas</span>
+                                <span className="text-xs text-gray-500">Mostra o logo e mensagem centralizada no topo da home.</span>
+                            </div>
+                            <button 
+                                onClick={() => setShowWelcomeCard(!showWelcomeCard)}
+                                className={`p-1 rounded-full transition-colors ${showWelcomeCard ? 'text-green-500 bg-green-50 dark:bg-green-900/20' : 'text-gray-400 bg-gray-100 dark:bg-gray-800'}`}
+                            >
+                                {showWelcomeCard ? <ToggleRight size={32} className="fill-current" /> : <ToggleLeft size={32} />}
+                            </button>
+                        </div>
+
+                        {showWelcomeCard && (
+                            <div className="space-y-3 pl-4 border-l-2 border-gray-200 dark:border-gray-700 animate-in fade-in slide-in-from-left-2 duration-300">
+                                <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Título de Boas-Vindas</label>
+                                <input 
+                                    type="text" 
+                                    value={homeTitle}
+                                    onChange={(e) => setHomeTitle(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 outline-none bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                                    placeholder={`Bem-vindo ao ${appName}`}
+                                />
+                                </div>
+                                <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Instrução Inicial</label>
+                                <textarea
+                                    rows={2}
+                                    value={homeDescription}
+                                    onChange={(e) => setHomeDescription(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 outline-none bg-white dark:bg-gray-900 text-gray-900 dark:text-white resize-none"
+                                    placeholder="Instruções para o usuário logado..."
+                                />
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="pt-2">
+                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Página de Apresentação (Home Personalizada)</label>
+                            <div className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
+                                <RichTextEditor 
+                                    value={homeContent} 
+                                    onChange={setHomeContent} 
+                                    className="border-none min-h-[250px]"
+                                    placeholder="Escreva aqui o conteúdo da página inicial (avisos, links rápidos, imagens...)"
+                                />
+                            </div>
+                            <p className="text-xs text-gray-500 mt-2">
+                                Este conteúdo aparecerá abaixo do card de boas-vindas (ou no topo, se o card estiver oculto).
+                            </p>
+                        </div>
+                     </div>
+                   </div>
+
                    {/* Seção 1: Landing Page (Pública) */}
                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 mb-4">
                      <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 uppercase tracking-wide">Página de Login (Pública)</h4>
@@ -392,33 +460,6 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                             value={landingDescription}
                             onChange={(e) => setLandingDescription(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 outline-none bg-white dark:bg-gray-900 text-gray-900 dark:text-white resize-none"
-                          />
-                        </div>
-                     </div>
-                   </div>
-
-                   {/* Seção 2: Dashboard (Privada) */}
-                   <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                     <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 uppercase tracking-wide">Dashboard Interno (Privado)</h4>
-                     <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Título de Boas-Vindas</label>
-                          <input 
-                            type="text" 
-                            value={homeTitle}
-                            onChange={(e) => setHomeTitle(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 outline-none bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                            placeholder={`Bem-vindo ao ${appName}`}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Instrução Inicial</label>
-                          <textarea
-                            rows={2}
-                            value={homeDescription}
-                            onChange={(e) => setHomeDescription(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 outline-none bg-white dark:bg-gray-900 text-gray-900 dark:text-white resize-none"
-                            placeholder="Instruções para o usuário logado..."
                           />
                         </div>
                      </div>

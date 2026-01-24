@@ -169,8 +169,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
       }
     } else {
       if (username && password) {
-         // Validação básica para email, caso o usuário não use username
-         if (!isValidEmail(username)) {
+         // Validação básica para email, permitindo exceção para o usuário 'admin'
+         if (username !== 'admin' && !isValidEmail(username)) {
             setError('Por favor, insira um e-mail válido.');
             setIsLoading(false);
             return;

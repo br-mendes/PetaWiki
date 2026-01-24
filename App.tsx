@@ -992,25 +992,42 @@ const AppContent = () => {
           )}
 
           {currentView === 'HOME' && (
-            <div className="p-12 text-center animate-in fade-in duration-500">
-              <img 
-                src={systemSettings.logoCollapsedUrl} 
-                alt="Logo" 
-                className="w-24 h-24 mx-auto mb-6 rounded-xl shadow-md p-2 bg-white object-contain" 
-              />
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">
-                {systemSettings.homeTitle || `Bem-vindo ao ${systemSettings.appName}`}
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 max-w-lg mx-auto mb-8 whitespace-pre-line">
-                {systemSettings.homeDescription || 'Selecione uma categoria na barra lateral para navegar pela documentação.'}
-              </p>
-              {isAdminOrEditor && (
-                <button 
-                  onClick={() => setCurrentView('TEMPLATE_SELECTION')}
-                  className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
-                >
-                  Criar Novo Documento
-                </button>
+            <div className="p-8 max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
+              
+              {/* ÁREA 1: CARD DE BOAS VINDAS (CONDICIONAL) */}
+              {systemSettings.showWelcomeCard !== false && (
+                <div className="text-center py-8">
+                  <img 
+                    src={systemSettings.logoCollapsedUrl} 
+                    alt="Logo" 
+                    className="w-24 h-24 mx-auto mb-6 rounded-xl shadow-md p-2 bg-white object-contain" 
+                  />
+                  <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">
+                    {systemSettings.homeTitle || `Bem-vindo ao ${systemSettings.appName}`}
+                  </h2>
+                  <p className="text-gray-600 dark:text-gray-400 max-w-lg mx-auto mb-8 whitespace-pre-line">
+                    {systemSettings.homeDescription || 'Selecione uma categoria na barra lateral para navegar pela documentação.'}
+                  </p>
+                  
+                  {isAdminOrEditor && (
+                    <button 
+                      onClick={() => setCurrentView('TEMPLATE_SELECTION')}
+                      className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+                    >
+                      Criar Novo Documento
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* ÁREA 2: CONTEÚDO PERSONALIZADO (Página de Apresentação) */}
+              {systemSettings.homeContent && (
+                <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                   <div 
+                      className="prose prose-blue dark:prose-invert max-w-none text-gray-800 dark:text-gray-300 leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: systemSettings.homeContent }}
+                   />
+                </div>
               )}
             </div>
           )}

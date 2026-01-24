@@ -42,6 +42,8 @@ export interface SystemSettings {
   // Configurações do Dashboard Interno (Pós-login)
   homeTitle?: string; 
   homeDescription?: string;
+  showWelcomeCard?: boolean; // Novo: Controla visibilidade do card padrão
+  homeContent?: string;      // Novo: Conteúdo rico personalizado da home
 
   // Configurações da Landing Page / Login (Pré-login)
   landingTitle?: string;
