@@ -100,37 +100,61 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- === CORREÇÕES DE FUNÇÕES EXISTENTES (DROP ANTES DE RECREATE) ===
+
 -- RPC: Registrar Visualização (Atomicamente incrementa contador e salva histórico)
+-- Removemos a versão antiga que retornava void, se existir
+DROP FUNCTION IF EXISTS register_view(text, text);
+
 CREATE OR REPLACE FUNCTION register_view(p_doc_id text, p_user_id text)
-RETURNS void AS $$
+RETURNS integer
+SECURITY DEFINER -- Executa como admin para garantir permissão de escrita
+AS $$
+DECLARE
+  new_count integer;
 BEGIN
-  -- 1. Incrementa contador no documento
+  -- 1. Incrementa contador no documento e retorna o novo valor
   UPDATE documents 
   SET views = views + 1 
-  WHERE id = p_doc_id;
+  WHERE id = p_doc_id
+  RETURNING views INTO new_count;
 
   -- 2. Insere log histórico
   INSERT INTO analytics_events (event_type, document_id, user_id)
   VALUES ('VIEW', p_doc_id, p_user_id);
+
+  -- 3. Retorna o valor atualizado para o frontend
+  RETURN new_count;
 END;
 $$ LANGUAGE plpgsql;
 
 -- RPC: Registrar Busca
+DROP FUNCTION IF EXISTS log_search_event(text, text);
+
 CREATE OR REPLACE FUNCTION log_search_event(p_query text, p_user_id text)
-RETURNS void AS $$
+RETURNS void
+SECURITY DEFINER
+AS $$
 BEGIN
-  INSERT INTO analytics_events (event_type, user_id, metadata)
-  VALUES ('SEARCH', p_user_id, jsonb_build_object('query', p_query));
+  -- Só registra se houver texto válido
+  IF length(trim(p_query)) > 0 THEN
+    INSERT INTO analytics_events (event_type, user_id, metadata)
+    VALUES ('SEARCH', p_user_id, jsonb_build_object('query', trim(p_query)));
+  END IF;
 END;
 $$ LANGUAGE plpgsql;
 
 -- RPC ANALYTICS: Estatísticas Diárias (Últimos 30 dias)
+DROP FUNCTION IF EXISTS get_daily_analytics();
+
 CREATE OR REPLACE FUNCTION get_daily_analytics()
 RETURNS TABLE (
   date text,
   views bigint,
   unique_users bigint
-) AS $$
+)
+SECURITY DEFINER
+AS $$
 BEGIN
   RETURN QUERY
   SELECT 
@@ -147,52 +171,58 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- RPC ANALYTICS: Estatísticas por Departamento
+DROP FUNCTION IF EXISTS get_department_analytics();
+
 CREATE OR REPLACE FUNCTION get_department_analytics()
 RETURNS TABLE (
   name text,
   doc_count bigint,
-  view_count bigint, -- Visitas que os docs deste departamento receberam
+  view_count bigint,
   published_count bigint,
   draft_count bigint
-) AS $$
+)
+SECURITY DEFINER
+AS $$
 BEGIN
   RETURN QUERY
-  WITH user_depts AS (
-    SELECT id, department FROM users
-  )
   SELECT 
-    COALESCE(u.department, 'Geral') as name,
+    COALESCE(u.department, 'Sem Departamento') as name,
     count(d.id) as doc_count,
     COALESCE(sum(d.views), 0) as view_count,
     count(CASE WHEN d.status = 'PUBLISHED' THEN 1 END) as published_count,
     count(CASE WHEN d.status = 'DRAFT' THEN 1 END) as draft_count
   FROM documents d
-  LEFT JOIN user_depts u ON d.author_id = u.id
+  LEFT JOIN users u ON d.author_id = u.id
   WHERE d.deleted_at IS NULL
-  GROUP BY COALESCE(u.department, 'Geral');
+  GROUP BY COALESCE(u.department, 'Sem Departamento')
+  ORDER BY view_count DESC;
 END;
 $$ LANGUAGE plpgsql;
 
 -- RPC ANALYTICS: Top Buscas
+DROP FUNCTION IF EXISTS get_top_searches();
+
 CREATE OR REPLACE FUNCTION get_top_searches()
 RETURNS TABLE (
   query text,
   count bigint
-) AS $$
+)
+SECURITY DEFINER
+AS $$
 BEGIN
   RETURN QUERY
   SELECT 
-    metadata->>'query' as query,
+    lower(metadata->>'query') as query,
     count(*) as count
   FROM analytics_events
   WHERE event_type = 'SEARCH'
-  GROUP BY metadata->>'query'
+  GROUP BY lower(metadata->>'query')
   ORDER BY count DESC
   LIMIT 10;
 END;
 $$ LANGUAGE plpgsql;
 
--- 9. Seed Inicial (Admin Persistente)
+-- 9. Seed Inicial (Admin Persistente) - Mantém caso não exista
 INSERT INTO public.users (id, username, email, password, name, role, department, avatar)
 VALUES (
   'u_admin_seed', 
