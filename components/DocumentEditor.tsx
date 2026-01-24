@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Save, Sparkles, X, Tag, ChevronDown, Copy, Plus, Folder, CornerDownRight, ArrowLeft } from 'lucide-react';
+import { Save, Sparkles, X, Tag, ChevronDown, Copy, Plus, Folder, CornerDownRight, ArrowLeft, SpellCheck, FileText, Wand2 } from 'lucide-react';
 import { generateAiResponse } from '../lib/ai';
 import { Document, User, Category } from '../types';
 import { Button } from './Button';
@@ -45,8 +45,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   
   // AI State
   const [isGenerating, setIsGenerating] = useState(false);
-  const [isGeneratingTags, setIsGeneratingTags] = useState(false);
-  const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
+  const [aiResult, setAiResult] = useState<{ type: 'SUGGEST' | 'GRAMMAR' | 'SUMMARY', content: string } | null>(null);
   
   // UI State
   const [showCategorySelect, setShowCategorySelect] = useState(false);
@@ -63,20 +62,40 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
     return () => window.document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleAiSuggest = async () => {
+  const handleAiAction = async (type: 'SUGGEST' | 'GRAMMAR' | 'SUMMARY') => {
+    if (!content.trim()) {
+        toast.warning("Escreva algum conteúdo antes de usar a IA.");
+        return;
+    }
+
     setIsGenerating(true);
+    setAiResult(null);
+    
     try {
-      const plainText = content.replace(/<[^>]+>/g, '');
-      
-      // Prompt específico para Mistral ser direto
-      const systemPrompt = "Você é um editor técnico sênior de uma wiki corporativa. Seu objetivo é melhorar a clareza e estrutura.";
-      const userPrompt = `Analise o seguinte conteúdo e forneça 3 sugestões pontuais de melhoria em Português do Brasil.\n\nTítulo: ${title}\nConteúdo: ${plainText}`;
+      const plainText = content.replace(/<[^>]+>/g, ' ');
+      let systemPrompt = '';
+      let userPrompt = '';
+
+      switch (type) {
+        case 'SUGGEST':
+            systemPrompt = "Você é um editor técnico sênior. Seu objetivo é melhorar a clareza e estrutura do texto.";
+            userPrompt = `Analise o texto e forneça 3 sugestões pontuais de melhoria em estilo e coesão.\n\nTítulo: ${title}\nConteúdo: ${plainText}`;
+            break;
+        case 'GRAMMAR':
+            systemPrompt = "Você é uma ferramenta de correção gramatical (similar ao LanguageTool). Foque estritamente em erros de ortografia, concordância nominal/verbal e pontuação.";
+            userPrompt = `Liste os erros gramaticais encontrados no texto abaixo e sugira a correção para cada um. Se não houver erros, responda apenas 'Nenhum erro gramatical encontrado'.\n\nConteúdo: ${plainText}`;
+            break;
+        case 'SUMMARY':
+            systemPrompt = "Você é uma ferramenta de sumarização (similar ao Sumy).";
+            userPrompt = `Gere um resumo executivo conciso (máximo 3 linhas) do texto abaixo.\n\nConteúdo: ${plainText}`;
+            break;
+      }
 
       const response = await generateAiResponse(systemPrompt, userPrompt);
-      
-      setAiSuggestion(response || "Nenhuma sugestão gerada.");
+      setAiResult({ type, content: response || "Sem resposta da IA." });
+
     } catch (error: any) {
-      toast.error(error.message || "Falha ao gerar sugestões com IA.");
+      toast.error(error.message || "Falha ao processar solicitação com IA.");
     } finally {
       setIsGenerating(false);
     }
@@ -88,37 +107,34 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
         return;
     }
 
-    setIsGeneratingTags(true);
+    setIsGenerating(true);
     try {
-        const plainText = content.replace(/<[^>]+>/g, '');
+        const plainText = content.replace(/<[^>]+>/g, ' ');
         
-        // Mistral tende a ser verboso, então o prompt precisa ser muito restritivo
-        const systemPrompt = "Você é uma API que gera tags JSON. Responda APENAS com as palavras-chave separadas por vírgula.";
-        const userPrompt = `Gere 5 tags relevantes para este documento. Retorne APENAS as tags separadas por vírgula (ex: rh, onboarding, normas). Não use numeração.\n\nTítulo: ${title}\nConteúdo: ${plainText}`;
+        const systemPrompt = "Você é uma ferramenta de extração de palavras-chave (similar ao Keybert). Responda APENAS com as tags separadas por vírgula.";
+        const userPrompt = `Extraia as 5 tags/palavras-chave mais relevantes deste texto. Retorne APENAS as tags separadas por vírgula (ex: rh, segurança, normas). Não use numeração.\n\nTítulo: ${title}\nConteúdo: ${plainText}`;
 
         const responseText = await generateAiResponse(systemPrompt, userPrompt, 0.3); // Temp baixa para precisão
 
         if (responseText) {
-            // Limpeza extra para garantir que o Mistral não enviou texto introdutório
             const cleanText = responseText.replace(/Tags:|Aqui estão as tags:|Note que/gi, '');
-            
             const newTags = cleanText
                 .split(',')
                 .map(t => t.trim().toLowerCase().replace('.', ''))
                 .filter(t => t.length > 1 && !tags.includes(t))
-                .slice(0, 8); // Limite de segurança
+                .slice(0, 8);
             
             if (newTags.length > 0) {
               setTags(prev => [...new Set([...prev, ...newTags])]);
               toast.success(`${newTags.length} tags geradas.`);
             } else {
-              toast.warning("A IA não retornou tags válidas. Tente adicionar mais conteúdo.");
+              toast.warning("A IA não retornou tags válidas.");
             }
         }
     } catch (e: any) {
         toast.error(e.message || "Erro ao conectar com a IA.");
     } finally {
-        setIsGeneratingTags(false);
+        setIsGenerating(false);
     }
   };
 
@@ -194,32 +210,64 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-visible relative">
-        {/* Toolbar de Ferramentas Auxiliares */}
+        {/* Toolbar de Ferramentas IA */}
         <div className="border-b border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mr-2 shrink-0 flex items-center gap-1">
+                <Wand2 size={12} /> Ferramentas IA
+            </span>
+            
             <button 
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors border ${isGenerating ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/40 dark:text-purple-300 dark:border-purple-800' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-600 hover:border-purple-200'}`}
-              onClick={handleAiSuggest}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors border ${aiResult?.type === 'GRAMMAR' ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+              onClick={() => handleAiAction('GRAMMAR')}
               disabled={isGenerating}
-              title="Usa Mistral 7B via Ollama para analisar o texto"
+              title="Verificar concordância e pontuação (LanguageTool)"
+            >
+              <SpellCheck size={14} />
+              Revisão Gramatical
+            </button>
+
+            <button 
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors border ${aiResult?.type === 'SUMMARY' ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+              onClick={() => handleAiAction('SUMMARY')}
+              disabled={isGenerating}
+              title="Gerar resumo executivo (Sumy)"
+            >
+              <FileText size={14} />
+              Resumir
+            </button>
+
+            <button 
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors border ${aiResult?.type === 'SUGGEST' ? 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+              onClick={() => handleAiAction('SUGGEST')}
+              disabled={isGenerating}
+              title="Sugestões de estilo e clareza"
             >
               <Sparkles size={14} />
-              {isGenerating ? 'Analisando...' : 'Revisão IA'}
+              Melhorias
             </button>
           </div>
-          <div className="text-xs text-gray-400 font-mono hidden sm:block">
-             {content.length} caracteres
+          
+          <div className="text-xs text-gray-400 font-mono hidden sm:block shrink-0">
+             {isGenerating ? <span className="animate-pulse text-blue-500">Processando...</span> : `${content.length} caracteres`}
           </div>
         </div>
 
-        {aiSuggestion && (
-          <div className="bg-purple-50 dark:bg-purple-900/20 border-b border-purple-100 dark:border-purple-800 p-4 flex items-start gap-3 animate-in slide-in-from-top-2 duration-300">
-            <Sparkles className="text-purple-600 dark:text-purple-400 mt-1 shrink-0" size={18} />
-            <div className="flex-1">
-              <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-300">Sugestão IA (Mistral 7B)</h4>
-              <p className="text-sm text-purple-800 dark:text-purple-200 mt-1 whitespace-pre-line leading-relaxed">{aiSuggestion}</p>
+        {/* AI Result Panel */}
+        {aiResult && (
+          <div className="bg-blue-50 dark:bg-blue-900/10 border-b border-blue-100 dark:border-blue-800 p-4 flex items-start gap-3 animate-in slide-in-from-top-2 duration-300">
+            <div className="mt-1 shrink-0 p-2 bg-white dark:bg-blue-900/30 rounded-full text-blue-600 dark:text-blue-400">
+                {aiResult.type === 'GRAMMAR' ? <SpellCheck size={18} /> : aiResult.type === 'SUMMARY' ? <FileText size={18} /> : <Sparkles size={18} />}
             </div>
-            <button onClick={() => setAiSuggestion(null)} className="text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors">
+            <div className="flex-1">
+              <h4 className="text-sm font-bold text-blue-900 dark:text-blue-200 mb-1">
+                {aiResult.type === 'GRAMMAR' ? 'Análise Gramatical' : aiResult.type === 'SUMMARY' ? 'Resumo Gerado' : 'Sugestões de Estilo'}
+              </h4>
+              <div className="text-sm text-blue-800 dark:text-blue-300 whitespace-pre-line leading-relaxed">
+                {aiResult.content}
+              </div>
+            </div>
+            <button onClick={() => setAiResult(null)} className="text-blue-400 hover:text-blue-700 dark:hover:text-blue-200 transition-colors">
               <X size={16} />
             </button>
           </div>
@@ -323,15 +371,15 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                     
                     <button 
                         onClick={handleGenerateTags}
-                        disabled={isGeneratingTags}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all shadow-sm ${isGeneratingTags ? 'bg-purple-50 text-purple-400 cursor-not-allowed border border-purple-100' : 'bg-white border border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300 dark:bg-gray-800 dark:border-purple-900 dark:text-purple-400'}`}
-                        title="Gerar tags automaticamente com IA"
+                        disabled={isGenerating}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all shadow-sm ${isGenerating ? 'bg-purple-50 text-purple-400 cursor-not-allowed border border-purple-100' : 'bg-white border border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300 dark:bg-gray-800 dark:border-purple-900 dark:text-purple-400'}`}
+                        title="Gerar tags automaticamente com IA (Keybert logic)"
                     >
-                        {isGeneratingTags ? (
+                        {isGenerating ? (
                             <span className="animate-pulse flex items-center gap-2"><Sparkles size={14} /> Gerando...</span>
                         ) : (
                             <>
-                                <Sparkles size={14} /> Auto-Tag
+                                <Tag size={14} /> Auto-Tag
                             </>
                         )}
                     </button>
