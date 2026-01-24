@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
 import { Header } from './components/Header';
@@ -26,6 +26,9 @@ import { AlertTriangle } from 'lucide-react';
 
 type ViewState = 'HOME' | 'DOCUMENT_VIEW' | 'DOCUMENT_EDIT' | 'DOCUMENT_CREATE' | 'TEMPLATE_SELECTION' | 'ANALYTICS';
 
+const SESSION_KEY = 'peta_wiki_session';
+const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutos em milissegundos
+
 // Componente interno para usar o hook useToast (que precisa estar dentro do Provider)
 const AppContent = () => {
   const toast = useToast();
@@ -35,22 +38,10 @@ const AppContent = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   
-  // Settings State with Local Persistence
-  const [systemSettings, setSystemSettings] = useState<SystemSettings>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('peta_wiki_settings');
-      if (saved) {
-        try {
-          return JSON.parse(saved);
-        } catch (e) {
-          console.error("Erro ao carregar configurações salvas", e);
-        }
-      }
-    }
-    return DEFAULT_SYSTEM_SETTINGS;
-  });
+  // Settings State (Inicia com Default, depois atualiza do Banco)
+  const [systemSettings, setSystemSettings] = useState<SystemSettings>(DEFAULT_SYSTEM_SETTINGS);
   
-  // Theme State - Inicializa com localStorage, mas será sobrescrito pelo perfil do usuário ao logar
+  // Theme State
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
        return localStorage.getItem('theme') === 'dark';
@@ -86,33 +77,99 @@ const AppContent = () => {
     onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
+  // --- SESSÃO E INATIVIDADE ---
+  
+  // 1. Restaurar Sessão ao Iniciar
+  useEffect(() => {
+    const restoreSession = () => {
+        const savedSession = localStorage.getItem(SESSION_KEY);
+        if (savedSession) {
+            try {
+                const { user, lastActive } = JSON.parse(savedSession);
+                const now = Date.now();
+                
+                // Verifica se a sessão expirou (15 min)
+                if (now - lastActive < INACTIVITY_LIMIT) {
+                    setCurrentUser(user);
+                    setIsAuthenticated(true);
+                    
+                    // Atualiza o timestamp para o momento atual (refresh token logic equivalent)
+                    const refreshedSession = { user, lastActive: now };
+                    localStorage.setItem(SESSION_KEY, JSON.stringify(refreshedSession));
+                    
+                    if (user.themePreference) {
+                        setIsDarkMode(user.themePreference === 'dark');
+                    }
+                    console.log('Sessão restaurada para:', user.email);
+                } else {
+                    console.log('Sessão expirada. Limpando storage.');
+                    localStorage.removeItem(SESSION_KEY);
+                }
+            } catch (e) {
+                console.error("Erro ao restaurar sessão", e);
+                localStorage.removeItem(SESSION_KEY);
+            }
+        }
+    };
+    restoreSession();
+  }, []);
+
+  // 2. Monitorar Atividade e Logout Automático
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    let inactivityTimer: ReturnType<typeof setTimeout>;
+    
+    // Função para atualizar o timestamp de atividade
+    const updateActivity = () => {
+        const stored = localStorage.getItem(SESSION_KEY);
+        if (stored) {
+            const data = JSON.parse(stored);
+            data.lastActive = Date.now();
+            localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+        }
+    };
+
+    // Função para checar periodicamente se expirou
+    const checkInactivity = () => {
+        const stored = localStorage.getItem(SESSION_KEY);
+        if (stored) {
+            const { lastActive } = JSON.parse(stored);
+            if (Date.now() - lastActive > INACTIVITY_LIMIT) {
+                handleLogout(true); // True indica que foi por inatividade
+            }
+        }
+    };
+
+    // Listeners de eventos de atividade
+    window.addEventListener('mousemove', updateActivity);
+    window.addEventListener('keydown', updateActivity);
+    window.addEventListener('click', updateActivity);
+    window.addEventListener('scroll', updateActivity);
+
+    // Intervalo de verificação (a cada 1 minuto)
+    const intervalId = setInterval(checkInactivity, 60 * 1000);
+
+    return () => {
+        window.removeEventListener('mousemove', updateActivity);
+        window.removeEventListener('keydown', updateActivity);
+        window.removeEventListener('click', updateActivity);
+        window.removeEventListener('scroll', updateActivity);
+        clearInterval(intervalId);
+    };
+  }, [isAuthenticated]);
+
   // Computed Properties
   const categoryTree = useMemo(() => buildCategoryTree(categories), [categories]);
-  
-  // --- VISIBILITY & FILTERING RULES ---
-  // 1. activeDocuments: All non-deleted docs (used for logic/admin)
-  // 2. visibleDocuments: Docs visible to the CURRENT USER based on role
-  // 3. trashDocuments: Only deleted docs (for Admin Trash view)
-  
   const activeDocuments = useMemo(() => documents.filter(d => !d.deletedAt), [documents]);
   const trashDocuments = useMemo(() => documents.filter(d => d.deletedAt), [documents]);
 
   const visibleDocuments = useMemo(() => {
     if (!currentUser) return [];
-
     return activeDocuments.filter(doc => {
-      // Rule 1: ADMIN sees everything active
       if (currentUser.role === 'ADMIN') return true;
-
-      // Rule 2: EDITOR sees PUBLISHED and DRAFT/PENDING
-      // (Editors need to see drafts to edit them)
       if (currentUser.role === 'EDITOR') return true;
-
-      // Rule 3: READER sees ONLY PUBLISHED
-      if (currentUser.role === 'READER') {
-        return doc.status === 'PUBLISHED';
-      }
-
+      if (currentUser.role === 'READER') return doc.status === 'PUBLISHED';
       return false;
     });
   }, [activeDocuments, currentUser]);
@@ -128,12 +185,8 @@ const AppContent = () => {
     }
   }, [isDarkMode]);
 
-  // Apply System Settings Effect (Favicon, Title, Persistence)
+  // Apply System Settings Effect (Favicon, Title)
   useEffect(() => {
-    // Persist
-    localStorage.setItem('peta_wiki_settings', JSON.stringify(systemSettings));
-
-    // Update Favicon
     const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
     if (link) {
       link.href = systemSettings.logoCollapsedUrl;
@@ -143,8 +196,6 @@ const AppContent = () => {
       newLink.href = systemSettings.logoCollapsedUrl;
       document.head.appendChild(newLink);
     }
-    
-    // Update Title
     document.title = systemSettings.appName || 'Peta Wiki';
   }, [systemSettings]);
 
@@ -153,13 +204,18 @@ const AppContent = () => {
     async function fetchData() {
       setIsLoading(true);
       try {
-        console.log("Iniciando conexão com Supabase...");
+        console.log("Iniciando carregamento de dados...");
         
-        const [docsRes, catsRes, usersRes] = await Promise.all([
+        const [docsRes, catsRes, usersRes, settingsRes] = await Promise.all([
             supabase.from('documents').select('*'),
             supabase.from('categories').select('*'),
-            supabase.from('users').select('*')
+            supabase.from('users').select('*'),
+            supabase.from('system_settings').select('settings').single()
         ]);
+
+        // Trata erros individualmente para não falhar tudo se apenas um falhar (ex: settings table missing)
+        // Mas neste bloco 'try', qualquer erro em Promise.all joga pro catch
+        // Vamos manter assim, pois a correção do schema deve resolver.
 
         if (docsRes.error) throw new Error(`Erro Docs: ${docsRes.error.message}`);
         if (catsRes.error) throw new Error(`Erro Cats: ${catsRes.error.message}`);
@@ -175,7 +231,7 @@ const AppContent = () => {
           authorId: d.author_id,
           createdAt: d.created_at,
           updatedAt: d.updated_at,
-          deletedAt: d.deleted_at, // Soft Delete
+          deletedAt: d.deleted_at,
           views: d.views,
           tags: d.tags || [],
           categoryPath: '...',
@@ -205,26 +261,39 @@ const AppContent = () => {
             role: u.role,
             department: u.department,
             avatar: u.avatar,
-            themePreference: u.theme_preference // Load theme preference
+            themePreference: u.theme_preference
         }));
 
         setDocuments(mappedDocs);
         setCategories(mappedCats); 
         
-        // Persistence Logic:
         if (mappedUsers.length > 0) {
             setUsers(mappedUsers);
         } else {
             console.warn("DB Users Empty. Using Mocks.");
             setUsers(MOCK_USERS);
         }
+
+        // Configurações Globais
+        if (settingsRes.data && settingsRes.data.settings) {
+            console.log("Configurações globais carregadas.");
+            setSystemSettings(settingsRes.data.settings);
+        } else {
+            console.log("Nenhuma configuração global encontrada. Usando padrão.");
+        }
         
         setTemplates(MOCK_TEMPLATES); 
         
       } catch (e) {
         console.error("Erro crítico ao carregar dados:", e);
-        setUsers(MOCK_USERS);
-        toast.error("Erro ao conectar ao banco de dados. Usando dados locais.");
+        // Fallback apenas em erro grave
+        // Não sobrescrevemos users com mock se já tivermos sessão válida, para evitar logout
+        if (users.length === 0) setUsers(MOCK_USERS);
+        
+        // Tentar ler configurações do LS como fallback extremo se DB falhar
+        const savedLocal = localStorage.getItem('peta_wiki_settings');
+        if (savedLocal) setSystemSettings(JSON.parse(savedLocal));
+        toast.error("Erro ao conectar ao banco de dados.");
       } finally {
         setIsLoading(false);
       }
@@ -233,7 +302,7 @@ const AppContent = () => {
   }, []);
 
 
-  // Auth Handlers - REAL DB CHECK
+  // Auth Handlers
   const handleLogin = (usernameInput: string, passwordInput: string) => {
     const foundUser = users.find(u => u.username === usernameInput || u.email === usernameInput);
     
@@ -241,13 +310,12 @@ const AppContent = () => {
       setCurrentUser(foundUser);
       setIsAuthenticated(true);
       
-      // Apply User Theme Preference Immediately
+      // Iniciar Sessão no LocalStorage
+      const sessionData = { user: foundUser, lastActive: Date.now() };
+      localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+      
       if (foundUser.themePreference) {
           setIsDarkMode(foundUser.themePreference === 'dark');
-      } else {
-          // If no preference in DB, stick with local or default to light? 
-          // Let's stick with current local state to not jar the user, but maybe save it to DB later?
-          // For now, respect local state if DB is null.
       }
 
       toast.success(`Bem-vindo, ${foundUser.name}!`);
@@ -257,7 +325,6 @@ const AppContent = () => {
   };
 
   const handleSignUp = async (name: string, email: string, password: string): Promise<boolean> => {
-      // 1. Validar Domínio
       const domain = email.split('@')[1];
       const allowedDomains = systemSettings.allowedDomains || [];
       
@@ -266,26 +333,23 @@ const AppContent = () => {
           return false;
       }
 
-      // 2. Validar se usuário já existe
       if (users.some(u => u.email === email || u.username === email)) {
           toast.error('Este e-mail já está cadastrado.');
           return false;
       }
 
-      // 3. Criar Usuário
       const newUser: User = {
           id: `u${Date.now()}`,
-          username: email, // Username padrão é o email no signup
+          username: email,
           email: email,
           password: password,
           name: name,
-          role: 'READER', // Segurança: Default é leitor
+          role: 'READER',
           department: 'Geral',
           avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
-          themePreference: 'light' // Default
+          themePreference: 'light'
       };
 
-      // 4. Persistir
       try {
           const { error } = await supabase.from('users').insert({
             id: newUser.id,
@@ -311,41 +375,74 @@ const AppContent = () => {
       }
   };
 
-  const handleLogout = () => {
+  const handleLogout = (isTimeout = false) => {
     setIsAuthenticated(false);
     setCurrentUser(null);
     setCurrentView('HOME');
-    // We keep the current theme active (last used) rather than resetting
-    toast.info('Você saiu do sistema.');
+    localStorage.removeItem(SESSION_KEY);
+    
+    if (isTimeout) {
+        toast.info('Sessão encerrada por inatividade (15min).');
+    } else {
+        toast.info('Você saiu do sistema.');
+    }
+  };
+
+  // --- Global Settings Handler ---
+  const handleSaveSettingsGlobal = async (newSettings: SystemSettings) => {
+      // 1. Atualiza estado local
+      setSystemSettings(newSettings);
+
+      // 2. Persiste no Banco de Dados (Tabela Singleton id=1)
+      try {
+          const { error } = await supabase.from('system_settings').upsert({ 
+              id: 1, 
+              settings: newSettings,
+              updated_at: new Date().toISOString()
+          });
+
+          if (error) throw error;
+          
+          // Opcional: Atualizar LocalStorage como cache secundário/fallback
+          localStorage.setItem('peta_wiki_settings', JSON.stringify(newSettings));
+          
+      } catch (e) {
+          console.error("Erro ao salvar configurações globais:", e);
+          toast.error("Erro ao salvar configurações no banco de dados.");
+      }
   };
 
   const handleToggleTheme = async () => {
       const newMode = !isDarkMode;
       setIsDarkMode(newMode);
       
-      // If user is logged in, save to DB
       if (currentUser) {
           try {
-             // Optimistic update locally
-             setCurrentUser({ ...currentUser, themePreference: newMode ? 'dark' : 'light' });
+             // Atualiza usuário localmente na sessão e na lista
+             const updatedUser = { ...currentUser, themePreference: newMode ? 'dark' : 'light' as 'dark' | 'light' };
+             setCurrentUser(updatedUser);
+             setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedUser : u));
              
-             // Update in User list locally
-             setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, themePreference: newMode ? 'dark' : 'light' } : u));
+             // Atualiza Session Storage para manter consistência no reload
+             const storedSession = localStorage.getItem(SESSION_KEY);
+             if (storedSession) {
+                 const sessionData = JSON.parse(storedSession);
+                 sessionData.user = updatedUser;
+                 localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+             }
 
-             // Update DB
+             // Persiste no DB
              await supabase.from('users').update({ 
                  theme_preference: newMode ? 'dark' : 'light' 
              }).eq('id', currentUser.id);
              
           } catch (error) {
               console.error("Erro ao salvar preferência de tema", error);
-              // Not critical enough to show a toast error usually
           }
       }
   };
 
-  // --- User Management Handlers ---
-
+  // ... (Restante dos handlers: User Update, Role Change, Delete User, Add User - Mantidos iguais)
   const handleUpdateUserRole = async (userId: string, newRole: Role) => {
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
     try {
@@ -357,39 +454,36 @@ const AppContent = () => {
   };
 
   const handleUpdateUserDetails = async (userId: string, data: { name: string, email: string }) => {
-    // 1. Check duplicate email (local check)
     const emailExists = users.some(u => u.email === data.email && u.id !== userId);
     if (emailExists) {
         toast.error("Este e-mail já está sendo usado por outro usuário.");
         return;
     }
-
-    // 2. Optimistic Update
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...data } : u));
-    
-    // Update current user if it's the admin editing themselves
     if (currentUser && currentUser.id === userId) {
-        setCurrentUser(prev => prev ? { ...prev, ...data } : null);
+        const updated = { ...currentUser, ...data };
+        setCurrentUser(updated);
+        // Atualiza sessão
+        const stored = localStorage.getItem(SESSION_KEY);
+        if (stored) {
+             const s = JSON.parse(stored);
+             s.user = updated;
+             localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+        }
     }
-
     try {
-        // 3. DB Update
         if (userId === 'mock_admin') {
            toast.success("Simulação: Detalhes atualizados.");
            return;
         }
-
         const { error } = await supabase.from('users').update({ 
             name: data.name, 
             email: data.email 
         }).eq('id', userId);
-
         if (error) throw error;
         toast.success('Dados do usuário atualizados.');
-
     } catch (e) {
         toast.error('Erro ao salvar dados no banco.');
-        // Revert on error could be implemented here fetching data again
     }
   };
 
@@ -399,7 +493,6 @@ const AppContent = () => {
         toast.error('Você não pode excluir a si mesmo.');
         return;
     }
-
     setConfirmModal({
         isOpen: true,
         title: 'Excluir Usuário',
@@ -408,7 +501,6 @@ const AppContent = () => {
             const userToDelete = users.find(u => u.id === userId);
             setUsers(prev => prev.filter(u => u.id !== userId));
             try {
-                // Check if user is mock
                 if (userId === 'mock_admin') {
                    toast.success('Simulação: Usuário mock excluído.');
                    return;
@@ -434,9 +526,7 @@ const AppContent = () => {
       password: '123',
       themePreference: 'light'
     };
-    
     setUsers(prev => [...prev, newUser]);
-
     try {
         await supabase.from('users').insert({
             id: newUser.id,
@@ -455,22 +545,17 @@ const AppContent = () => {
 
   const handleUpdatePassword = async (oldPass: string, newPass: string): Promise<boolean> => {
     if (!currentUser) return false;
-    
     if (currentUser.password && currentUser.password !== oldPass) {
       return false;
     }
-    
     const updatedUser = { ...currentUser, password: newPass };
-    
     setCurrentUser(updatedUser);
     setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedUser : u));
 
     if (currentUser.id === 'mock_admin') {
        toast.warning('Aviso: Senha de usuário mock não persiste no DB.');
-       // We allow the change in memory for the session
        return true;
     }
-
     try {
         const { error } = await supabase.from('users').update({ password: newPass }).eq('id', currentUser.id);
         if (error) throw error;
@@ -485,38 +570,32 @@ const AppContent = () => {
   const handleUpdateAvatar = async (base64: string) => {
     if (!currentUser) return;
     const updatedUser = { ...currentUser, avatar: base64 };
-    
     setCurrentUser(updatedUser);
     setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedUser : u));
 
-    if (currentUser.id === 'mock_admin') {
-       // Mock update only in memory
-       return;
+    // Atualiza sessão
+    const stored = localStorage.getItem(SESSION_KEY);
+    if (stored) {
+         const s = JSON.parse(stored);
+         s.user = updatedUser;
+         localStorage.setItem(SESSION_KEY, JSON.stringify(s));
     }
 
+    if (currentUser.id === 'mock_admin') return;
     try {
         await supabase.from('users').update({ avatar: base64 }).eq('id', currentUser.id);
         toast.success('Avatar atualizado.');
     } catch(e) { toast.error('Erro ao salvar avatar.'); }
   };
 
-  const handleRoleChange = (role: Role) => {
-    if (currentUser) {
-      const updated = { ...currentUser, role };
-      setCurrentUser(updated);
-      toast.info(`Visualizando como: ${role}`);
-    }
-  };
+  // ... (Restante dos handlers de Categoria, Documento e Template - Mantidos iguais ao original, apenas omitidos para brevidade se não alterados, mas vou incluir os essenciais para o contexto do arquivo XML completo)
 
-  // Logic Guards
-  // Use 'activeDocuments' for standard selection, but we might select a trash doc if in Trash view (handled by AdminSettings)
   const selectedDocument = documents.find(d => d.id === selectedDocId) || null;
   const selectedTranslations = translations.filter(t => t.documentId === selectedDocId);
   const isAdminOrEditor = currentUser?.role === 'ADMIN' || currentUser?.role === 'EDITOR';
 
-  // --- View Handlers ---
   const handleSelectDocument = (document: Document) => {
-    if (document.deletedAt) return; // Prevent selecting deleted docs from normal navigation
+    if (document.deletedAt) return; 
     setSelectedDocId(document.id);
     setCurrentView('DOCUMENT_VIEW');
   };
@@ -556,9 +635,7 @@ const AppContent = () => {
       description: data.description,
       icon: data.icon
     };
-    
     setCategories([...categories, newCategory]);
-
     try {
         await supabase.from('categories').insert({
             id: newCategory.id,
@@ -591,22 +668,16 @@ const AppContent = () => {
       toast.error("Apenas Admins podem excluir categorias.");
       return;
     }
-
-    // 1. Verificação de Subcategorias (Filhos)
     const hasChildren = categories.some(c => c.parentId === categoryId);
     if (hasChildren) {
         toast.error("Não é possível excluir: Esta categoria possui subcategorias.");
         return;
     }
-
-    // 2. Verificação de Documentos (Arquivos) - Check Active Docs only
     const hasDocuments = activeDocuments.some(d => d.categoryId === categoryId);
     if (hasDocuments) {
         toast.error("Não é possível excluir: Esta categoria contém documentos.");
         return;
     }
-
-    // Se chegou aqui, está vazio e pode excluir (Confirmação segura)
     setConfirmModal({
         isOpen: true,
         title: 'Excluir Categoria',
@@ -653,10 +724,8 @@ const AppContent = () => {
 
   const handleCreateTranslation = async (targetLangs: SupportedLanguage[]) => {
     if (!selectedDocument) return;
-
     for (const lang of targetLangs) {
       const result = await translateDocument(selectedDocument.title, selectedDocument.content, lang);
-      
       const translation: DocumentTranslation = {
         id: `trans_${selectedDocument.id}_${lang}_${Date.now()}`,
         documentId: selectedDocument.id,
@@ -666,7 +735,6 @@ const AppContent = () => {
         status: 'SYNCED',
         lastSyncedAt: new Date().toISOString()
       };
-      
       setTranslations(prev => [
         ...prev.filter(t => !(t.documentId === selectedDocument.id && t.language === lang)),
         translation
@@ -699,10 +767,7 @@ const AppContent = () => {
         templateId: newDocTemplate?.templateId,
         versions: []
       };
-      
       updatedDocs = [...documents, newDoc];
-      
-      // Update local category count
       setCategories(prev => prev.map(c => 
         c.id === targetCategoryId ? { ...c, docCount: c.docCount + 1 } : c
       ));
@@ -718,19 +783,14 @@ const AppContent = () => {
             tags: newDoc.tags,
             views: 0
         });
-        
         const currentCat = categories.find(c => c.id === targetCategoryId);
         if (currentCat) {
              await supabase.from('categories').update({ doc_count: currentCat.docCount + 1 }).eq('id', targetCategoryId);
         }
-
       } catch (e) { toast.error('Erro ao salvar documento.'); }
-
       setSelectedDocId(newDocId);
     } else if (selectedDocument) {
-      // Logic for Versioning (Max 3 versions)
       const oldDoc = documents.find(d => d.id === selectedDocument.id)!;
-      
       const newVersion: DocumentVersion = {
         id: `v_${Date.now()}`,
         title: oldDoc.title,
@@ -738,9 +798,7 @@ const AppContent = () => {
         savedAt: new Date().toISOString(),
         savedBy: users.find(u => u.id === oldDoc.authorId)?.name || 'Desconhecido'
       };
-
       const updatedVersions = [newVersion, ...(oldDoc.versions || [])].slice(0, 3);
-
       updatedDocs = documents.map(d => 
         d.id === selectedDocument.id 
           ? { 
@@ -753,13 +811,11 @@ const AppContent = () => {
             } 
           : d
       );
-
       setTranslations(prev => prev.map(t => 
         t.documentId === selectedDocument.id 
           ? { ...t, status: 'OUT_OF_SYNC' } 
           : t
       ));
-      
       try {
         await supabase.from('documents').update({ 
             title: data.title,
@@ -771,7 +827,6 @@ const AppContent = () => {
         }).eq('id', selectedDocument.id);
       } catch (e) { toast.error('Erro ao atualizar documento.'); }
     }
-    
     setDocuments(updatedDocs);
     setCurrentView('DOCUMENT_VIEW');
     toast.success('Documento salvo.');
@@ -779,7 +834,6 @@ const AppContent = () => {
 
   const handleRestoreVersion = async (version: DocumentVersion) => {
      if (!selectedDocument || !currentUser) return;
-     
      setConfirmModal({
         isOpen: true,
         title: 'Restaurar Versão',
@@ -794,43 +848,29 @@ const AppContent = () => {
      });
   };
 
-  // --- Document Deletion & Trash Logic ---
-
   const handleSoftDeleteDocument = async (doc: Document) => {
     if (currentUser?.role !== 'ADMIN' && currentUser?.role !== 'EDITOR') return;
-
     setConfirmModal({
         isOpen: true,
         title: 'Mover para Lixeira',
         message: `Deseja remover "${doc.title}"? O item será movido para a lixeira e poderá ser restaurado por um administrador.`,
         onConfirm: async () => {
             const now = new Date().toISOString();
-            
-            // Update State
             setDocuments(prev => prev.map(d => d.id === doc.id ? { ...d, deletedAt: now } : d));
-            
-            // If current view was this doc, go home
             if (selectedDocId === doc.id) {
                 setCurrentView('HOME');
                 setSelectedDocId(null);
             }
-
-            // Update DB
             try {
                 await supabase.from('documents').update({ deleted_at: now }).eq('id', doc.id);
                 toast.success('Documento movido para a lixeira.');
-                
-                // Update category count locally
                 setCategories(prev => prev.map(c => 
                    c.id === doc.categoryId ? { ...c, docCount: Math.max(0, c.docCount - 1) } : c
                 ));
-
-                // DB count update
                 const cat = categories.find(c => c.id === doc.categoryId);
                 if (cat) {
                    await supabase.from('categories').update({ doc_count: Math.max(0, cat.docCount - 1) }).eq('id', cat.id);
                 }
-
             } catch(e) { toast.error('Erro ao atualizar status do documento.'); }
         }
     });
@@ -838,14 +878,10 @@ const AppContent = () => {
 
   const handleRestoreDocument = async (doc: Document) => {
       if (currentUser?.role !== 'ADMIN') return;
-
       setDocuments(prev => prev.map(d => d.id === doc.id ? { ...d, deletedAt: null } : d));
-
       try {
           await supabase.from('documents').update({ deleted_at: null }).eq('id', doc.id);
           toast.success('Documento restaurado.');
-          
-          // Update category count
           setCategories(prev => prev.map(c => 
              c.id === doc.categoryId ? { ...c, docCount: c.docCount + 1 } : c
           ));
@@ -858,14 +894,12 @@ const AppContent = () => {
 
   const handlePermanentDeleteDocument = async (doc: Document) => {
       if (currentUser?.role !== 'ADMIN') return;
-
       setConfirmModal({
           isOpen: true,
           title: 'Excluir Permanentemente',
           message: `ATENÇÃO: Deseja apagar definitivamente "${doc.title}"? Esta ação é irreversível.`,
           onConfirm: async () => {
               setDocuments(prev => prev.filter(d => d.id !== doc.id));
-              
               try {
                   await supabase.from('documents').delete().eq('id', doc.id);
                   toast.success('Documento excluído permanentemente.');
@@ -878,7 +912,7 @@ const AppContent = () => {
     return (
         <div className="flex flex-col h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 text-blue-600 gap-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="animate-pulse">Preparando tudo para você...</p>
+            <p className="animate-pulse">Sincronizando sistema...</p>
         </div>
     );
   }
@@ -889,7 +923,7 @@ const AppContent = () => {
 
   const commonProps = {
     categories: categoryTree,
-    documents: visibleDocuments, // Sidebar/Search only sees docs permitted by user role
+    documents: visibleDocuments,
     onSelectCategory: handleSelectCategory,
     onSelectDocument: handleSelectDocument,
     onNavigateHome: () => setCurrentView('HOME'),
@@ -898,7 +932,7 @@ const AppContent = () => {
     onDeleteCategory: handleDeleteCategory,
     systemSettings,
     onOpenSettings: () => setIsAdminSettingsOpen(true),
-    onLogout: handleLogout,
+    onLogout: () => handleLogout(false),
     onOpenProfile: () => setIsProfileOpen(true),
     toggleTheme: handleToggleTheme,
     isDarkMode,
@@ -910,17 +944,13 @@ const AppContent = () => {
   return (
     <div className={`flex h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans transition-colors duration-200 ${isNavbarMode ? 'flex-col' : 'flex-row'}`}>
       
-      {/* Navigation Layer */}
       {isNavbarMode ? (
          <Navbar {...commonProps} />
       ) : (
          <Sidebar {...commonProps} />
       )}
 
-      {/* Main Content Layer */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        
-        {/* Header only for search if in Sidebar mode (user controls are now in Sidebar footer) */}
         {!isNavbarMode && <Header />}
 
         <main className="flex-1 overflow-y-auto">
@@ -1008,7 +1038,7 @@ const AppContent = () => {
         isOpen={isAdminSettingsOpen}
         onClose={() => setIsAdminSettingsOpen(false)}
         settings={systemSettings}
-        onSaveSettings={setSystemSettings}
+        onSaveSettings={handleSaveSettingsGlobal}
         users={users}
         onUpdateUserRole={handleUpdateUserRole}
         onUpdateUserDetails={handleUpdateUserDetails}

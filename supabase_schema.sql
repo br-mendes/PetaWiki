@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS public.users (
   role text CHECK (role IN ('ADMIN', 'EDITOR', 'READER')),
   avatar text,
   department text,
+  theme_preference text DEFAULT 'light',
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -48,11 +49,29 @@ CREATE TABLE IF NOT EXISTS public.document_reactions (
   user_id text REFERENCES public.users(id) ON DELETE CASCADE,
   reaction_type text NOT NULL CHECK (reaction_type IN ('THUMBS_UP', 'THUMBS_DOWN', 'HEART')),
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
-  -- Garante que um usuário só pode ter um tipo de reação por vez (se quiser permitir heart + like, remova a unique constraint total e trate via app, mas a constraint abaixo evita duplicatas do MESMO tipo)
   UNIQUE(document_id, user_id, reaction_type)
 );
 
--- 5. Seed Inicial (Admin Persistente)
+-- 5. Tabela de Logs de Email (Webhooks)
+CREATE TABLE IF NOT EXISTS public.email_logs (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  event_type text NOT NULL, 
+  email_id text,
+  recipient text,
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+  payload jsonb
+);
+
+-- 6. Tabela de Configurações Globais (NOVO)
+-- Armazena um único registro com ID 1 contendo o JSON de configurações
+CREATE TABLE IF NOT EXISTS public.system_settings (
+  id integer PRIMARY KEY DEFAULT 1,
+  settings jsonb NOT NULL,
+  updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+  CONSTRAINT single_row CHECK (id = 1)
+);
+
+-- 7. Seed Inicial (Admin Persistente)
 INSERT INTO public.users (id, username, email, password, name, role, department, avatar)
 VALUES (
   'u_admin_seed', 

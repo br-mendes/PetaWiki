@@ -25,6 +25,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false); // Visibilidade senha cadastro
   
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -75,6 +76,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
          setNewEmail('');
          setNewPassword('');
          setConfirmPassword('');
+         setShowSignUpPassword(false);
       }
     } else {
       // Login
@@ -183,14 +185,22 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Senha</label>
                     <div className="relative">
                       <input 
-                        type="password" 
+                        type={showSignUpPassword ? "text" : "password"}
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         placeholder="••••••••"
                         required
                       />
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                      <button
+                        type="button"
+                        onClick={() => setShowSignUpPassword(!showSignUpPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        title={showSignUpPassword ? "Ocultar senha" : "Mostrar senha"}
+                      >
+                         {showSignUpPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
                     </div>
                     {/* Password Strength Meter */}
                     {newPassword && (
@@ -211,10 +221,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirmar Senha</label>
                     <div className="relative">
                       <input 
-                        type="password" 
+                        type={showSignUpPassword ? "text" : "password"}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         placeholder="••••••••"
                         required
                       />
