@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { BookOpen, Shield, Users, Search, Lock, Mail, ArrowLeft, Send, Check, AlertCircle, User as UserIcon } from 'lucide-react';
+import { BookOpen, Shield, Users, Search, Lock, Mail, ArrowLeft, Send, Check, AlertCircle, User as UserIcon, Eye, EyeOff } from 'lucide-react';
 import { Button } from './Button';
 import { SystemSettings } from '../types';
 import { sendPasswordResetEmail } from '../lib/email';
@@ -18,6 +18,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
   // Login State
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false); // New state for password visibility
   
   // Sign Up State
   const [newName, setNewName] = useState('');
@@ -236,6 +237,30 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
                   <div>
                     <div className="flex justify-between mb-1">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Senha</label>
+                    </div>
+                    <div className="relative">
+                      <input 
+                        type={showPassword ? "text" : "password"} 
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        placeholder="••••••••"
+                      />
+                      {/* Left Icon (Lock) */}
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+                      
+                      {/* Right Icon (Toggle Show) */}
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        title={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                      >
+                         {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                    
+                    <div className="text-right mt-1.5">
                         <button 
                             type="button" 
                             onClick={() => setShowForgotModal(true)}
@@ -243,16 +268,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
                         >
                             Esqueceu a senha?
                         </button>
-                    </div>
-                    <div className="relative">
-                      <input 
-                        type="password" 
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        placeholder="••••••••"
-                      />
-                      <Lock className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     </div>
                   </div>
                 </>
