@@ -511,6 +511,18 @@ const AppContent = () => {
     try {
         await supabase.from('users').update({ role: newRole }).eq('id', userId);
         toast.success('Permissão atualizada.');
+        // Update local current user if needed AND update session storage
+        if (currentUser && currentUser.id === userId) {
+            const updatedUser = { ...currentUser, role: newRole };
+            setCurrentUser(updatedUser);
+            
+            const stored = localStorage.getItem(SESSION_KEY);
+            if (stored) {
+                 const s = JSON.parse(stored);
+                 s.user = updatedUser;
+                 localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+            }
+        }
     } catch (e) { 
         toast.error('Erro ao atualizar permissão.');
     }
@@ -1136,6 +1148,7 @@ const AppContent = () => {
           user={currentUser}
           onUpdatePassword={handleUpdatePassword}
           onUpdateAvatar={handleUpdateAvatar}
+          onUpdateRole={(role) => handleUpdateUserRole(currentUser.id, role)} 
         />
       )}
 
