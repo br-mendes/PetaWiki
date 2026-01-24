@@ -32,9 +32,16 @@ export const compressImage = async (file: File, maxWidth = 1200, quality = 0.7):
 
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Converter para JPEG comprimido (Base64)
-        // JPEG é geralmente melhor para fotos/conteúdo misto em termos de tamanho
-        const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+        // Verifica se o arquivo original suporta transparência
+        const isTransparentType = file.type === 'image/png' || file.type === 'image/webp' || file.type === 'image/gif';
+        
+        // Se suportar transparência, usamos PNG para garantir a preservação do fundo transparente.
+        // Nota: image/png ignora o parâmetro de qualidade no toDataURL, a compressão vem do redimensionamento.
+        // Se o original for JPG, usamos image/jpeg com compressão de qualidade.
+        const outputType = isTransparentType ? 'image/png' : 'image/jpeg';
+        
+        // Converter para Base64
+        const compressedBase64 = canvas.toDataURL(outputType, quality);
         resolve(compressedBase64);
       };
       img.onerror = (err) => reject(err);

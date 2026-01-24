@@ -1,21 +1,19 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Edit2, Clock, Eye, Download, ThumbsUp, ThumbsDown, Heart, FileText, FileType, Globe, AlertTriangle, History, RotateCcw, Trash2 } from 'lucide-react';
-import { Document, User, DocumentTranslation, SupportedLanguage, SystemSettings, DocumentVersion } from '../types';
+import { Edit2, Eye, Download, ThumbsUp, ThumbsDown, Heart, FileText, FileType, History, RotateCcw, Trash2 } from 'lucide-react';
+import { Document, User, SystemSettings, DocumentVersion } from '../types';
 import { Button } from './Button';
 import { StatusBadge } from './Badge';
 import { canExportDocument, generateMarkdown, generatePDF } from '../lib/export';
-import { LANGUAGES } from '../lib/translate';
 import { Modal } from './Modal';
 import { useToast } from './Toast';
 import { supabase } from '../lib/supabase';
 
 interface DocumentViewProps {
   document: Document;
-  translations?: DocumentTranslation[];
   user: User;
   onEdit: () => void;
-  onDelete?: () => void; // New Prop
+  onDelete?: () => void;
   systemSettings: SystemSettings;
   onRestoreVersion?: (version: DocumentVersion) => void;
 }
@@ -24,7 +22,6 @@ type ReactionType = 'THUMBS_UP' | 'THUMBS_DOWN' | 'HEART';
 
 export const DocumentView: React.FC<DocumentViewProps> = ({ 
   document, 
-  translations = [],
   user, 
   onEdit,
   onDelete,
@@ -34,11 +31,9 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
   const toast = useToast();
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [selectedLang, setSelectedLang] = useState<string>('original');
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   
   // Real-time View Count State
-  // Inicializa com o valor da prop, mas será sobrescrito pelo retorno do banco
   const [liveViews, setLiveViews] = useState(document.views);
   const viewRegistered = useRef(false);
 
@@ -54,30 +49,18 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
   const canDelete = user.role === 'ADMIN' || (user.role === 'EDITOR' && document.authorId === user.id);
   const canExport = canExportDocument(user, document);
 
-  const currentTranslation = selectedLang !== 'original' 
-    ? translations.find(t => t.language === selectedLang) 
-    : null;
-
-  const displayTitle = currentTranslation ? currentTranslation.translatedTitle : document.title;
-  const displayContent = currentTranslation ? currentTranslation.translatedContent : document.content;
-  const isOutOfSync = currentTranslation?.status === 'OUT_OF_SYNC';
-
   // --- View Tracking Logic ---
   useEffect(() => {
-    // Ao mudar o documento, reseta flags
     viewRegistered.current = false;
-    // Setamos inicialmente para o que veio via props (cache local) para evitar layout shift
     setLiveViews(document.views);
   }, [document.id]);
 
   useEffect(() => {
     const registerView = async () => {
-      // Evita contagem dupla em StrictMode
       if (viewRegistered.current) return;
       viewRegistered.current = true;
 
       try {
-        // Chamada RPC agora retorna o inteiro atualizado do banco
         const { data: newCount, error } = await supabase.rpc('register_view', {
           p_doc_id: document.id,
           p_user_id: user.id
@@ -86,7 +69,6 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
         if (error) {
             console.error("Failed to register view:", error);
         } else if (typeof newCount === 'number') {
-            // Atualiza com o valor real vindo do banco (Single Source of Truth)
             setLiveViews(newCount);
         }
       } catch (err) {
@@ -98,14 +80,12 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
   }, [document.id, user.id]);
 
   // --- Feedback Logic ---
-
   useEffect(() => {
     fetchReactions();
   }, [document.id, user.id]);
 
   const fetchReactions = async () => {
     try {
-        // 1. Fetch user's current reactions
         const { data: userData } = await supabase
             .from('document_reactions')
             .select('reaction_type')
@@ -116,7 +96,6 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
             setUserReactions(userData.map((r: any) => r.reaction_type));
         }
 
-        // 2. Fetch total counts
         const { data: allReactions } = await supabase
             .from('document_reactions')
             .select('reaction_type')
@@ -136,31 +115,21 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
   };
 
   const handleToggleReaction = async (type: ReactionType) => {
-    // Optimistic Update Setup
     const oldReactions = [...userReactions];
     let newReactions = [...userReactions];
     let newCounts = { ...reactionCounts };
 
-    // Logic: 
-    // - Heart is independent.
-    // - Up/Down are mutually exclusive.
-
     const isActive = newReactions.includes(type);
 
     if (isActive) {
-        // Remove reaction
         newReactions = newReactions.filter(r => r !== type);
         newCounts[type] = Math.max(0, newCounts[type] - 1);
         
-        // DB Call: Delete
         await supabase.from('document_reactions').delete()
             .eq('document_id', document.id)
             .eq('user_id', user.id)
             .eq('reaction_type', type);
     } else {
-        // Add reaction
-        
-        // If adding UP or DOWN, remove the opposite if it exists
         if (type === 'THUMBS_UP' && newReactions.includes('THUMBS_DOWN')) {
             newReactions = newReactions.filter(r => r !== 'THUMBS_DOWN');
             newCounts['THUMBS_DOWN'] = Math.max(0, newCounts['THUMBS_DOWN'] - 1);
@@ -177,7 +146,6 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
         newReactions.push(type);
         newCounts[type]++;
         
-        // DB Call: Insert
         await supabase.from('document_reactions').insert({
             document_id: document.id,
             user_id: user.id,
@@ -185,11 +153,9 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
         });
     }
 
-    // Apply Optimistic State
     setUserReactions(newReactions);
     setReactionCounts(newCounts);
   };
-
 
   const handleExport = async (format: 'PDF' | 'MARKDOWN') => {
     setIsExporting(true);
@@ -197,10 +163,11 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
 
     await new Promise(resolve => setTimeout(resolve, 800));
 
+    // Export always uses original content now
     const exportDoc = {
       ...document,
-      title: displayTitle,
-      content: displayContent
+      title: document.title,
+      content: document.content
     };
 
     if (format === 'PDF') {
@@ -225,7 +192,7 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
         <div className="flex-1 pr-6">
           <div className="flex items-center flex-wrap gap-3 mb-2">
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white leading-tight">
-              {displayTitle}
+              {document.title}
             </h1>
             <div className="mt-1">
               <StatusBadge status={document.status} />
@@ -239,26 +206,6 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
             <span className="flex items-center gap-1">
                <Eye size={14} className="mr-1" /> {liveViews} visualizações
             </span>
-            
-            <div className="relative inline-flex items-center">
-              <Globe size={14} className="mr-1.5 text-gray-400" />
-              <select 
-                value={selectedLang}
-                onChange={(e) => setSelectedLang(e.target.value)}
-                className="bg-transparent border-none p-0 pr-4 text-sm font-medium text-gray-700 dark:text-gray-300 focus:ring-0 cursor-pointer appearance-none hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                style={{ backgroundImage: 'none' }}
-              >
-                <option value="original">Original (PT-BR)</option>
-                {translations.map(t => {
-                   const langInfo = LANGUAGES.find(l => l.code === t.language);
-                   return (
-                     <option key={t.id} value={t.language}>
-                       {langInfo?.name} {t.status === 'OUT_OF_SYNC' ? '(Antigo)' : ''}
-                     </option>
-                   );
-                })}
-              </select>
-            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -330,23 +277,10 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
         </div>
       </div>
 
-      {isOutOfSync && (
-        <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700/50 rounded-lg flex items-start gap-3">
-          <AlertTriangle className="text-yellow-600 dark:text-yellow-500 shrink-0 mt-0.5" size={18} />
-          <div>
-            <h4 className="text-sm font-bold text-yellow-800 dark:text-yellow-400">Tradução Desatualizada</h4>
-            <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-              O documento original foi atualizado desde que esta tradução foi gerada. 
-              {canEdit ? ' Por favor, solicite uma nova tradução.' : ' Algumas informações podem estar desatualizadas.'}
-            </p>
-          </div>
-        </div>
-      )}
-
       <div className="w-full">
         <div 
           className="prose prose-blue dark:prose-invert max-w-none text-gray-800 dark:text-gray-300 leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: displayContent }}
+          dangerouslySetInnerHTML={{ __html: document.content }}
         />
         
         <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">

@@ -11,7 +11,7 @@ import { TemplateSelector } from './components/TemplateSelector';
 import { LoginPage } from './components/LoginPage';
 import { AdminSettings } from './components/AdminSettings';
 import { UserProfile } from './components/UserProfile';
-import { Role, Document, Category, User, DocumentTemplate, DocumentTranslation, SupportedLanguage, SystemSettings, DocumentVersion } from './types';
+import { Role, Document, Category, User, DocumentTemplate, SystemSettings, DocumentVersion } from './types';
 import { MOCK_TEMPLATES, DEFAULT_SYSTEM_SETTINGS, MOCK_USERS } from './constants';
 import { supabase } from './lib/supabase';
 import { 
@@ -28,7 +28,6 @@ type ViewState = 'HOME' | 'DOCUMENT_VIEW' | 'DOCUMENT_EDIT' | 'DOCUMENT_CREATE' 
 const SESSION_KEY = 'peta_wiki_session';
 const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutos em milissegundos
 
-// Componente interno para usar o hook useToast (que precisa estar dentro do Provider)
 const AppContent = () => {
   const toast = useToast();
 
@@ -59,7 +58,6 @@ const AppContent = () => {
   
   // Data State
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [translations, setTranslations] = useState<DocumentTranslation[]>([]); 
   const [categories, setCategories] = useState<Category[]>([]); // Flat list
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -82,8 +80,6 @@ const AppContent = () => {
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   // --- SESSÃO E INATIVIDADE ---
-  
-  // 1. Restaurar Sessão ao Iniciar
   useEffect(() => {
     const restoreSession = () => {
         const savedSession = localStorage.getItem(SESSION_KEY);
@@ -97,7 +93,6 @@ const AppContent = () => {
                     setCurrentUser(user);
                     setIsAuthenticated(true);
                     
-                    // Atualiza o timestamp para o momento atual (refresh token logic equivalent)
                     const refreshedSession = { user, lastActive: now };
                     localStorage.setItem(SESSION_KEY, JSON.stringify(refreshedSession));
                     
@@ -118,13 +113,11 @@ const AppContent = () => {
     restoreSession();
   }, []);
 
-  // 2. Monitorar Atividade e Logout Automático
   useEffect(() => {
     if (!isAuthenticated) return;
 
     let inactivityTimer: ReturnType<typeof setTimeout>;
     
-    // Função para atualizar o timestamp de atividade
     const updateActivity = () => {
         const stored = localStorage.getItem(SESSION_KEY);
         if (stored) {
@@ -134,24 +127,21 @@ const AppContent = () => {
         }
     };
 
-    // Função para checar periodicamente se expirou
     const checkInactivity = () => {
         const stored = localStorage.getItem(SESSION_KEY);
         if (stored) {
             const { lastActive } = JSON.parse(stored);
             if (Date.now() - lastActive > INACTIVITY_LIMIT) {
-                handleLogout(true); // True indica que foi por inatividade
+                handleLogout(true);
             }
         }
     };
 
-    // Listeners de eventos de atividade
     window.addEventListener('mousemove', updateActivity);
     window.addEventListener('keydown', updateActivity);
     window.addEventListener('click', updateActivity);
     window.addEventListener('scroll', updateActivity);
 
-    // Intervalo de verificação (a cada 1 minuto)
     const intervalId = setInterval(checkInactivity, 60 * 1000);
 
     return () => {
@@ -163,10 +153,7 @@ const AppContent = () => {
     };
   }, [isAuthenticated]);
 
-  // Computed Properties
   const categoryTree = useMemo(() => buildCategoryTree(categories), [categories]);
-  
-  // Separate pure active/trash from local state for admin management
   const activeDocuments = useMemo(() => documents.filter(d => !d.deletedAt), [documents]);
   const trashDocuments = useMemo(() => documents.filter(d => d.deletedAt), [documents]);
 
@@ -174,23 +161,21 @@ const AppContent = () => {
   useEffect(() => {
     const performSearch = async () => {
         if (!searchQuery.trim()) {
-            setSearchResultDocs(null); // Clear search results, revert to default view
+            setSearchResultDocs(null);
             return;
         }
 
         setIsSearching(true);
         try {
-            // 1. Tentar busca no Backend via RPC
             const { data, error } = await supabase.rpc('search_documents', {
                 query_text: searchQuery
             });
 
             if (error) {
-                console.warn("RPC 'search_documents' falhou (pode não existir ainda). Usando fallback local.", error.message);
-                throw error; // Força cair no catch para fallback local
+                console.warn("RPC 'search_documents' falhou. Usando fallback local.", error.message);
+                throw error;
             }
 
-            // Map Backend Results (snake_case) to Frontend Model (camelCase)
             const mappedResults: Document[] = (data || []).map((d: any) => ({
                 id: d.id,
                 title: d.title,
@@ -203,15 +188,13 @@ const AppContent = () => {
                 deletedAt: d.deleted_at,
                 views: d.views,
                 tags: d.tags || [],
-                categoryPath: getCategoryPath(d.category_id, categories), // Recalculate path
+                categoryPath: getCategoryPath(d.category_id, categories),
                 versions: [] 
             }));
 
             setSearchResultDocs(mappedResults);
 
-            // 2. ANALYTICS: Track successful search
             if (currentUser && mappedResults.length > 0) {
-               // Fire and forget - don't await blocking UI
                supabase.rpc('log_search_event', {
                   p_query: searchQuery,
                   p_user_id: currentUser.id
@@ -219,8 +202,6 @@ const AppContent = () => {
             }
 
         } catch (error) {
-            // 3. Fallback: Busca Client-Side (usando dados já carregados em memória)
-            // Isso garante que a busca funcione mesmo se a função SQL não tiver sido criada.
             const queryLower = searchQuery.toLowerCase();
             const localResults = documents.filter(d => {
                 if (d.deletedAt) return false;
@@ -236,7 +217,6 @@ const AppContent = () => {
         }
     };
 
-    // Debounce search by 800ms to allow typing and prevent spamming RPC
     const debounceTimer = setTimeout(performSearch, 800);
     return () => clearTimeout(debounceTimer);
 
@@ -246,16 +226,13 @@ const AppContent = () => {
   const visibleDocuments = useMemo(() => {
     if (!currentUser) return [];
     
-    // 1. Determine Source: Search Results OR Default Active Documents
     const isSearchingActive = searchQuery.trim().length > 0;
     
     const sourceDocs = (isSearchingActive && searchResultDocs !== null) 
         ? searchResultDocs 
         : activeDocuments;
 
-    // 2. Filter by Role
     const roleFiltered = sourceDocs.filter(doc => {
-      // Must not be in trash (unless we want to search trash, but usually not in main view)
       if (doc.deletedAt) return false;
 
       if (currentUser.role === 'ADMIN') return true;
@@ -267,7 +244,6 @@ const AppContent = () => {
     return roleFiltered;
   }, [activeDocuments, searchResultDocs, currentUser, searchQuery]);
 
-  // Apply Theme Effect
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -278,7 +254,6 @@ const AppContent = () => {
     }
   }, [isDarkMode]);
 
-  // Apply System Settings Effect (Favicon, Title)
   useEffect(() => {
     const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
     if (link) {
@@ -310,7 +285,6 @@ const AppContent = () => {
         if (catsRes.error) throw new Error(`Erro Cats: ${catsRes.error.message}`);
         if (usersRes.error) throw new Error(`Erro Users: ${usersRes.error.message}`);
 
-        // Mapper Categories (Needed first for getCategoryPath)
         const mappedCats = (catsRes.data || []).map((c: any) => ({
             id: c.id,
             name: c.name,
@@ -323,7 +297,6 @@ const AppContent = () => {
             icon: c.icon
         }));
 
-        // Mapper Documents
         const mappedDocs = (docsRes.data || []).map((d: any) => ({
           id: d.id,
           title: d.title,
@@ -340,7 +313,6 @@ const AppContent = () => {
           versions: [] 
         }));
 
-        // Mapper Users
         const mappedUsers = (usersRes.data || []).map((u: any) => ({
             id: u.id,
             username: u.username,
@@ -363,12 +335,8 @@ const AppContent = () => {
             setUsers(MOCK_USERS);
         }
 
-        // Configurações Globais
         if (settingsRes.data && settingsRes.data.settings) {
-            console.log("Configurações globais carregadas.");
             setSystemSettings(settingsRes.data.settings);
-        } else {
-            console.log("Nenhuma configuração global encontrada. Usando padrão.");
         }
         
         setTemplates(MOCK_TEMPLATES); 
@@ -386,9 +354,6 @@ const AppContent = () => {
     fetchData();
   }, []);
 
-
-  // ... (Auth Handlers and other functions remain unchanged) ...
-  // Auth Handlers
   const handleLogin = (usernameInput: string, passwordInput: string) => {
     const foundUser = users.find(u => u.username === usernameInput || u.email === usernameInput);
     
@@ -515,7 +480,6 @@ const AppContent = () => {
     try {
         await supabase.from('users').update({ role: newRole }).eq('id', userId);
         toast.success('Permissão atualizada.');
-        // Update local current user if needed AND update session storage
         if (currentUser && currentUser.id === userId) {
             const updatedUser = { ...currentUser, role: newRole };
             setCurrentUser(updatedUser);
@@ -533,7 +497,6 @@ const AppContent = () => {
   };
 
   const handleUpdateUserDetails = async (userId: string, data: Partial<User>) => {
-    // Check email uniqueness if email is changing
     if (data.email) {
         const emailExists = users.some(u => u.email === data.email && u.id !== userId);
         if (emailExists) {
@@ -544,11 +507,9 @@ const AppContent = () => {
 
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...data } : u));
     
-    // Update current user if it's them
     if (currentUser && currentUser.id === userId) {
         const updated = { ...currentUser, ...data };
         setCurrentUser(updated);
-        // Update storage
         const stored = localStorage.getItem(SESSION_KEY);
         if (stored) {
              const s = JSON.parse(stored);
@@ -563,7 +524,6 @@ const AppContent = () => {
            return;
         }
         
-        // Construct DB update object (snake_case)
         const dbData: any = {};
         if (data.name) dbData.name = data.name;
         if (data.email) dbData.email = data.email;
@@ -680,7 +640,6 @@ const AppContent = () => {
   };
 
   const selectedDocument = documents.find(d => d.id === selectedDocId) || null;
-  const selectedTranslations = translations.filter(t => t.documentId === selectedDocId);
   const isAdminOrEditor = currentUser?.role === 'ADMIN' || currentUser?.role === 'EDITOR';
 
   const handleSelectDocument = (document: Document) => {
@@ -879,11 +838,6 @@ const AppContent = () => {
             } 
           : d
       );
-      setTranslations(prev => prev.map(t => 
-        t.documentId === selectedDocument.id 
-          ? { ...t, status: 'OUT_OF_SYNC' } 
-          : t
-      ));
       try {
         await supabase.from('documents').update({ 
             title: data.title,
@@ -1031,8 +985,6 @@ const AppContent = () => {
         )}
 
         <main className="flex-1 overflow-y-auto">
-          {/* A mensagem de busca agora é tratada pela Sidebar, então removemos daqui para não duplicar */}
-          {/* Mas se quiser manter uma mensagem de "loading" global, pode deixar */}
           {isSearching && isLoading && (
              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-center text-sm text-blue-600 dark:text-blue-300">
                 <span className="animate-pulse">Buscando documentos...</span>
@@ -1078,7 +1030,6 @@ const AppContent = () => {
           {currentView === 'DOCUMENT_VIEW' && selectedDocument && (
             <DocumentView 
               document={selectedDocument} 
-              translations={selectedTranslations}
               user={currentUser}
               onEdit={() => setCurrentView('DOCUMENT_EDIT')}
               onDelete={() => handleSoftDeleteDocument(selectedDocument)}
@@ -1096,7 +1047,7 @@ const AppContent = () => {
                 selectedDocument ? setCurrentView('DOCUMENT_VIEW') : setCurrentView('HOME');
               }}
               categories={categoryTree}
-              allCategories={categories} // Added: Passing flat list for improved lookup in Editor
+              allCategories={categories} 
               initialCategoryId={selectedDocument?.categoryId}
               initialContent={currentView === 'DOCUMENT_CREATE' ? newDocTemplate?.content : undefined}
               initialTags={currentView === 'DOCUMENT_CREATE' ? newDocTemplate?.tags : undefined}
@@ -1149,7 +1100,6 @@ const AppContent = () => {
         />
       )}
 
-      {/* Confirmação Modal Genérica */}
       <Modal 
         isOpen={confirmModal.isOpen} 
         onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })} 

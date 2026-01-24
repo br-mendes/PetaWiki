@@ -9,7 +9,6 @@ import { supabase } from '../lib/supabase';
 import { useToast } from './Toast';
 import { DEFAULT_SYSTEM_SETTINGS } from '../constants';
 
-// Mapa de ícones disponíveis para renderização dinâmica
 const ICON_MAP: Record<string, React.ElementType> = {
   'shield': Shield,
   'users': Users,
@@ -32,12 +31,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
   const toast = useToast();
   const [isSignUpMode, setIsSignUpMode] = useState(false);
   
-  // Login State
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false); 
   
-  // Sign Up State
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -47,21 +44,18 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  // Forgot Password State
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [isSendingReset, setIsSendingReset] = useState(false);
   const [resetMessage, setResetMessage] = useState<{type: 'success'|'error', text: string} | null>(null);
 
-  // Reset/Setup Password Callback State
   const [isResetCallbackOpen, setIsResetCallbackOpen] = useState(false);
   const [callbackParams, setCallbackParams] = useState<{action: string, email: string, token: string} | null>(null);
   const [newCallbackPassword, setNewCallbackPassword] = useState('');
   const [confirmCallbackPassword, setConfirmCallbackPassword] = useState('');
-  const [showResetPassword, setShowResetPassword] = useState(false); // Visibilidade senha reset
+  const [showResetPassword, setShowResetPassword] = useState(false); 
   const [isSavingPassword, setIsSavingPassword] = useState(false);
 
-  // Check URL for callback actions (reset-password, setup-password)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const action = params.get('action');
@@ -71,7 +65,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
     if (email && (action === 'reset-password' || action === 'setup-password')) {
         setCallbackParams({ action, email, token: token || '' });
         setIsResetCallbackOpen(true);
-        // Clear sensitive params from URL visually without reload
         window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
@@ -83,7 +76,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
     if (/[A-Z]/.test(pass)) score++;
     if (/[0-9]/.test(pass)) score++;
     if (/[^A-Za-z0-9]/.test(pass)) score++;
-    return score; // 0 to 5
+    return score; 
   };
 
   const passwordStrength = calculatePasswordStrength(newPassword);
@@ -103,7 +96,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
           return;
       }
       
-      // Mesma validação do cadastro
       if (resetPasswordStrength < 3) {
           toast.error('A senha é muito fraca. Use letras maiúsculas, números e símbolos.');
           return;
@@ -111,9 +103,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
 
       setIsSavingPassword(true);
       try {
-          console.log(`Solicitando atualização de senha para: ${callbackParams.email}`);
-          
-          // Chama a API segura para atualizar a senha
           const response = await fetch('/api/reset-password', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -135,7 +124,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
           setNewCallbackPassword('');
           setConfirmCallbackPassword('');
           
-          // Pre-fill login
           setUsername(callbackParams.email);
           
       } catch (err: any) {
@@ -158,7 +146,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
         return;
       }
 
-      // Validate Sign Up
       if (newPassword !== confirmPassword) {
         setError('As senhas não coincidem.');
         setIsLoading(false);
@@ -173,9 +160,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
 
       const success = await onSignUp(newName, newEmail, newPassword);
       if (success) {
-         // Auto login logic handled by parent or ask user to login
          setIsSignUpMode(false);
-         // Reset form
          setNewName('');
          setNewEmail('');
          setNewPassword('');
@@ -183,8 +168,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
          setShowSignUpPassword(false);
       }
     } else {
-      // Login
       if (username && password) {
+         // Validação básica para email, caso o usuário não use username
          if (!isValidEmail(username)) {
             setError('Por favor, insira um e-mail válido.');
             setIsLoading(false);
@@ -226,30 +211,23 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
     }
   };
 
-  // Helper to render icon
   const renderIcon = (iconName: string, size: number = 16, className?: string) => {
     const Icon = ICON_MAP[iconName.toLowerCase()] || Star;
     return <Icon size={size} className={className} />;
   };
 
-  // Prefer Collapsed logo for Login page splash as requested
   const displayLogo = settings.logoCollapsedUrl || settings.logoExpandedUrl;
-
-  // Use customized texts specific for LANDING PAGE, falling back to defaults
   const displayTitle = settings.landingTitle || settings.appName || 'Peta Wiki';
   const displayDescription = settings.landingDescription || 'O hub central para o conhecimento corporativo. Organize, compartilhe e colabore na documentação com segurança baseada em funções.';
 
-  // Footer Config
   const footerColumns = settings.footerColumns || DEFAULT_SYSTEM_SETTINGS.footerColumns || [];
   const footerText = settings.footerBottomText || DEFAULT_SYSTEM_SETTINGS.footerBottomText || 'Feito com 💙 na Peta.';
 
-  // Feature Config
   const heroTags = settings.heroTags || DEFAULT_SYSTEM_SETTINGS.heroTags || [];
   const landingFeatures = settings.landingFeatures || DEFAULT_SYSTEM_SETTINGS.landingFeatures || [];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors">
-      {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-700 to-blue-900 text-white py-16 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12">
           <div className="flex-1 text-center md:text-left">
@@ -262,7 +240,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
             <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-2xl whitespace-pre-line">
               {displayDescription}
             </p>
-            {/* Hero Tags (Items 1, 2, 3) */}
             <div className="flex flex-wrap gap-4 justify-center md:justify-start text-sm font-medium text-blue-200">
                {heroTags.map((tag, idx) => (
                  <span key={idx} className="flex items-center gap-1">
@@ -280,7 +257,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
             <form onSubmit={handleSubmit} className="space-y-4">
               
               {isSignUpMode ? (
-                /* SIGN UP FORM */
                 <>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome Completo</label>
@@ -331,7 +307,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
                          {showSignUpPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                       </button>
                     </div>
-                    {/* Password Strength Meter */}
                     {newPassword && (
                         <div className="mt-2 flex gap-1 h-1">
                             {[1, 2, 3, 4, 5].map(step => (
@@ -362,7 +337,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
                   </div>
                 </>
               ) : (
-                /* LOGIN FORM */
                 <>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">E-mail</label>
@@ -438,7 +412,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
         </div>
       </div>
 
-      {/* Feature Grid (Items 4, 5, 6) */}
       <div className="max-w-6xl mx-auto py-16 px-6 grid md:grid-cols-3 gap-8">
         {landingFeatures.map((feat, idx) => {
           const colors = [
@@ -460,7 +433,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
         })}
       </div>
 
-      {/* Footer (Centered & Blue Gradient) */}
       <footer className="bg-gradient-to-r from-blue-700 to-blue-900 border-t border-blue-800 mt-auto text-white">
         <div className="max-w-6xl mx-auto py-12 px-6 text-center">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -495,14 +467,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
         </div>
       </footer>
 
-      {/* Forgot Password Modal */}
       <Modal 
         isOpen={showForgotModal} 
         onClose={() => setShowForgotModal(false)} 
         title="Recuperação de Senha"
         size="sm"
       >
-        {/* ... (Modal content unchanged) ... */}
         <div className="space-y-4">
             <p className="text-sm text-gray-600 dark:text-gray-300">
                 Digite seu e-mail abaixo para receber um link de redefinição de senha.
@@ -538,14 +508,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
         </div>
       </Modal>
 
-      {/* Callback Modal (Reset/Setup Password) */}
       <Modal 
         isOpen={isResetCallbackOpen} 
         onClose={() => setIsResetCallbackOpen(false)} 
         title={callbackParams?.action === 'setup-password' ? 'Definir Senha de Acesso' : 'Redefinir Senha'}
         size="sm"
       >
-        {/* ... (Callback modal content unchanged) ... */}
         <div className="space-y-4">
             <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded text-sm text-blue-800 dark:text-blue-200">
                 {callbackParams?.action === 'setup-password' 
@@ -576,7 +544,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
                            {showResetPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                         </button>
                     </div>
-                     {/* Password Strength Meter */}
                      {newCallbackPassword && (
                         <div className="mt-2 flex gap-1 h-1">
                             {[1, 2, 3, 4, 5].map(step => (
