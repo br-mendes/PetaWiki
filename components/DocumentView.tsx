@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Edit2, Clock, Eye, Download, ThumbsUp, ThumbsDown, Heart, FileText, FileType, Globe, AlertTriangle, History, RotateCcw, Trash2 } from 'lucide-react';
 import { Document, User, DocumentTranslation, SupportedLanguage, SystemSettings, DocumentVersion } from '../types';
 import { Button } from './Button';
@@ -36,6 +36,10 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
   const [isExporting, setIsExporting] = useState(false);
   const [selectedLang, setSelectedLang] = useState<string>('original');
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  
+  // Real-time View Count State
+  const [liveViews, setLiveViews] = useState(document.views);
+  const viewRegistered = useRef(false);
 
   // Reaction State
   const [userReactions, setUserReactions] = useState<ReactionType[]>([]);
@@ -56,6 +60,40 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
   const displayTitle = currentTranslation ? currentTranslation.translatedTitle : document.title;
   const displayContent = currentTranslation ? currentTranslation.translatedContent : document.content;
   const isOutOfSync = currentTranslation?.status === 'OUT_OF_SYNC';
+
+  // --- View Tracking Logic ---
+  useEffect(() => {
+    // Reset ref when document changes to allow recounting
+    viewRegistered.current = false;
+    setLiveViews(document.views);
+  }, [document.id]);
+
+  useEffect(() => {
+    const registerView = async () => {
+      // Prevent double counting in StrictMode or re-renders
+      if (viewRegistered.current) return;
+      viewRegistered.current = true;
+
+      try {
+        // Call RPC to atomic increment and log event
+        const { error } = await supabase.rpc('register_view', {
+          p_doc_id: document.id,
+          p_user_id: user.id
+        });
+
+        if (error) {
+            console.error("Failed to register view:", error);
+        } else {
+            // Optimistic update locally
+            setLiveViews(prev => prev + 1);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    registerView();
+  }, [document.id, user.id]);
 
   // --- Feedback Logic ---
 
@@ -98,7 +136,6 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
   const handleToggleReaction = async (type: ReactionType) => {
     // Optimistic Update Setup
     const oldReactions = [...userReactions];
-    const oldCounts = { ...reactionCounts };
     let newReactions = [...userReactions];
     let newCounts = { ...reactionCounts };
 
@@ -198,7 +235,7 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
                Atualizado {new Date(document.updatedAt).toLocaleDateString()}
             </span>
             <span className="flex items-center gap-1">
-               {document.views} visualizações
+               {liveViews} visualizações
             </span>
             
             <div className="relative inline-flex items-center">

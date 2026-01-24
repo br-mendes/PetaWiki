@@ -4,7 +4,8 @@ import {
   ChevronRight, ChevronDown, Plus, Trash2, 
   Book, Folder, FolderOpen, FileText, 
   LifeBuoy, Server, MessageCircle, Mail, Monitor, 
-  Users, UserPlus, Heart, Library, Settings, LogOut, Sun, Moon, UserCircle, PlusCircle
+  Users, UserPlus, Heart, Library, Settings, LogOut, Sun, Moon, UserCircle, PlusCircle,
+  Activity
 } from 'lucide-react';
 import { Category, User, SystemSettings, Document } from '../types';
 import { canUserModifyCategory } from '../lib/hierarchy';
@@ -40,6 +41,7 @@ interface SidebarProps {
   onOpenProfile: () => void;
   toggleTheme: () => void;
   isDarkMode: boolean;
+  onNavigateToAnalytics: () => void;
   // Search Context
   searchQuery?: string;
   // Variant
@@ -216,6 +218,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenProfile,
   toggleTheme,
   isDarkMode,
+  onNavigateToAnalytics,
   searchQuery,
   variant = 'SIDEBAR'
 }) => {
@@ -265,6 +268,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* 2. Scrollable Navigation Area */}
       <div className={`flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 ${isDropdown ? 'max-h-[70vh]' : ''}`}>
+        
+        {/* Admin Analytics Link - Always visible here if Admin */}
+        {!isSearching && user.role === 'ADMIN' && (
+            <div className="mb-4 mt-2 px-1">
+               <button 
+                 onClick={onNavigateToAnalytics}
+                 className="w-full flex items-center gap-3 px-3 py-2.5 bg-purple-50 dark:bg-purple-900/10 hover:bg-purple-100 dark:hover:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-lg transition-all shadow-sm group border border-purple-100 dark:border-purple-800/50"
+               >
+                 <Activity size={18} className="text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform" />
+                 <div className="flex flex-col items-start">
+                    <span className="font-bold text-sm leading-none">Analytics</span>
+                    <span className="text-[10px] opacity-70 mt-0.5">Dashboard de Gestão</span>
+                 </div>
+               </button>
+            </div>
+        )}
+
         <div className="mb-4">
           <div className="flex items-center justify-between px-2 mb-3">
             <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">

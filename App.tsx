@@ -171,7 +171,7 @@ const AppContent = () => {
   const activeDocuments = useMemo(() => documents.filter(d => !d.deletedAt), [documents]);
   const trashDocuments = useMemo(() => documents.filter(d => d.deletedAt), [documents]);
 
-  // --- SEARCH LOGIC (Hybrid: Backend First -> Client Fallback) ---
+  // --- SEARCH LOGIC (Hybrid & Tracking) ---
   useEffect(() => {
     const performSearch = async () => {
         if (!searchQuery.trim()) {
@@ -210,8 +210,17 @@ const AppContent = () => {
 
             setSearchResultDocs(mappedResults);
 
+            // 2. ANALYTICS: Track successful search
+            if (currentUser && mappedResults.length > 0) {
+               // Fire and forget - don't await blocking UI
+               supabase.rpc('log_search_event', {
+                  p_query: searchQuery,
+                  p_user_id: currentUser.id
+               }).catch(err => console.error("Tracking error", err));
+            }
+
         } catch (error) {
-            // 2. Fallback: Busca Client-Side (usando dados já carregados em memória)
+            // 3. Fallback: Busca Client-Side (usando dados já carregados em memória)
             // Isso garante que a busca funcione mesmo se a função SQL não tiver sido criada.
             const queryLower = searchQuery.toLowerCase();
             const localResults = documents.filter(d => {
@@ -228,29 +237,24 @@ const AppContent = () => {
         }
     };
 
-    // Debounce search by 500ms
-    const debounceTimer = setTimeout(performSearch, 500);
+    // Debounce search by 800ms to allow typing and prevent spamming RPC
+    const debounceTimer = setTimeout(performSearch, 800);
     return () => clearTimeout(debounceTimer);
 
-  }, [searchQuery, categories, documents]); // Re-run if query or data changes
+  }, [searchQuery, categories, documents, currentUser]); 
 
   // --- VISIBLE DOCUMENTS CALCULATION ---
   const visibleDocuments = useMemo(() => {
     if (!currentUser) return [];
     
     // 1. Determine Source: Search Results OR Default Active Documents
-    // Se houver uma query, usamos searchResultDocs. Se searchResultDocs for null, significa que não há busca ativa ou está carregando (mas se query existir, consideramos estado de busca).
-    // Se searchQuery existe mas searchResultDocs é vazio ([]), é um resultado válido de "nenhum item encontrado".
     const isSearchingActive = searchQuery.trim().length > 0;
     
-    // Se está buscando e temos resultados (mesmo que vazio), usamos eles.
-    // Se não está buscando, usamos activeDocuments.
     const sourceDocs = (isSearchingActive && searchResultDocs !== null) 
         ? searchResultDocs 
         : activeDocuments;
 
     // 2. Filter by Role
-    // Note: The RPC/Local search might return deleted docs. We strictly filter here.
     const roleFiltered = sourceDocs.filter(doc => {
       // Must not be in trash (unless we want to search trash, but usually not in main view)
       if (doc.deletedAt) return false;
