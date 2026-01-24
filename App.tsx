@@ -647,6 +647,11 @@ const AppContent = () => {
     setCurrentView('DOCUMENT_VIEW');
   };
 
+  const handleSearchTag = (tag: string) => {
+    setSearchQuery(tag);
+    // O useEffect de busca será acionado automaticamente pelo setSearchQuery
+  };
+
   const handleSelectCategory = (category: Category) => {
     const docsInCat = visibleDocuments.filter(d => d.categoryId === category.id);
     if (docsInCat.length === 0) {
@@ -1053,7 +1058,8 @@ const AppContent = () => {
               onEdit={() => setCurrentView('DOCUMENT_EDIT')}
               onDelete={() => handleSoftDeleteDocument(selectedDocument)}
               systemSettings={systemSettings}
-              onRestoreVersion={handleRestoreVersion} 
+              onRestoreVersion={handleRestoreVersion}
+              onSearchTag={handleSearchTag}
             />
           )}
 

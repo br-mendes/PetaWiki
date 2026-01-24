@@ -16,6 +16,7 @@ interface DocumentViewProps {
   onDelete?: () => void;
   systemSettings: SystemSettings;
   onRestoreVersion?: (version: DocumentVersion) => void;
+  onSearchTag?: (tag: string) => void;
 }
 
 type ReactionType = 'THUMBS_UP' | 'THUMBS_DOWN' | 'HEART';
@@ -26,7 +27,8 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
   onEdit,
   onDelete,
   systemSettings,
-  onRestoreVersion
+  onRestoreVersion,
+  onSearchTag
 }) => {
   const toast = useToast();
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
@@ -188,92 +190,110 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
         <span className="text-gray-900 dark:text-gray-200 font-medium">{document.categoryPath}</span>
       </nav>
 
-      <div className="flex items-start justify-between mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex-1 pr-6">
-          <div className="flex items-center flex-wrap gap-3 mb-2">
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white leading-tight">
+      {/* Header Layout Refatorado */}
+      <div className="flex flex-col gap-6 mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
+        
+        {/* Título e Status */}
+        <div className="flex items-start justify-between gap-4">
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white leading-tight flex-1">
               {document.title}
             </h1>
-            <div className="mt-1">
+            <div className="pt-2">
               <StatusBadge status={document.status} />
             </div>
-          </div>
+        </div>
 
-          <div className="flex items-center flex-wrap gap-x-6 gap-y-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
+        {/* Metadados */}
+        <div className="flex items-center flex-wrap gap-x-6 gap-y-2 text-sm text-gray-500 dark:text-gray-400">
             <span className="flex items-center gap-1">
                Atualizado {new Date(document.updatedAt).toLocaleDateString()}
             </span>
             <span className="flex items-center gap-1">
-               <Eye size={14} className="mr-1" /> {liveViews} visualizações
+               <Eye size={14} className="mr-1" /> {liveViews.toLocaleString()} visualizações
             </span>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            {document.tags.map(tag => (
-              <span key={tag} className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors cursor-pointer bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-md">
-                #{tag}
-              </span>
-            ))}
-          </div>
         </div>
 
-        <div className="flex flex-col gap-3 shrink-0">
-          <div className="flex gap-2 justify-end">
-            {canEdit && (
-                <>
-                <Button variant="secondary" onClick={() => setIsHistoryModalOpen(true)} className="dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700">
-                    <History size={16} className="mr-2" /> Histórico
-                </Button>
-                <Button onClick={onEdit}>
-                    <Edit2 size={16} className="mr-2" />
-                    Editar
-                </Button>
-                </>
-            )}
-             {canDelete && onDelete && (
-                <Button variant="danger" onClick={onDelete} className="bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/40">
-                    <Trash2 size={16} />
-                </Button>
-            )}
-          </div>
-          
-          <div className="relative flex justify-end">
-            <Button 
-              variant="secondary" 
-              size="sm" 
-              className="w-full md:w-auto dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsExportMenuOpen(!isExportMenuOpen);
-              }}
-              disabled={!canExport || isExporting}
-              title={!canExport ? "Permissão negada (Publicação necessária para Leitores)" : "Exportar Documento"}
-            >
-              <Download size={16} className="mr-2" />
-              {isExporting ? 'Gerando...' : 'Exportar'}
-            </Button>
+        {/* Tags e Toolbar de Ações */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+                {document.tags.map(tag => (
+                <span 
+                    key={tag} 
+                    onClick={() => onSearchTag && onSearchTag(tag)}
+                    className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-white hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors cursor-pointer bg-blue-50 dark:bg-blue-900/20 px-2.5 py-1 rounded-md"
+                    title={`Buscar documentos com a tag: ${tag}`}
+                >
+                    #{tag}
+                </span>
+                ))}
+            </div>
 
-            {isExportMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-50 border border-gray-200 dark:border-gray-700 animate-in fade-in zoom-in duration-100">
-                <div className="py-1">
-                  <button 
-                    onClick={() => handleExport('PDF')}
-                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    <FileType size={16} className="mr-2 text-red-500" />
-                    Exportar PDF
-                  </button>
-                  <button 
-                    onClick={() => handleExport('MARKDOWN')}
-                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  >
-                    <FileText size={16} className="mr-2 text-blue-500" />
-                    Exportar Markdown
-                  </button>
+            {/* Botões Organizados em Linha */}
+            <div className="flex items-center gap-2 flex-wrap md:flex-nowrap">
+                {canEdit && (
+                    <>
+                    <Button variant="secondary" onClick={() => setIsHistoryModalOpen(true)} className="dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700">
+                        <History size={16} className="mr-2" /> Histórico
+                    </Button>
+                    <Button onClick={onEdit}>
+                        <Edit2 size={16} className="mr-2" />
+                        Editar
+                    </Button>
+                    </>
+                )}
+                
+                <div className="relative">
+                    <Button 
+                    variant="secondary" 
+                    className="dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        setIsExportMenuOpen(!isExportMenuOpen);
+                    }}
+                    disabled={!canExport || isExporting}
+                    title={!canExport ? "Permissão negada (Publicação necessária para Leitores)" : "Exportar Documento"}
+                    >
+                    <Download size={16} className="mr-2" />
+                    {isExporting ? '...' : 'Exportar'}
+                    </Button>
+
+                    {isExportMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-50 border border-gray-200 dark:border-gray-700 animate-in fade-in zoom-in duration-100">
+                        <div className="py-1">
+                        <button 
+                            onClick={() => handleExport('PDF')}
+                            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                            <FileType size={16} className="mr-2 text-red-500" />
+                            Exportar PDF
+                        </button>
+                        <button 
+                            onClick={() => handleExport('MARKDOWN')}
+                            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                            <FileText size={16} className="mr-2 text-blue-500" />
+                            Exportar Markdown
+                        </button>
+                        </div>
+                    </div>
+                    )}
                 </div>
-              </div>
-            )}
-          </div>
+
+                {canDelete && onDelete && (
+                    <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-1 hidden md:block"></div>
+                )}
+
+                {canDelete && onDelete && (
+                    <Button 
+                        variant="ghost" 
+                        onClick={onDelete} 
+                        className="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 px-3"
+                        title="Mover para lixeira"
+                    >
+                        <Trash2 size={20} />
+                    </Button>
+                )}
+            </div>
         </div>
       </div>
 
