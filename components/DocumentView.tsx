@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Edit2, Eye, Download, ThumbsUp, ThumbsDown, Heart, FileText, FileType, History, RotateCcw, Trash2 } from 'lucide-react';
+import { Edit2, Eye, Download, ThumbsUp, ThumbsDown, Heart, FileText, FileType, History, RotateCcw, Trash2, File } from 'lucide-react';
 import { Document, User, SystemSettings, DocumentVersion } from '../types';
 import { Button } from './Button';
 import { StatusBadge } from './Badge';
-import { canExportDocument, generateMarkdown, generatePDF } from '../lib/export';
+import { canExportDocument, generateMarkdown, generatePDF, generateDOCX } from '../lib/export';
 import { Modal } from './Modal';
 import { useToast } from './Toast';
 import { supabase } from '../lib/supabase';
@@ -159,7 +159,7 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
     setReactionCounts(newCounts);
   };
 
-  const handleExport = async (format: 'PDF' | 'MARKDOWN') => {
+  const handleExport = async (format: 'PDF' | 'MARKDOWN' | 'DOCX') => {
     setIsExporting(true);
     setIsExportMenuOpen(false);
 
@@ -174,6 +174,8 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
 
     if (format === 'PDF') {
       generatePDF(exportDoc, user, systemSettings);
+    } else if (format === 'DOCX') {
+      generateDOCX(exportDoc, user, systemSettings);
     } else {
       generateMarkdown(exportDoc, user);
     }
@@ -268,10 +270,17 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
                             Exportar PDF
                         </button>
                         <button 
+                            onClick={() => handleExport('DOCX')}
+                            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                            <FileText size={16} className="mr-2 text-blue-700" />
+                            Exportar DOCX (Word)
+                        </button>
+                        <button 
                             onClick={() => handleExport('MARKDOWN')}
                             className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
-                            <FileText size={16} className="mr-2 text-blue-500" />
+                            <File size={16} className="mr-2 text-gray-500" />
                             Exportar Markdown
                         </button>
                         </div>
