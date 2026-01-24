@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Edit2, Clock, Eye, Download, ThumbsUp, FileText, FileType, Globe, AlertTriangle, History, RotateCcw } from 'lucide-react';
+import { Edit2, Clock, Eye, Download, ThumbsUp, FileText, FileType, Globe, AlertTriangle, History, RotateCcw, Trash2 } from 'lucide-react';
 import { Document, User, DocumentTranslation, SupportedLanguage, SystemSettings, DocumentVersion } from '../types';
 import { Button } from './Button';
 import { StatusBadge } from './Badge';
@@ -14,6 +14,7 @@ interface DocumentViewProps {
   translations?: DocumentTranslation[];
   user: User;
   onEdit: () => void;
+  onDelete?: () => void; // New Prop
   systemSettings: SystemSettings;
   onRestoreVersion?: (version: DocumentVersion) => void;
 }
@@ -23,6 +24,7 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
   translations = [],
   user, 
   onEdit,
+  onDelete,
   systemSettings,
   onRestoreVersion
 }) => {
@@ -33,6 +35,7 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   
   const canEdit = user.role === 'ADMIN' || (user.role === 'EDITOR' && document.authorId === user.id);
+  const canDelete = user.role === 'ADMIN' || (user.role === 'EDITOR' && document.authorId === user.id);
   const canExport = canExportDocument(user, document);
 
   const currentTranslation = selectedLang !== 'original' 
@@ -134,6 +137,11 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
                     Editar
                 </Button>
                 </>
+            )}
+             {canDelete && onDelete && (
+                <Button variant="danger" onClick={onDelete} className="bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/40">
+                    <Trash2 size={16} />
+                </Button>
             )}
           </div>
           

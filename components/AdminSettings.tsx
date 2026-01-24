@@ -2,8 +2,8 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
-import { User, SystemSettings, Role, Category } from '../types';
-import { Image, Save, UserCog, UserPlus, FolderTree, Upload, Trash2, Plus, CornerDownRight, ShieldCheck, X } from 'lucide-react';
+import { User, SystemSettings, Role, Category, Document } from '../types';
+import { Image, Save, UserCog, UserPlus, FolderTree, Upload, Trash2, Plus, CornerDownRight, ShieldCheck, X, Layout, Sidebar as SidebarIcon, PanelTop, RotateCcw, FileX } from 'lucide-react';
 import { generateSlug } from '../lib/hierarchy';
 import { sendWelcomeEmail } from '../lib/email';
 import { useToast } from './Toast';
@@ -15,11 +15,16 @@ interface AdminSettingsProps {
   onSaveSettings: (settings: SystemSettings) => void;
   users: User[];
   onUpdateUserRole: (userId: string, newRole: Role) => void;
+  onDeleteUser: (userId: string) => void; // New prop
   onAddUser: (user: Partial<User>) => void;
   categories: Category[]; 
   onUpdateCategory: (id: string, data: Partial<Category>) => void;
   onDeleteCategory: (id: string) => void;
   onAddCategory: (data: Partial<Category>) => void;
+  // Trash Management Props
+  trashDocuments: Document[];
+  onRestoreDocument: (doc: Document) => void;
+  onPermanentDeleteDocument: (doc: Document) => void;
 }
 
 export const AdminSettings: React.FC<AdminSettingsProps> = ({
@@ -29,19 +34,24 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   onSaveSettings,
   users,
   onUpdateUserRole,
+  onDeleteUser,
   onAddUser,
   categories,
   onUpdateCategory,
   onDeleteCategory,
-  onAddCategory
+  onAddCategory,
+  trashDocuments,
+  onRestoreDocument,
+  onPermanentDeleteDocument
 }) => {
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<'BRANDING' | 'SECURITY' | 'USERS' | 'CATEGORIES'>('BRANDING');
+  const [activeTab, setActiveTab] = useState<'BRANDING' | 'SECURITY' | 'USERS' | 'CATEGORIES' | 'TRASH'>('BRANDING');
   
   // Branding State
   const [appName, setAppName] = useState(settings.appName);
   const [logoCollapsedUrl, setLogoCollapsedUrl] = useState(settings.logoCollapsedUrl);
   const [logoExpandedUrl, setLogoExpandedUrl] = useState(settings.logoExpandedUrl);
+  const [layoutMode, setLayoutMode] = useState<'SIDEBAR' | 'NAVBAR'>(settings.layoutMode || 'SIDEBAR');
   
   // Internal Home State
   const [homeTitle, setHomeTitle] = useState(settings.homeTitle || `Bem-vindo ao ${settings.appName}`);
@@ -96,6 +106,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
         logoCollapsedUrl, 
         logoExpandedUrl,
         allowedDomains,
+        layoutMode,
         homeTitle,
         homeDescription,
         landingTitle,
@@ -182,7 +193,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
             onClick={() => setActiveTab('BRANDING')}
             className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'BRANDING' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
           >
-            <Image size={16} /> Marca & Home
+            <Layout size={16} /> Layout & Home
           </button>
           <button
             onClick={() => setActiveTab('SECURITY')}
@@ -194,13 +205,19 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
             onClick={() => setActiveTab('USERS')}
             className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'USERS' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
           >
-            <UserCog size={16} /> Gerenciar Usuários
+            <UserCog size={16} /> Usuários
           </button>
           <button
             onClick={() => setActiveTab('CATEGORIES')}
             className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'CATEGORIES' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
           >
-            <FolderTree size={16} /> Árvore de Docs
+            <FolderTree size={16} /> Categorias
+          </button>
+          <button
+            onClick={() => setActiveTab('TRASH')}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'TRASH' ? 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
+          >
+            <Trash2 size={16} /> Lixeira
           </button>
         </div>
 
@@ -209,7 +226,33 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
           {activeTab === 'BRANDING' && (
             <div className="space-y-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Identidade Visual</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Aparência & Layout</h3>
+                
+                {/* Layout Selector */}
+                <div className="mb-6 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Estilo do Menu de Navegação</label>
+                   <div className="grid grid-cols-2 gap-4">
+                      <button 
+                        onClick={() => setLayoutMode('SIDEBAR')}
+                        className={`flex flex-col items-center p-3 border-2 rounded-lg transition-all ${layoutMode === 'SIDEBAR' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'}`}
+                      >
+                         <SidebarIcon size={24} className={layoutMode === 'SIDEBAR' ? 'text-blue-600' : 'text-gray-400'} />
+                         <span className={`mt-2 text-sm font-medium ${layoutMode === 'SIDEBAR' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'}`}>Lateral (Sidebar)</span>
+                      </button>
+
+                      <button 
+                        onClick={() => setLayoutMode('NAVBAR')}
+                        className={`flex flex-col items-center p-3 border-2 rounded-lg transition-all ${layoutMode === 'NAVBAR' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'}`}
+                      >
+                         <PanelTop size={24} className={layoutMode === 'NAVBAR' ? 'text-blue-600' : 'text-gray-400'} />
+                         <span className={`mt-2 text-sm font-medium ${layoutMode === 'NAVBAR' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'}`}>Superior (Navbar)</span>
+                      </button>
+                   </div>
+                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                     * Os controles de perfil, tema e admin acompanharão a posição do menu.
+                   </p>
+                </div>
+
                 <div className="space-y-6">
                    <div>
                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome da Aplicação</label>
@@ -320,7 +363,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
 
                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                      <Button onClick={handleSaveSettings}>
-                        <Save size={16} className="mr-2" /> Salvar Branding
+                        <Save size={16} className="mr-2" /> Salvar Alterações
                      </Button>
                    </div>
                 </div>
@@ -330,7 +373,8 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
 
           {activeTab === 'SECURITY' && (
               <div className="space-y-6">
-                  <div>
+                  {/* ... código existente da aba de segurança mantido ... */}
+                   <div>
                       <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Auto-Cadastro (Self Sign-up)</h3>
                       <p className="text-sm text-gray-500 mb-4">
                           Defina quais domínios de e-mail têm permissão para criar contas automaticamente. 
@@ -431,7 +475,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Usuário</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Função</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ação</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ação</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -452,16 +496,25 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                               {u.role}
                             </span>
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            <select 
-                              value={u.role}
-                              onChange={(e) => onUpdateUserRole(u.id, e.target.value as Role)}
-                              className="text-xs border-gray-300 dark:border-gray-600 rounded shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 bg-white dark:bg-gray-700 dark:text-white"
-                            >
-                              <option value="READER">Leitor</option>
-                              <option value="EDITOR">Editor</option>
-                              <option value="ADMIN">Admin</option>
-                            </select>
+                          <td className="px-4 py-3 whitespace-nowrap text-right">
+                            <div className="flex items-center justify-end gap-2">
+                                <select 
+                                value={u.role}
+                                onChange={(e) => onUpdateUserRole(u.id, e.target.value as Role)}
+                                className="text-xs border-gray-300 dark:border-gray-600 rounded shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 bg-white dark:bg-gray-700 dark:text-white"
+                                >
+                                <option value="READER">Leitor</option>
+                                <option value="EDITOR">Editor</option>
+                                <option value="ADMIN">Admin</option>
+                                </select>
+                                <button 
+                                  onClick={() => onDeleteUser(u.id)}
+                                  className="p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                                  title="Excluir Usuário"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -473,7 +526,8 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
           )}
 
           {activeTab === 'CATEGORIES' && (
-            <div className="space-y-6">
+             // ... código existente da aba de categorias mantido ...
+             <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">Estrutura de Categorias</h3>
                 <p className="text-xs text-gray-500 dark:text-gray-400">Use o botão (+) para adicionar subcategorias rapidamente.</p>
@@ -581,6 +635,68 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                  </Button>
               </div>
             </div>
+          )}
+
+          {activeTab === 'TRASH' && (
+             <div className="space-y-6">
+                <div>
+                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Lixeira de Artigos</h3>
+                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                     Documentos excluídos permanecem aqui até serem removidos permanentemente. 
+                     Apenas administradores podem gerenciar esta área.
+                   </p>
+                </div>
+                
+                {trashDocuments.length === 0 ? (
+                  <div className="bg-gray-50 dark:bg-gray-800 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg p-12 text-center text-gray-400">
+                     <Trash2 size={48} className="mx-auto mb-4 opacity-20" />
+                     <p>A lixeira está vazia.</p>
+                  </div>
+                ) : (
+                  <div className="border rounded-lg overflow-hidden dark:border-gray-600 bg-white dark:bg-gray-800">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                       <thead className="bg-gray-50 dark:bg-gray-800">
+                         <tr>
+                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Documento</th>
+                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Excluído Em</th>
+                           <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ações</th>
+                         </tr>
+                       </thead>
+                       <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                          {trashDocuments.map(doc => (
+                             <tr key={doc.id} className="hover:bg-red-50 dark:hover:bg-red-900/10">
+                                <td className="px-4 py-3">
+                                   <div className="font-medium text-gray-900 dark:text-white">{doc.title}</div>
+                                   <div className="text-xs text-gray-500">ID: {doc.id}</div>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                                   {doc.deletedAt ? new Date(doc.deletedAt).toLocaleString() : '-'}
+                                </td>
+                                <td className="px-4 py-3 text-right">
+                                   <div className="flex justify-end gap-2">
+                                      <button 
+                                        onClick={() => onRestoreDocument(doc)}
+                                        className="p-1.5 text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded"
+                                        title="Restaurar Documento"
+                                      >
+                                         <RotateCcw size={16} />
+                                      </button>
+                                      <button 
+                                        onClick={() => onPermanentDeleteDocument(doc)}
+                                        className="p-1.5 text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30 rounded"
+                                        title="Excluir Permanentemente"
+                                      >
+                                         <FileX size={16} />
+                                      </button>
+                                   </div>
+                                </td>
+                             </tr>
+                          ))}
+                       </tbody>
+                    </table>
+                  </div>
+                )}
+             </div>
           )}
         </div>
       </div>

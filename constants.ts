@@ -7,6 +7,8 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
   logoExpandedUrl: 'https://ui-avatars.com/api/?name=Peta+Wiki+Corp&background=2563eb&color=fff&size=256&bold=true&length=3', // 16:9 placeholder
   allowedDomains: ['petacorp.com.br', 'gmxtecnologia.com.br'],
   
+  layoutMode: 'SIDEBAR',
+
   // Dashboard Interno
   homeTitle: 'Bem-vindo ao Peta Wiki',
   homeDescription: 'Selecione uma categoria na barra lateral para navegar pela documentação.',

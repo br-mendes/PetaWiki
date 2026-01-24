@@ -15,6 +15,9 @@ export interface SystemSettings {
   logoExpandedUrl: string; // 16:9 Full Logo
   allowedDomains: string[]; // Lista de domínios permitidos para cadastro (ex: ['empresa.com'])
   
+  // Layout
+  layoutMode: 'SIDEBAR' | 'NAVBAR';
+
   // Configurações do Dashboard Interno (Pós-login)
   homeTitle?: string; 
   homeDescription?: string;
@@ -78,6 +81,7 @@ export interface Document {
   authorId: string;
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string | null; // Soft Delete support
   views: number;
   tags: string[];
   categoryPath?: string; // Breadcrumb cache

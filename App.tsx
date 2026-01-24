@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Sidebar } from './components/Sidebar';
+import { Navbar } from './components/Navbar';
 import { Header } from './components/Header';
 import { DocumentView } from './components/DocumentView';
 import { DocumentEditor } from './components/DocumentEditor';
@@ -85,8 +86,12 @@ const AppContent = () => {
     onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
-  // Computed Tree
+  // Computed Properties
   const categoryTree = useMemo(() => buildCategoryTree(categories), [categories]);
+  
+  // Separating Active Docs from Trash
+  const activeDocuments = useMemo(() => documents.filter(d => !d.deletedAt), [documents]);
+  const trashDocuments = useMemo(() => documents.filter(d => d.deletedAt), [documents]);
 
   // Apply Theme Effect
   useEffect(() => {
@@ -146,6 +151,7 @@ const AppContent = () => {
           authorId: d.author_id,
           createdAt: d.created_at,
           updatedAt: d.updated_at,
+          deletedAt: d.deleted_at, // Soft Delete
           views: d.views,
           tags: d.tags || [],
           categoryPath: '...',
@@ -158,7 +164,7 @@ const AppContent = () => {
             name: c.name,
             slug: c.slug,
             parentId: c.parent_id,
-            departmentId: c.department_id,
+            department_id: c.department_id,
             order: c.order,
             docCount: c.doc_count,
             description: c.description,
@@ -266,6 +272,8 @@ const AppContent = () => {
     toast.info('Você saiu do sistema.');
   };
 
+  // --- User Management Handlers ---
+
   const handleUpdateUserRole = async (userId: string, newRole: Role) => {
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
     try {
@@ -274,6 +282,30 @@ const AppContent = () => {
     } catch (e) { 
         toast.error('Erro ao atualizar permissão.');
     }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (currentUser?.role !== 'ADMIN') return;
+    if (currentUser?.id === userId) {
+        toast.error('Você não pode excluir a si mesmo.');
+        return;
+    }
+
+    setConfirmModal({
+        isOpen: true,
+        title: 'Excluir Usuário',
+        message: 'Tem certeza que deseja remover este usuário? Esta ação não pode ser desfeita.',
+        onConfirm: async () => {
+            const userToDelete = users.find(u => u.id === userId);
+            setUsers(prev => prev.filter(u => u.id !== userId));
+            try {
+                await supabase.from('users').delete().eq('id', userId);
+                toast.success(`Usuário ${userToDelete?.name} excluído.`);
+            } catch (e) {
+                toast.error('Erro ao excluir usuário no banco de dados.');
+            }
+        }
+    });
   };
 
   const handleAddUser = async (userData: Partial<User>) => {
@@ -350,18 +382,20 @@ const AppContent = () => {
   };
 
   // Logic Guards
+  // Use 'activeDocuments' for standard selection, but we might select a trash doc if in Trash view (handled by AdminSettings)
   const selectedDocument = documents.find(d => d.id === selectedDocId) || null;
   const selectedTranslations = translations.filter(t => t.documentId === selectedDocId);
   const isAdminOrEditor = currentUser?.role === 'ADMIN' || currentUser?.role === 'EDITOR';
 
   // --- View Handlers ---
   const handleSelectDocument = (document: Document) => {
+    if (document.deletedAt) return; // Prevent selecting deleted docs from normal navigation
     setSelectedDocId(document.id);
     setCurrentView('DOCUMENT_VIEW');
   };
 
   const handleSelectCategory = (category: Category) => {
-    const docsInCat = documents.filter(d => d.categoryId === category.id);
+    const docsInCat = activeDocuments.filter(d => d.categoryId === category.id);
     if (docsInCat.length === 0) {
       if (isAdminOrEditor && (!category.children || category.children.length === 0)) {
         setConfirmModal({
@@ -438,8 +472,8 @@ const AppContent = () => {
         return;
     }
 
-    // 2. Verificação de Documentos (Arquivos)
-    const hasDocuments = documents.some(d => d.categoryId === categoryId);
+    // 2. Verificação de Documentos (Arquivos) - Check Active Docs only
+    const hasDocuments = activeDocuments.some(d => d.categoryId === categoryId);
     if (hasDocuments) {
         toast.error("Não é possível excluir: Esta categoria contém documentos.");
         return;
@@ -633,6 +667,86 @@ const AppContent = () => {
      });
   };
 
+  // --- Document Deletion & Trash Logic ---
+
+  const handleSoftDeleteDocument = async (doc: Document) => {
+    if (currentUser?.role !== 'ADMIN' && currentUser?.role !== 'EDITOR') return;
+
+    setConfirmModal({
+        isOpen: true,
+        title: 'Mover para Lixeira',
+        message: `Deseja remover "${doc.title}"? O item será movido para a lixeira e poderá ser restaurado por um administrador.`,
+        onConfirm: async () => {
+            const now = new Date().toISOString();
+            
+            // Update State
+            setDocuments(prev => prev.map(d => d.id === doc.id ? { ...d, deletedAt: now } : d));
+            
+            // If current view was this doc, go home
+            if (selectedDocId === doc.id) {
+                setCurrentView('HOME');
+                setSelectedDocId(null);
+            }
+
+            // Update DB
+            try {
+                await supabase.from('documents').update({ deleted_at: now }).eq('id', doc.id);
+                toast.success('Documento movido para a lixeira.');
+                
+                // Update category count locally
+                setCategories(prev => prev.map(c => 
+                   c.id === doc.categoryId ? { ...c, docCount: Math.max(0, c.docCount - 1) } : c
+                ));
+
+                // DB count update
+                const cat = categories.find(c => c.id === doc.categoryId);
+                if (cat) {
+                   await supabase.from('categories').update({ doc_count: Math.max(0, cat.docCount - 1) }).eq('id', cat.id);
+                }
+
+            } catch(e) { toast.error('Erro ao atualizar status do documento.'); }
+        }
+    });
+  };
+
+  const handleRestoreDocument = async (doc: Document) => {
+      if (currentUser?.role !== 'ADMIN') return;
+
+      setDocuments(prev => prev.map(d => d.id === doc.id ? { ...d, deletedAt: null } : d));
+
+      try {
+          await supabase.from('documents').update({ deleted_at: null }).eq('id', doc.id);
+          toast.success('Documento restaurado.');
+          
+          // Update category count
+          setCategories(prev => prev.map(c => 
+             c.id === doc.categoryId ? { ...c, docCount: c.docCount + 1 } : c
+          ));
+          const cat = categories.find(c => c.id === doc.categoryId);
+          if (cat) {
+             await supabase.from('categories').update({ doc_count: cat.docCount + 1 }).eq('id', cat.id);
+          }
+      } catch(e) { toast.error('Erro ao restaurar documento.'); }
+  };
+
+  const handlePermanentDeleteDocument = async (doc: Document) => {
+      if (currentUser?.role !== 'ADMIN') return;
+
+      setConfirmModal({
+          isOpen: true,
+          title: 'Excluir Permanentemente',
+          message: `ATENÇÃO: Deseja apagar definitivamente "${doc.title}"? Esta ação é irreversível.`,
+          onConfirm: async () => {
+              setDocuments(prev => prev.filter(d => d.id !== doc.id));
+              
+              try {
+                  await supabase.from('documents').delete().eq('id', doc.id);
+                  toast.success('Documento excluído permanentemente.');
+              } catch(e) { toast.error('Erro ao excluir do banco de dados.'); }
+          }
+      });
+  };
+
   if (isLoading) {
     return (
         <div className="flex flex-col h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 text-blue-600 gap-4">
@@ -643,39 +757,44 @@ const AppContent = () => {
   }
 
   if (!isAuthenticated || !currentUser) {
-    // Aqui garantimos que systemSettings (com textos da home) sejam passados, 
-    // lidos do localStorage na inicialização do estado.
     return <LoginPage onLogin={handleLogin} onSignUp={handleSignUp} settings={systemSettings} />;
   }
 
-  return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans transition-colors duration-200">
-      <div className="flex-shrink-0 h-full z-20 shadow-xl">
-        <Sidebar 
-          categories={categoryTree}
-          documents={documents}
-          onSelectCategory={handleSelectCategory}
-          onSelectDocument={handleSelectDocument} 
-          onNavigateHome={() => setCurrentView('HOME')}
-          user={currentUser}
-          onCreateCategory={openCreateCategoryModal}
-          onDeleteCategory={handleDeleteCategory}
-          systemSettings={systemSettings}
-        />
-      </div>
+  const commonProps = {
+    categories: categoryTree,
+    documents: activeDocuments, // Sidebar/Search only sees non-deleted docs
+    onSelectCategory: handleSelectCategory,
+    onSelectDocument: handleSelectDocument,
+    onNavigateHome: () => setCurrentView('HOME'),
+    user: currentUser,
+    onCreateCategory: openCreateCategoryModal,
+    onDeleteCategory: handleDeleteCategory,
+    systemSettings,
+    onOpenSettings: () => setIsAdminSettingsOpen(true),
+    onLogout: handleLogout,
+    onOpenProfile: () => setIsProfileOpen(true),
+    toggleTheme: () => setIsDarkMode(!isDarkMode),
+    isDarkMode,
+    onNavigateToAnalytics: () => setCurrentView('ANALYTICS')
+  };
 
+  const isNavbarMode = systemSettings.layoutMode === 'NAVBAR';
+
+  return (
+    <div className={`flex h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans transition-colors duration-200 ${isNavbarMode ? 'flex-col' : 'flex-row'}`}>
+      
+      {/* Navigation Layer */}
+      {isNavbarMode ? (
+         <Navbar {...commonProps} />
+      ) : (
+         <Sidebar {...commonProps} />
+      )}
+
+      {/* Main Content Layer */}
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        <Header 
-          user={currentUser} 
-          onRoleChange={handleRoleChange}
-          onNavigateToAnalytics={() => setCurrentView('ANALYTICS')}
-          onNavigateHome={() => setCurrentView('HOME')}
-          onOpenSettings={() => setIsAdminSettingsOpen(true)}
-          onLogout={handleLogout}
-          onOpenProfile={() => setIsProfileOpen(true)}
-          toggleTheme={() => setIsDarkMode(!isDarkMode)}
-          isDarkMode={isDarkMode}
-        />
+        
+        {/* Header only for search if in Sidebar mode (user controls are now in Sidebar footer) */}
+        {!isNavbarMode && <Header />}
 
         <main className="flex-1 overflow-y-auto">
           {currentView === 'HOME' && (
@@ -720,6 +839,7 @@ const AppContent = () => {
               translations={selectedTranslations}
               user={currentUser}
               onEdit={() => setCurrentView('DOCUMENT_EDIT')}
+              onDelete={() => handleSoftDeleteDocument(selectedDocument)}
               systemSettings={systemSettings}
               onRestoreVersion={handleRestoreVersion} 
             />
@@ -764,11 +884,15 @@ const AppContent = () => {
         onSaveSettings={setSystemSettings}
         users={users}
         onUpdateUserRole={handleUpdateUserRole}
+        onDeleteUser={handleDeleteUser}
         onAddUser={handleAddUser}
         categories={categories}
         onUpdateCategory={handleUpdateCategory}
         onDeleteCategory={handleDeleteCategory}
         onAddCategory={handleSaveCategory}
+        trashDocuments={trashDocuments}
+        onRestoreDocument={handleRestoreDocument}
+        onPermanentDeleteDocument={handlePermanentDeleteDocument}
       />
 
       {currentUser && (
