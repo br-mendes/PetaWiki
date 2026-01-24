@@ -123,9 +123,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
       <div className="bg-gradient-to-r from-blue-700 to-blue-900 text-white py-16 px-6">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12">
           <div className="flex-1 text-center md:text-left">
-            <div className="flex items-center justify-center md:justify-start gap-4 mb-6">
-              <img src={displayLogo} alt="Logo" className="h-16 w-16 bg-white rounded-xl p-2 object-contain" />
-              <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">{displayTitle}</h1>
+            <div className="flex items-center justify-center md:justify-start gap-6 mb-6">
+              {/* Logo aumentado para h-24 (mobile) e h-32 (desktop) para alinhar com texto de 2 linhas */}
+              <img src={displayLogo} alt="Logo" className="h-24 w-24 md:h-32 md:w-32 bg-white rounded-xl p-3 object-contain shrink-0 shadow-lg" />
+              {/* Regra 1 & 2: Ocupar até 2 linhas, alinhado ao centro (flex items-center no pai) */}
+              <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight line-clamp-2 overflow-hidden text-ellipsis leading-tight">
+                {displayTitle}
+              </h1>
             </div>
             <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-2xl whitespace-pre-line">
               {displayDescription}
@@ -229,7 +233,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        placeholder="ex: admin"
+                        // Regra 3: Alteração do Placeholder
+                        placeholder="seunome@empresa.com.br"
                       />
                       <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     </div>
