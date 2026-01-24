@@ -18,15 +18,36 @@ import {
   getCategoryPath 
 } from './lib/hierarchy';
 import { translateDocument } from './lib/translate';
+import { ToastProvider, useToast } from './components/Toast';
+import { Modal } from './components/Modal';
+import { Button } from './components/Button';
+import { AlertTriangle } from 'lucide-react';
 
 type ViewState = 'HOME' | 'DOCUMENT_VIEW' | 'DOCUMENT_EDIT' | 'DOCUMENT_CREATE' | 'TEMPLATE_SELECTION' | 'ANALYTICS';
 
-export default function App() {
+// Componente interno para usar o hook useToast (que precisa estar dentro do Provider)
+const AppContent = () => {
+  const toast = useToast();
+
   // Auth & System State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [systemSettings, setSystemSettings] = useState<SystemSettings>(DEFAULT_SYSTEM_SETTINGS);
+  
+  // Settings State with Local Persistence
+  const [systemSettings, setSystemSettings] = useState<SystemSettings>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('peta_wiki_settings');
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error("Erro ao carregar configurações salvas", e);
+        }
+      }
+    }
+    return DEFAULT_SYSTEM_SETTINGS;
+  });
   
   // Theme State
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -55,6 +76,14 @@ export default function App() {
   const [categoryModalParentId, setCategoryModalParentId] = useState<string | null>(null);
   const [isAdminSettingsOpen, setIsAdminSettingsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  
+  // Confirmation Modal State (Substitui window.confirm)
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   // Computed Tree
   const categoryTree = useMemo(() => buildCategoryTree(categories), [categories]);
@@ -70,8 +99,12 @@ export default function App() {
     }
   }, [isDarkMode]);
 
-  // Apply Dynamic Favicon Effect
+  // Apply System Settings Effect (Favicon, Title, Persistence)
   useEffect(() => {
+    // Persist
+    localStorage.setItem('peta_wiki_settings', JSON.stringify(systemSettings));
+
+    // Update Favicon
     const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
     if (link) {
       link.href = systemSettings.logoCollapsedUrl;
@@ -81,8 +114,10 @@ export default function App() {
       newLink.href = systemSettings.logoCollapsedUrl;
       document.head.appendChild(newLink);
     }
+    
+    // Update Title
     document.title = systemSettings.appName || 'Peta Wiki';
-  }, [systemSettings.logoCollapsedUrl, systemSettings.appName]);
+  }, [systemSettings]);
 
   // Initial Fetch - REAL DATA ONLY
   useEffect(() => {
@@ -145,13 +180,11 @@ export default function App() {
         setDocuments(mappedDocs);
         setCategories(mappedCats); 
         setUsers(mappedUsers);
-        setTemplates(MOCK_TEMPLATES); // Mantemos templates estáticos por enquanto ou podemos criar tabela no futuro
-        
-        console.log(`Dados carregados: ${mappedDocs.length} docs, ${mappedUsers.length} usuários.`);
+        setTemplates(MOCK_TEMPLATES); 
         
       } catch (e) {
         console.error("Erro crítico ao carregar dados:", e);
-        // Não mostrar alert intrusivo no início, apenas log
+        toast.error("Erro ao conectar ao banco de dados.");
       } finally {
         setIsLoading(false);
       }
@@ -162,32 +195,85 @@ export default function App() {
 
   // Auth Handlers - REAL DB CHECK
   const handleLogin = (usernameInput: string, passwordInput: string) => {
-    // Procura no estado local (que foi populado pelo DB na inicialização)
     const foundUser = users.find(u => u.username === usernameInput || u.email === usernameInput);
     
-    // Verificação real de senha (simples)
     if (foundUser && foundUser.password === passwordInput) {
       setCurrentUser(foundUser);
       setIsAuthenticated(true);
+      toast.success(`Bem-vindo, ${foundUser.name}!`);
     } else {
-      alert('Usuário ou senha inválidos.');
+      toast.error('Usuário ou senha inválidos.');
     }
+  };
+
+  const handleSignUp = async (name: string, email: string, password: string): Promise<boolean> => {
+      // 1. Validar Domínio
+      const domain = email.split('@')[1];
+      const allowedDomains = systemSettings.allowedDomains || [];
+      
+      if (!allowedDomains.includes(domain)) {
+          toast.error(`O domínio @${domain} não está autorizado para auto-cadastro.`);
+          return false;
+      }
+
+      // 2. Validar se usuário já existe
+      if (users.some(u => u.email === email || u.username === email)) {
+          toast.error('Este e-mail já está cadastrado.');
+          return false;
+      }
+
+      // 3. Criar Usuário
+      const newUser: User = {
+          id: `u${Date.now()}`,
+          username: email, // Username padrão é o email no signup
+          email: email,
+          password: password,
+          name: name,
+          role: 'READER', // Segurança: Default é leitor
+          department: 'Geral',
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
+      };
+
+      // 4. Persistir
+      try {
+          const { error } = await supabase.from('users').insert({
+            id: newUser.id,
+            username: newUser.username,
+            password: newUser.password,
+            email: newUser.email,
+            name: newUser.name,
+            role: newUser.role,
+            department: newUser.department,
+            avatar: newUser.avatar
+          });
+
+          if (error) throw error;
+
+          setUsers([...users, newUser]);
+          toast.success('Conta criada com sucesso! Faça login para continuar.');
+          return true;
+      } catch (e) {
+          console.error("Signup error", e);
+          toast.error('Erro ao criar conta no servidor.');
+          return false;
+      }
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
     setCurrentUser(null);
     setCurrentView('HOME');
+    toast.info('Você saiu do sistema.');
   };
 
   const handleUpdateUserRole = async (userId: string, newRole: Role) => {
-    // 1. Update Local
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
-    
-    // 2. Update DB
     try {
         await supabase.from('users').update({ role: newRole }).eq('id', userId);
-    } catch (e) { console.error("Erro update role", e); }
+        toast.success('Permissão atualizada.');
+    } catch (e) { 
+        toast.error('Erro ao atualizar permissão.');
+    }
   };
 
   const handleAddUser = async (userData: Partial<User>) => {
@@ -199,13 +285,11 @@ export default function App() {
       role: userData.role || 'READER',
       department: userData.department || 'Geral',
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=random`,
-      password: '123' // Senha padrão inicial
+      password: '123'
     };
     
-    // 1. Update Local
     setUsers(prev => [...prev, newUser]);
 
-    // 2. Insert DB
     try {
         await supabase.from('users').insert({
             id: newUser.id,
@@ -217,7 +301,8 @@ export default function App() {
             department: newUser.department,
             avatar: newUser.avatar
         });
-    } catch (e) { console.error("Erro add user", e); }
+        toast.success('Usuário criado com sucesso.');
+    } catch (e) { toast.error('Erro ao criar usuário no banco.'); }
   };
 
   const handleUpdatePassword = async (oldPass: string, newPass: string): Promise<boolean> => {
@@ -229,17 +314,16 @@ export default function App() {
     
     const updatedUser = { ...currentUser, password: newPass };
     
-    // 1. Update Local
     setCurrentUser(updatedUser);
     setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedUser : u));
 
-    // 2. Update DB
     try {
         const { error } = await supabase.from('users').update({ password: newPass }).eq('id', currentUser.id);
         if (error) throw error;
+        toast.success('Senha atualizada com sucesso.');
         return true;
     } catch (e) {
-        console.error("Erro ao alterar senha", e);
+        toast.error('Erro ao salvar nova senha.');
         return false;
     }
   };
@@ -253,14 +337,15 @@ export default function App() {
 
     try {
         await supabase.from('users').update({ avatar: base64 }).eq('id', currentUser.id);
-    } catch(e) { console.error("Erro update avatar", e); }
+        toast.success('Avatar atualizado.');
+    } catch(e) { toast.error('Erro ao salvar avatar.'); }
   };
 
   const handleRoleChange = (role: Role) => {
-    // Apenas simulação visual temporária para o usuário atual na sessão
     if (currentUser) {
       const updated = { ...currentUser, role };
       setCurrentUser(updated);
+      toast.info(`Visualizando como: ${role}`);
     }
   };
 
@@ -279,11 +364,15 @@ export default function App() {
     const docsInCat = documents.filter(d => d.categoryId === category.id);
     if (docsInCat.length === 0) {
       if (isAdminOrEditor && (!category.children || category.children.length === 0)) {
-        const create = window.confirm(`Nenhum documento em ${category.name}. Deseja criar um?`);
-        if (create) {
-           setNewDocTemplate({ content: '', tags: [] }); 
-           setCurrentView('TEMPLATE_SELECTION');
-        }
+        setConfirmModal({
+            isOpen: true,
+            title: 'Categoria Vazia',
+            message: `Nenhum documento em "${category.name}". Deseja criar um agora?`,
+            onConfirm: () => {
+                setNewDocTemplate({ content: '', tags: [] }); 
+                setCurrentView('TEMPLATE_SELECTION');
+            }
+        });
       }
     }
   };
@@ -321,7 +410,8 @@ export default function App() {
             doc_count: 0,
             order: newCategory.order
         });
-    } catch(e) { console.error("Erro ao salvar categoria no DB", e); }
+        toast.success('Categoria criada com sucesso.');
+    } catch(e) { toast.error('Erro ao salvar categoria.'); }
   };
   
   const handleUpdateCategory = async (id: string, data: Partial<Category>) => {
@@ -329,24 +419,45 @@ export default function App() {
     try {
         const dbData: any = {};
         if (data.name) dbData.name = data.name;
-        // Adicionar outros campos conforme necessário para sync
         if (Object.keys(dbData).length > 0) {
             await supabase.from('categories').update(dbData).eq('id', id);
         }
-    } catch(e) { console.error("Erro update categoria DB", e); }
+    } catch(e) { console.error(e); }
   };
 
   const handleDeleteCategory = async (categoryId: string) => {
     if (currentUser?.role !== 'ADMIN') {
-      alert("Apenas Admins podem excluir categorias.");
+      toast.error("Apenas Admins podem excluir categorias.");
       return;
     }
-    if (!confirm("Tem certeza? Subcategorias e documentos ficarão órfãos.")) return;
-    
-    setCategories(categories.filter(c => c.id !== categoryId));
-    try {
-        await supabase.from('categories').delete().eq('id', categoryId);
-    } catch(e) { console.error("Erro delete categoria DB", e); }
+
+    // 1. Verificação de Subcategorias (Filhos)
+    const hasChildren = categories.some(c => c.parentId === categoryId);
+    if (hasChildren) {
+        toast.error("Não é possível excluir: Esta categoria possui subcategorias.");
+        return;
+    }
+
+    // 2. Verificação de Documentos (Arquivos)
+    const hasDocuments = documents.some(d => d.categoryId === categoryId);
+    if (hasDocuments) {
+        toast.error("Não é possível excluir: Esta categoria contém documentos.");
+        return;
+    }
+
+    // Se chegou aqui, está vazio e pode excluir (Confirmação segura)
+    setConfirmModal({
+        isOpen: true,
+        title: 'Excluir Categoria',
+        message: 'Tem certeza que deseja excluir esta categoria vazia?',
+        onConfirm: async () => {
+            setCategories(categories.filter(c => c.id !== categoryId));
+            try {
+                await supabase.from('categories').delete().eq('id', categoryId);
+                toast.success('Categoria excluída.');
+            } catch(e) { toast.error('Erro ao excluir no banco de dados.'); }
+        }
+    });
   };
 
   const handleTemplateSelect = (template: DocumentTemplate | null) => {
@@ -376,7 +487,7 @@ export default function App() {
       departmentId: currentUser?.department
     };
     setTemplates([...templates, newTemplate]);
-    alert('Template salvo com sucesso!');
+    toast.success('Template salvo com sucesso!');
   };
 
   const handleCreateTranslation = async (targetLangs: SupportedLanguage[]) => {
@@ -400,6 +511,7 @@ export default function App() {
         translation
       ]);
     }
+    toast.success('Tradução concluída.');
   };
 
   const handleSaveDocument = async (data: Partial<Document>) => {
@@ -446,13 +558,12 @@ export default function App() {
             views: 0
         });
         
-        // Update category doc count in DB
         const currentCat = categories.find(c => c.id === targetCategoryId);
         if (currentCat) {
              await supabase.from('categories').update({ doc_count: currentCat.docCount + 1 }).eq('id', targetCategoryId);
         }
 
-      } catch (e) { console.error("Falha ao salvar no DB", e); }
+      } catch (e) { toast.error('Erro ao salvar documento.'); }
 
       setSelectedDocId(newDocId);
     } else if (selectedDocument) {
@@ -497,23 +608,29 @@ export default function App() {
             updated_at: new Date().toISOString(),
             status: data.status || selectedDocument.status
         }).eq('id', selectedDocument.id);
-      } catch (e) { console.error("Falha ao atualizar no DB", e); }
+      } catch (e) { toast.error('Erro ao atualizar documento.'); }
     }
     
     setDocuments(updatedDocs);
     setCurrentView('DOCUMENT_VIEW');
+    toast.success('Documento salvo.');
   };
 
   const handleRestoreVersion = async (version: DocumentVersion) => {
      if (!selectedDocument || !currentUser) return;
-     if (!confirm(`Deseja restaurar a versão de ${new Date(version.savedAt).toLocaleString()}?`)) return;
-
-     await handleSaveDocument({
-       title: version.title,
-       content: version.content
-     });
      
-     alert('Versão restaurada com sucesso!');
+     setConfirmModal({
+        isOpen: true,
+        title: 'Restaurar Versão',
+        message: `Deseja restaurar a versão de ${new Date(version.savedAt).toLocaleString()}? O conteúdo atual será salvo no histórico.`,
+        onConfirm: async () => {
+            await handleSaveDocument({
+                title: version.title,
+                content: version.content
+            });
+            toast.success('Versão restaurada com sucesso!');
+        }
+     });
   };
 
   if (isLoading) {
@@ -526,7 +643,9 @@ export default function App() {
   }
 
   if (!isAuthenticated || !currentUser) {
-    return <LoginPage onLogin={handleLogin} settings={systemSettings} />;
+    // Aqui garantimos que systemSettings (com textos da home) sejam passados, 
+    // lidos do localStorage na inicialização do estado.
+    return <LoginPage onLogin={handleLogin} onSignUp={handleSignUp} settings={systemSettings} />;
   }
 
   return (
@@ -566,9 +685,11 @@ export default function App() {
                 alt="Logo" 
                 className="w-24 h-24 mx-auto mb-6 rounded-xl shadow-md p-2 bg-white object-contain" 
               />
-              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">Bem-vindo ao {systemSettings.appName}</h2>
-              <p className="text-gray-600 dark:text-gray-400 max-w-lg mx-auto mb-8">
-                Selecione uma categoria na barra lateral para navegar pela documentação.
+              <h2 className="text-3xl font-bold text-gray-800 dark:text-white mb-4">
+                {systemSettings.homeTitle || `Bem-vindo ao ${systemSettings.appName}`}
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 max-w-lg mx-auto mb-8 whitespace-pre-line">
+                {systemSettings.homeDescription || 'Selecione uma categoria na barra lateral para navegar pela documentação.'}
               </p>
               {isAdminOrEditor && (
                 <button 
@@ -659,6 +780,38 @@ export default function App() {
           onUpdateAvatar={handleUpdateAvatar}
         />
       )}
+
+      {/* Confirmação Modal Genérica */}
+      <Modal 
+        isOpen={confirmModal.isOpen} 
+        onClose={() => setConfirmModal({ ...confirmModal, isOpen: false })} 
+        title={confirmModal.title}
+        size="sm"
+      >
+        <div className="space-y-4">
+            <div className="flex items-start gap-3">
+                <div className="p-2 bg-yellow-50 rounded-full text-yellow-600">
+                    <AlertTriangle size={24} />
+                </div>
+                <p className="text-gray-700 dark:text-gray-300 pt-1">{confirmModal.message}</p>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+                <Button variant="ghost" onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}>Cancelar</Button>
+                <Button onClick={() => { confirmModal.onConfirm(); setConfirmModal({ ...confirmModal, isOpen: false }); }}>Confirmar</Button>
+            </div>
+        </div>
+      </Modal>
+
     </div>
   );
-}
+};
+
+const App = () => {
+  return (
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
+  );
+};
+
+export default App;

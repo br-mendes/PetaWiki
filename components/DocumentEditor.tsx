@@ -7,6 +7,7 @@ import { Button } from './Button';
 import { CategoryTreeSelect } from './CategoryTreeSelect';
 import { TranslationModal } from './TranslationModal';
 import { RichTextEditor } from './RichTextEditor';
+import { useToast } from './Toast';
 
 interface DocumentEditorProps {
   document?: Document | null; // Null means new doc
@@ -33,6 +34,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   initialTags = [],
   onCreateTemplate
 }) => {
+  const toast = useToast();
   const [title, setTitle] = useState(document?.title || '');
   const [content, setContent] = useState(document?.content || initialContent);
   const [categoryId, setCategoryId] = useState(document?.categoryId || initialCategoryId || '');
@@ -74,7 +76,6 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
     setIsGenerating(true);
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-      // Clean HTML tags for AI analysis to save tokens, or send raw if formatting matters
       const plainText = content.replace(/<[^>]+>/g, '');
       
       const response = await ai.models.generateContent({
@@ -88,7 +89,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
       setAiSuggestion(response.text || "Nenhuma sugestão gerada.");
     } catch (error) {
       console.error("Erro na IA:", error);
-      setAiSuggestion("Falha ao gerar sugestões. Por favor, tente novamente.");
+      toast.error("Falha ao gerar sugestões com IA.");
     } finally {
       setIsGenerating(false);
     }
@@ -96,12 +97,12 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
 
   const handleGenerateTags = async () => {
     if (!process.env.API_KEY) {
-      alert("Chave da API ausente.");
+      toast.error("Chave da API ausente.");
       return;
     }
     
     if (!content && !title) {
-        alert("Preencha o título ou conteúdo antes de gerar tags.");
+        toast.warning("Preencha o título ou conteúdo antes de gerar tags.");
         return;
     }
 
@@ -122,10 +123,11 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                 .filter(t => t.length > 0 && !tags.includes(t));
             
             setTags(prev => [...new Set([...prev, ...newTags])]); // Merge unique
+            toast.success(`${newTags.length} tags geradas.`);
         }
     } catch (e) {
         console.error("Erro ao gerar tags", e);
-        alert("Erro ao conectar com a IA.");
+        toast.error("Erro ao conectar com a IA.");
     } finally {
         setIsGeneratingTags(false);
     }
@@ -156,7 +158,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
       await onTranslate(langs);
       setIsTranslating(false);
       setIsTranslationModalOpen(false);
-      alert(`Tradução para ${langs.join(', ')} iniciada com sucesso.`);
+      // Success toast handled by parent
     }
   };
 
@@ -187,10 +189,8 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-visible relative">
-        {/* Toolbar Top - Actions */}
         <div className="border-b border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900 flex items-center gap-2 flex-wrap">
           
-          {/* AI Button */}
           <button 
             className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${isGenerating ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20'}`}
             onClick={handleAiSuggest}
@@ -200,7 +200,6 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             {isGenerating ? 'Analisando...' : 'Sugestão IA'}
           </button>
           
-          {/* Translate Button */}
           {document && onTranslate && (
              <button 
                className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
@@ -212,7 +211,6 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
           )}
         </div>
 
-        {/* AI Suggestion Banner */}
         {aiSuggestion && (
           <div className="bg-purple-50 dark:bg-purple-900/20 border-b border-purple-100 dark:border-purple-800 p-4 flex items-start gap-3">
             <Sparkles className="text-purple-600 dark:text-purple-400 mt-1 shrink-0" size={18} />
@@ -226,9 +224,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
           </div>
         )}
 
-        {/* Editor Inputs */}
         <div className="p-6 space-y-6">
-           {/* Category Selector */}
            <div className="relative" ref={selectRef}>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Localização da Categoria</label>
             <div 
@@ -268,7 +264,6 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Conteúdo do Artigo</label>
-            {/* Replaced Textarea with RichTextEditor */}
             <RichTextEditor 
               value={content}
               onChange={setContent}
@@ -276,7 +271,6 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             />
           </div>
 
-          {/* Tag Management Section */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                 <Tag size={16} /> Tags & Palavras-chave

@@ -7,6 +7,7 @@ import { StatusBadge } from './Badge';
 import { canExportDocument, generateMarkdown, generatePDF } from '../lib/export';
 import { LANGUAGES } from '../lib/translate';
 import { Modal } from './Modal';
+import { useToast } from './Toast';
 
 interface DocumentViewProps {
   document: Document;
@@ -25,15 +26,15 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
   systemSettings,
   onRestoreVersion
 }) => {
+  const toast = useToast();
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [selectedLang, setSelectedLang] = useState<string>('original'); // 'original' or language code
+  const [selectedLang, setSelectedLang] = useState<string>('original');
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   
   const canEdit = user.role === 'ADMIN' || (user.role === 'EDITOR' && document.authorId === user.id);
   const canExport = canExportDocument(user, document);
 
-  // Determine content to show based on language selection
   const currentTranslation = selectedLang !== 'original' 
     ? translations.find(t => t.language === selectedLang) 
     : null;
@@ -46,10 +47,8 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
     setIsExporting(true);
     setIsExportMenuOpen(false);
 
-    // Simulate audit logging delay
     await new Promise(resolve => setTimeout(resolve, 800));
 
-    // Export uses the currently displayed content (Original or Translation)
     const exportDoc = {
       ...document,
       title: displayTitle,
@@ -63,21 +62,19 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
     }
     
     setIsExporting(false);
+    toast.success(`Exportação ${format} concluída.`);
   };
 
   return (
     <div className="max-w-4xl mx-auto p-8" onClick={() => { if(isExportMenuOpen) setIsExportMenuOpen(false); }}>
-      {/* Breadcrumb */}
       <nav className="text-sm text-gray-500 dark:text-gray-400 mb-6 flex items-center gap-2">
         <span>Wiki</span>
         <span>/</span>
         <span className="text-gray-900 dark:text-gray-200 font-medium">{document.categoryPath}</span>
       </nav>
 
-      {/* Header Re-organized */}
       <div className="flex items-start justify-between mb-8 pb-8 border-b border-gray-200 dark:border-gray-700">
         <div className="flex-1 pr-6">
-          {/* Title Line */}
           <div className="flex items-center flex-wrap gap-3 mb-2">
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white leading-tight">
               {displayTitle}
@@ -87,7 +84,6 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
             </div>
           </div>
 
-          {/* Meta Line (Date, Views, Lang) */}
           <div className="flex items-center flex-wrap gap-x-6 gap-y-2 text-sm text-gray-500 dark:text-gray-400 mb-4">
             <span className="flex items-center gap-1">
                Atualizado {new Date(document.updatedAt).toLocaleDateString()}
@@ -96,7 +92,6 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
                {document.views} visualizações
             </span>
             
-            {/* Language Selector Inline */}
             <div className="relative inline-flex items-center">
               <Globe size={14} className="mr-1.5 text-gray-400" />
               <select 
@@ -118,7 +113,6 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
             </div>
           </div>
 
-          {/* Tags Line */}
           <div className="flex flex-wrap items-center gap-2">
             {document.tags.map(tag => (
               <span key={tag} className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors cursor-pointer bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-md">
@@ -128,7 +122,6 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
           </div>
         </div>
 
-        {/* Actions Column */}
         <div className="flex flex-col gap-3 shrink-0">
           <div className="flex gap-2 justify-end">
             {canEdit && (
@@ -184,7 +177,6 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
         </div>
       </div>
 
-      {/* Sync Warning */}
       {isOutOfSync && (
         <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-700/50 rounded-lg flex items-start gap-3">
           <AlertTriangle className="text-yellow-600 dark:text-yellow-500 shrink-0 mt-0.5" size={18} />
@@ -198,7 +190,6 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
         </div>
       )}
 
-      {/* Main Content */}
       <div className="w-full">
         <div 
           className="prose prose-blue dark:prose-invert max-w-none text-gray-800 dark:text-gray-300 leading-relaxed"
@@ -208,7 +199,10 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
         <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Você achou isso útil?</h3>
           <div className="flex gap-4">
-            <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-300">
+            <button 
+                onClick={() => toast.success('Obrigado pelo seu feedback!')}
+                className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-300"
+            >
               <ThumbsUp size={18} className="text-gray-500 dark:text-gray-400" />
               <span>Sim</span>
             </button>
@@ -216,7 +210,6 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
         </div>
       </div>
 
-      {/* History Modal */}
       <Modal isOpen={isHistoryModalOpen} onClose={() => setIsHistoryModalOpen(false)} title="Histórico de Versões">
         <div className="space-y-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">

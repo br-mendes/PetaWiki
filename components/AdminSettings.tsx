@@ -1,10 +1,12 @@
+
 import React, { useState, useRef, useMemo } from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { User, SystemSettings, Role, Category } from '../types';
-import { Settings, Image, Save, UserCog, UserPlus, FolderTree, Edit, Upload, Trash2, Plus, CornerDownRight, Mail } from 'lucide-react';
+import { Image, Save, UserCog, UserPlus, FolderTree, Upload, Trash2, Plus, CornerDownRight, ShieldCheck, X } from 'lucide-react';
 import { generateSlug } from '../lib/hierarchy';
 import { sendWelcomeEmail } from '../lib/email';
+import { useToast } from './Toast';
 
 interface AdminSettingsProps {
   isOpen: boolean;
@@ -14,7 +16,7 @@ interface AdminSettingsProps {
   users: User[];
   onUpdateUserRole: (userId: string, newRole: Role) => void;
   onAddUser: (user: Partial<User>) => void;
-  categories: Category[]; // Passed from App (should be flat list for easier management here)
+  categories: Category[]; 
   onUpdateCategory: (id: string, data: Partial<Category>) => void;
   onDeleteCategory: (id: string) => void;
   onAddCategory: (data: Partial<Category>) => void;
@@ -33,41 +35,49 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   onDeleteCategory,
   onAddCategory
 }) => {
-  const [activeTab, setActiveTab] = useState<'BRANDING' | 'USERS' | 'CATEGORIES'>('BRANDING');
+  const toast = useToast();
+  const [activeTab, setActiveTab] = useState<'BRANDING' | 'SECURITY' | 'USERS' | 'CATEGORIES'>('BRANDING');
   
-  // Settings State
+  // Branding State
   const [appName, setAppName] = useState(settings.appName);
   const [logoCollapsedUrl, setLogoCollapsedUrl] = useState(settings.logoCollapsedUrl);
   const [logoExpandedUrl, setLogoExpandedUrl] = useState(settings.logoExpandedUrl);
+  
+  // Internal Home State
+  const [homeTitle, setHomeTitle] = useState(settings.homeTitle || `Bem-vindo ao ${settings.appName}`);
+  const [homeDescription, setHomeDescription] = useState(settings.homeDescription || 'Selecione uma categoria na barra lateral para navegar pela documentação.');
 
-  // New User State
+  // Public Landing State
+  const [landingTitle, setLandingTitle] = useState(settings.landingTitle || settings.appName || 'Peta Wiki');
+  const [landingDescription, setLandingDescription] = useState(settings.landingDescription || 'O hub central para o conhecimento corporativo.');
+
+  // Security State
+  const [allowedDomains, setAllowedDomains] = useState<string[]>(settings.allowedDomains || []);
+  const [newDomain, setNewDomain] = useState('');
+
+  // User State
   const [newUser, setNewUser] = useState({ name: '', email: '', department: 'Geral', role: 'READER' as Role });
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   
-  // New Category State
+  // Category State
   const [newCatName, setNewCatName] = useState('');
   const [newCatParent, setNewCatParent] = useState('');
 
-  // File Refs
   const collapsedInputRef = useRef<HTMLInputElement>(null);
   const expandedInputRef = useRef<HTMLInputElement>(null);
   const catNameInputRef = useRef<HTMLInputElement>(null);
 
-  // --- Helper to sort categories hierarchically for display ---
   const sortedCategories = useMemo(() => {
     const grouped = new Map<string | null, Category[]>();
-    // Group by parentId
     categories.forEach(c => {
       const pid = c.parentId || null;
       if (!grouped.has(pid)) grouped.set(pid, []);
       grouped.get(pid)!.push(c);
     });
 
-    // Recursive traversal to build flat list with depth
     const result: { cat: Category, depth: number }[] = [];
     const traverse = (pid: string | null, depth: number) => {
       const children = grouped.get(pid) || [];
-      // Sort children by order (if available) or name
       children.sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
       
       children.forEach(c => {
@@ -81,8 +91,33 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   }, [categories]);
 
   const handleSaveSettings = () => {
-    onSaveSettings({ appName, logoCollapsedUrl, logoExpandedUrl });
-    alert('Configurações do sistema atualizadas!');
+    onSaveSettings({ 
+        appName, 
+        logoCollapsedUrl, 
+        logoExpandedUrl,
+        allowedDomains,
+        homeTitle,
+        homeDescription,
+        landingTitle,
+        landingDescription
+    });
+    toast.success('Configurações do sistema atualizadas!');
+  };
+
+  const handleAddDomain = () => {
+      const d = newDomain.trim().toLowerCase();
+      if (d && !allowedDomains.includes(d)) {
+          if (!d.includes('.')) {
+              toast.error('Domínio inválido (ex: empresa.com.br)');
+              return;
+          }
+          setAllowedDomains([...allowedDomains, d]);
+          setNewDomain('');
+      }
+  };
+
+  const handleRemoveDomain = (domain: string) => {
+      setAllowedDomains(allowedDomains.filter(d => d !== domain));
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -90,19 +125,17 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
     if (newUser.name && newUser.email) {
       setIsSendingEmail(true);
       
-      // 1. Add User to App State
       onAddUser(newUser);
 
-      // 2. Send Welcome Email
       const emailResult = await sendWelcomeEmail(newUser, settings);
       
       setIsSendingEmail(false);
       setNewUser({ name: '', email: '', department: 'Geral', role: 'READER' });
       
       if (emailResult.success) {
-        alert('Usuário adicionado e e-mail de boas-vindas enviado com sucesso!');
+        toast.success('Usuário adicionado e convite enviado!');
       } else {
-        alert(`Usuário adicionado, mas falha no envio do e-mail: ${emailResult.message}`);
+        toast.warning(`Usuário criado, mas erro no e-mail: ${emailResult.message}`);
       }
     }
   };
@@ -110,7 +143,6 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   const handleAddCategoryClick = () => {
     if(!newCatName.trim()) return;
     
-    // Logic: Roots = 'library', Children = 'folder'
     const defaultIcon = newCatParent ? 'folder' : 'library';
 
     onAddCategory({
@@ -122,9 +154,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
     });
     
     setNewCatName('');
-    // We keep the parent selection to allow rapid addition of multiple siblings, 
-    // or you could clear it: setNewCatParent('');
-    alert('Item incluído na estrutura.');
+    toast.success('Categoria incluída na estrutura.');
   };
 
   const prepareAddSubcategory = (parentId: string) => {
@@ -152,7 +182,13 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
             onClick={() => setActiveTab('BRANDING')}
             className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'BRANDING' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
           >
-            <Image size={16} /> Marca (Branding)
+            <Image size={16} /> Marca & Home
+          </button>
+          <button
+            onClick={() => setActiveTab('SECURITY')}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'SECURITY' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
+          >
+            <ShieldCheck size={16} /> Segurança
           </button>
           <button
             onClick={() => setActiveTab('USERS')}
@@ -184,10 +220,6 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                        placeholder="Deixe vazio para usar apenas o logo expandido"
                      />
-                     <p className="text-xs text-gray-500 mt-1">
-                        Se preenchido: Exibe Logo Recolhido (1:1) + Nome.<br/>
-                        Se vazio: Exibe apenas Logo Expandido (16:9).
-                     </p>
                    </div>
                    
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -207,7 +239,6 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                             <Upload size={14} className="mr-2" /> Upload Ícone
                           </Button>
                         </div>
-                        <p className="text-xs text-gray-500 mt-2 text-center">Usado no Favicon e na Home.</p>
                      </div>
 
                      {/* Expanded Logo */}
@@ -229,6 +260,64 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                      </div>
                    </div>
 
+                   <hr className="border-gray-200 dark:border-gray-700 my-4" />
+                   
+                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Personalização de Textos</h3>
+                   
+                   {/* Seção 1: Landing Page (Pública) */}
+                   <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 mb-4">
+                     <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 uppercase tracking-wide">Página de Login (Pública)</h4>
+                     <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Título Principal (H1)</label>
+                          <input 
+                            type="text" 
+                            value={landingTitle}
+                            onChange={(e) => setLandingTitle(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 outline-none bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                            placeholder="ex: Peta Wiki Corporativo"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição Hero</label>
+                          <textarea
+                            rows={2}
+                            value={landingDescription}
+                            onChange={(e) => setLandingDescription(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 outline-none bg-white dark:bg-gray-900 text-gray-900 dark:text-white resize-none"
+                            placeholder="Texto descritivo para visitantes..."
+                          />
+                        </div>
+                     </div>
+                   </div>
+
+                   {/* Seção 2: Dashboard (Privada) */}
+                   <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                     <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 uppercase tracking-wide">Dashboard Interno (Privado)</h4>
+                     <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Título de Boas-Vindas</label>
+                          <input 
+                            type="text" 
+                            value={homeTitle}
+                            onChange={(e) => setHomeTitle(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 outline-none bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                            placeholder={`Bem-vindo ao ${appName}`}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Instrução Inicial</label>
+                          <textarea
+                            rows={2}
+                            value={homeDescription}
+                            onChange={(e) => setHomeDescription(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 outline-none bg-white dark:bg-gray-900 text-gray-900 dark:text-white resize-none"
+                            placeholder="Instruções para o usuário logado..."
+                          />
+                        </div>
+                     </div>
+                   </div>
+
                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                      <Button onClick={handleSaveSettings}>
                         <Save size={16} className="mr-2" /> Salvar Branding
@@ -237,6 +326,52 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                 </div>
               </div>
             </div>
+          )}
+
+          {activeTab === 'SECURITY' && (
+              <div className="space-y-6">
+                  <div>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Auto-Cadastro (Self Sign-up)</h3>
+                      <p className="text-sm text-gray-500 mb-4">
+                          Defina quais domínios de e-mail têm permissão para criar contas automaticamente. 
+                          Usuários criados desta forma terão o papel de <strong>LEITOR</strong>.
+                      </p>
+
+                      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                          <div className="flex gap-2 mb-4">
+                              <input 
+                                type="text" 
+                                placeholder="ex: parceiro.com.br"
+                                value={newDomain}
+                                onChange={(e) => setNewDomain(e.target.value)}
+                                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                                onKeyDown={(e) => e.key === 'Enter' && handleAddDomain()}
+                              />
+                              <Button onClick={handleAddDomain}>Adicionar</Button>
+                          </div>
+
+                          <div className="space-y-2">
+                              {allowedDomains.length === 0 && (
+                                  <p className="text-sm text-red-500 italic">Nenhum domínio permitido. O auto-cadastro está efetivamente desabilitado.</p>
+                              )}
+                              {allowedDomains.map(domain => (
+                                  <div key={domain} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded border border-gray-100 dark:border-gray-600">
+                                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">@{domain}</span>
+                                      <button onClick={() => handleRemoveDomain(domain)} className="text-red-500 hover:text-red-700 p-1">
+                                          <X size={16} />
+                                      </button>
+                                  </div>
+                              ))}
+                          </div>
+                      </div>
+
+                      <div className="pt-4 mt-6 border-t border-gray-200 dark:border-gray-700">
+                        <Button onClick={handleSaveSettings}>
+                            <Save size={16} className="mr-2" /> Salvar Regras de Segurança
+                        </Button>
+                      </div>
+                  </div>
+              </div>
           )}
 
           {activeTab === 'USERS' && (
@@ -365,7 +500,6 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                      className="flex-1 px-3 py-2 text-sm border rounded bg-white dark:bg-gray-800 dark:border-gray-600 dark:text-white"
                   >
                     <option value="">(Raiz)</option>
-                    {/* Exibe hierarquia no dropdown também para clareza */}
                     {sortedCategories.map(({cat, depth}) => (
                       <option key={cat.id} value={cat.id}>
                         {'- '.repeat(depth) + cat.name}
@@ -428,7 +562,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                </button>
                              )}
                              <button 
-                               onClick={() => { if(confirm('Excluir categoria?')) onDeleteCategory(cat.id); }}
+                               onClick={() => onDeleteCategory(cat.id)}
                                className="text-red-500 hover:text-red-700 p-1"
                                title="Excluir"
                              >
@@ -442,7 +576,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
               </div>
 
               <div className="pt-2 border-t border-gray-200 dark:border-gray-700 flex justify-end">
-                 <Button onClick={() => { alert('Todas as alterações foram salvas.'); onClose(); }}>
+                 <Button onClick={() => { toast.success('Todas as alterações foram salvas.'); onClose(); }}>
                     <Save size={16} className="mr-2" /> Salvar Alterações e Fechar
                  </Button>
               </div>

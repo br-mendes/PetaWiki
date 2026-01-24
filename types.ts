@@ -13,6 +13,15 @@ export interface SystemSettings {
   appName: string;
   logoCollapsedUrl: string; // 1:1 Icon
   logoExpandedUrl: string; // 16:9 Full Logo
+  allowedDomains: string[]; // Lista de domínios permitidos para cadastro (ex: ['empresa.com'])
+  
+  // Configurações do Dashboard Interno (Pós-login)
+  homeTitle?: string; 
+  homeDescription?: string;
+
+  // Configurações da Landing Page / Login (Pré-login)
+  landingTitle?: string;
+  landingDescription?: string;
 }
 
 export interface User {

@@ -5,6 +5,15 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
   appName: 'Peta Wiki',
   logoCollapsedUrl: 'https://ui-avatars.com/api/?name=PW&background=2563eb&color=fff&size=128&bold=true', // 1:1
   logoExpandedUrl: 'https://ui-avatars.com/api/?name=Peta+Wiki+Corp&background=2563eb&color=fff&size=256&bold=true&length=3', // 16:9 placeholder
+  allowedDomains: ['petacorp.com.br', 'gmxtecnologia.com.br'],
+  
+  // Dashboard Interno
+  homeTitle: 'Bem-vindo ao Peta Wiki',
+  homeDescription: 'Selecione uma categoria na barra lateral para navegar pela documentação.',
+
+  // Landing Page (Pública)
+  landingTitle: 'Peta Wiki Corporativo',
+  landingDescription: 'O hub central para o conhecimento corporativo. Organize, compartilhe e colabore na documentação com segurança baseada em funções.'
 };
 
 // Mocks removidos para forçar uso do Banco de Dados.
