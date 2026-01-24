@@ -73,12 +73,28 @@ CREATE TABLE IF NOT EXISTS public.system_settings (
 -- 7. NOVA TABELA: Eventos de Analytics (Histórico)
 CREATE TABLE IF NOT EXISTS public.analytics_events (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
-  event_type text NOT NULL CHECK (event_type IN ('VIEW', 'SEARCH', 'EXPORT')),
-  document_id text REFERENCES public.documents(id) ON DELETE SET NULL,
-  user_id text REFERENCES public.users(id) ON DELETE SET NULL,
-  metadata jsonb DEFAULT '{}'::jsonb, -- Para armazenar query de busca, formato de exportação, etc.
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- MIGRATION: Garantir colunas na analytics_events (Caso a tabela já exista sem elas)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'analytics_events' AND column_name = 'event_type') THEN
+        ALTER TABLE public.analytics_events ADD COLUMN event_type text CHECK (event_type IN ('VIEW', 'SEARCH', 'EXPORT'));
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'analytics_events' AND column_name = 'document_id') THEN
+        ALTER TABLE public.analytics_events ADD COLUMN document_id text REFERENCES public.documents(id) ON DELETE SET NULL;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'analytics_events' AND column_name = 'user_id') THEN
+        ALTER TABLE public.analytics_events ADD COLUMN user_id text REFERENCES public.users(id) ON DELETE SET NULL;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'analytics_events' AND column_name = 'metadata') THEN
+        ALTER TABLE public.analytics_events ADD COLUMN metadata jsonb DEFAULT '{}'::jsonb;
+    END IF;
+END $$;
 
 -- 8. Funções RPC e Helpers
 
@@ -120,6 +136,7 @@ BEGIN
   RETURNING views INTO new_count;
 
   -- 2. Insere log histórico
+  -- Verifica se as colunas existem antes de inserir (Segurança extra, mas o ALTER TABLE acima deve garantir)
   INSERT INTO analytics_events (event_type, document_id, user_id)
   VALUES ('VIEW', p_doc_id, p_user_id);
 
