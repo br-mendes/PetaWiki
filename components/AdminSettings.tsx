@@ -7,6 +7,7 @@ import { Image, Save, UserCog, UserPlus, FolderTree, Upload, Trash2, Plus, Corne
 import { generateSlug } from '../lib/hierarchy';
 import { sendWelcomeEmail } from '../lib/email';
 import { useToast } from './Toast';
+import { compressImage } from '../lib/image';
 import { DEFAULT_SYSTEM_SETTINGS } from '../constants';
 
 interface AdminSettingsProps {
@@ -91,8 +92,6 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   const collapsedInputRef = useRef<HTMLInputElement>(null);
   const expandedInputRef = useRef<HTMLInputElement>(null);
   const catNameInputRef = useRef<HTMLInputElement>(null);
-
-  const availableIcons = ['shield', 'users', 'search', 'book', 'lock', 'zap', 'globe', 'layout', 'star'];
 
   const sortedCategories = useMemo(() => {
     const grouped = new Map<string | null, Category[]>();
@@ -207,12 +206,16 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, setter: (s: string) => void) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, setter: (s: string) => void) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setter(reader.result as string);
-      reader.readAsDataURL(file);
+      try {
+        const compressedBase64 = await compressImage(file, 800, 0.8);
+        setter(compressedBase64);
+        toast.success('Imagem processada com sucesso.');
+      } catch (e) {
+        toast.error('Erro ao processar imagem.');
+      }
     }
   };
 
@@ -239,19 +242,6 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
     const newCols = [...footerColumns];
     newCols[colIndex].links[linkIndex][field] = value;
     setFooterColumns(newCols);
-  };
-
-  // Feature Handlers
-  const handleUpdateFeature = (index: number, field: keyof LandingFeature, value: string) => {
-    const newFeatures = [...landingFeatures];
-    newFeatures[index] = { ...newFeatures[index], [field]: value };
-    setLandingFeatures(newFeatures);
-  };
-
-  const handleUpdateTag = (index: number, field: keyof HeroTag, value: string) => {
-    const newTags = [...heroTags];
-    newTags[index] = { ...newTags[index], [field]: value };
-    setHeroTags(newTags);
   };
 
   return (
@@ -302,7 +292,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
         <div className="flex-1 overflow-y-auto max-h-[600px] pr-2">
           {activeTab === 'BRANDING' && (
             <div className="space-y-6">
-              {/* Branding Content (Unchanged) */}
+              {/* Branding Content */}
                <div>
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Aparência & Layout</h3>
                 
@@ -444,11 +434,11 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
             </div>
           )}
 
+          {/* ... (Footer, Security, Users Tabs Content - Similar structure) ... */}
           {activeTab === 'FOOTER' && (
              <div className="space-y-6">
                 <div>
                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Configuração do Rodapé</h3>
-                   {/* Footer content unchanged */}
                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                      Personalize as colunas, links e o texto final exibidos no rodapé da página inicial.
                    </p>
@@ -629,7 +619,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                   </form>
                </div>
 
-               {/* User List */}
+               {/* User List & Tables ... (Unchanged logic) */}
                <div>
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Gerenciar Permissões</h3>
                 <div className="border rounded-lg overflow-hidden dark:border-gray-600">
@@ -696,7 +686,6 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
             </div>
           )}
 
-          {/* ... (Categories and Trash tabs unchanged) ... */}
           {activeTab === 'CATEGORIES' && (
              <div className="space-y-6">
               {/* Categories Tab Content - Unchanged Logic */}
@@ -811,6 +800,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
 
           {activeTab === 'TRASH' && (
              <div className="space-y-6">
+                {/* Trash content unchanged */}
                 <div>
                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Lixeira de Artigos</h3>
                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">

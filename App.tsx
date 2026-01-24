@@ -384,6 +384,7 @@ const AppContent = () => {
   }, []);
 
 
+  // ... (Auth Handlers and other functions remain unchanged) ...
   // Auth Handlers
   const handleLogin = (usernameInput: string, passwordInput: string) => {
     const foundUser = users.find(u => u.username === usernameInput || u.email === usernameInput);
@@ -1114,6 +1115,7 @@ const AppContent = () => {
                 selectedDocument ? setCurrentView('DOCUMENT_VIEW') : setCurrentView('HOME');
               }}
               categories={categoryTree}
+              allCategories={categories} // Added: Passing flat list for improved lookup in Editor
               initialCategoryId={selectedDocument?.categoryId}
               initialContent={currentView === 'DOCUMENT_CREATE' ? newDocTemplate?.content : undefined}
               initialTags={currentView === 'DOCUMENT_CREATE' ? newDocTemplate?.tags : undefined}

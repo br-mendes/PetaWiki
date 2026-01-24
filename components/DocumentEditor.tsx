@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Save, Sparkles, X, Type, Tag, Globe, ChevronDown, CheckCircle, AlertCircle, Copy, Plus } from 'lucide-react';
+import { Save, Sparkles, X, Type, Tag, Globe, ChevronDown, CheckCircle, AlertCircle, Copy, Plus, Folder, CornerDownRight, ArrowLeft } from 'lucide-react';
 import { generateAiResponse } from '../lib/ai';
 import { Document, User, Category, SupportedLanguage } from '../types';
 import { Button } from './Button';
@@ -8,6 +8,7 @@ import { CategoryTreeSelect } from './CategoryTreeSelect';
 import { TranslationModal } from './TranslationModal';
 import { RichTextEditor } from './RichTextEditor';
 import { useToast } from './Toast';
+import { getCategoryPath } from '../lib/hierarchy';
 
 interface DocumentEditorProps {
   document?: Document | null; // Null means new doc
@@ -16,6 +17,7 @@ interface DocumentEditorProps {
   onTranslate?: (langs: SupportedLanguage[]) => Promise<void>; // New prop
   onCancel: () => void;
   categories: Category[]; // Tree structure for selection
+  allCategories: Category[]; // Flat list for path lookup
   initialCategoryId?: string;
   initialContent?: string;
   initialTags?: string[];
@@ -29,6 +31,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   onTranslate, 
   onCancel, 
   categories,
+  allCategories,
   initialCategoryId,
   initialContent = '',
   initialTags = [],
@@ -155,84 +158,135 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
     }
   };
 
+  const categoryPath = categoryId ? getCategoryPath(categoryId, allCategories) : null;
+
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {document ? 'Editar Documento' : 'Novo Documento'}
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {document ? `Editando como ${user.name}` : 'Criar um novo artigo na base de conhecimento'}
-          </p>
+      {/* Header with Improved Button Layout */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm sticky top-20 z-20">
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={onCancel}
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors md:hidden"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              {document ? 'Editar Documento' : 'Novo Documento'}
+            </h1>
+            <p className="text-xs text-gray-500 dark:text-gray-400 hidden md:block">
+              {document ? `Editando revisão de ${user.name}` : 'Criando novo artigo na base de conhecimento'}
+            </p>
+          </div>
         </div>
-        <div className="flex gap-2">
+
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          <Button variant="ghost" onClick={onCancel} className="hidden md:flex text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+            Cancelar
+          </Button>
+          
+          <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 hidden md:block"></div>
+
           {user.role === 'ADMIN' && onCreateTemplate && (
-            <Button variant="secondary" onClick={() => onCreateTemplate({ title, content, tags })} className="dark:text-gray-300 dark:hover:bg-gray-700">
+            <Button 
+              variant="secondary" 
+              onClick={() => onCreateTemplate({ title, content, tags })} 
+              className="flex-1 md:flex-none justify-center dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+              title="Salvar estrutura como modelo reutilizável"
+            >
               <Copy size={16} className="mr-2" />
-              Salvar como Template
+              Salvar Template
             </Button>
           )}
-          <Button variant="ghost" onClick={onCancel} className="dark:text-gray-300 dark:hover:bg-gray-700">Cancelar</Button>
-          <Button onClick={() => onSave({ title, content, categoryId, tags })}>
+          
+          <Button 
+            onClick={() => onSave({ title, content, categoryId, tags })} 
+            className="flex-1 md:flex-none justify-center shadow-lg shadow-blue-500/20"
+          >
             <Save size={16} className="mr-2" />
-            Salvar & {user.role === 'ADMIN' ? 'Publicar' : 'Solicitar Revisão'}
+            Salvar & {user.role === 'ADMIN' ? 'Publicar' : 'Enviar'}
           </Button>
         </div>
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-visible relative">
-        <div className="border-b border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900 flex items-center gap-2 flex-wrap">
-          
-          <button 
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${isGenerating ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20'}`}
-            onClick={handleAiSuggest}
-            disabled={isGenerating}
-            title="Usa Mistral 7B via Ollama"
-          >
-            <Sparkles size={16} />
-            {isGenerating ? 'Pensando (Ollama)...' : 'Sugestão IA'}
-          </button>
-          
-          {document && onTranslate && (
-             <button 
-               className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-               onClick={() => setIsTranslationModalOpen(true)}
-             >
-               <Globe size={16} />
-               Traduzir
-             </button>
-          )}
+        {/* Toolbar de Ferramentas Auxiliares */}
+        <div className="border-b border-gray-200 dark:border-gray-700 p-3 bg-gray-50 dark:bg-gray-900 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <button 
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors border ${isGenerating ? 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/40 dark:text-purple-300 dark:border-purple-800' : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-600 hover:border-purple-200'}`}
+              onClick={handleAiSuggest}
+              disabled={isGenerating}
+              title="Usa Mistral 7B via Ollama para analisar o texto"
+            >
+              <Sparkles size={14} />
+              {isGenerating ? 'Analisando...' : 'Revisão IA'}
+            </button>
+            
+            {document && onTranslate && (
+              <button 
+                className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 hover:border-blue-200 transition-colors"
+                onClick={() => setIsTranslationModalOpen(true)}
+              >
+                <Globe size={14} />
+                Traduzir
+              </button>
+            )}
+          </div>
+          <div className="text-xs text-gray-400 font-mono hidden sm:block">
+             {content.length} caracteres
+          </div>
         </div>
 
         {aiSuggestion && (
-          <div className="bg-purple-50 dark:bg-purple-900/20 border-b border-purple-100 dark:border-purple-800 p-4 flex items-start gap-3">
+          <div className="bg-purple-50 dark:bg-purple-900/20 border-b border-purple-100 dark:border-purple-800 p-4 flex items-start gap-3 animate-in slide-in-from-top-2 duration-300">
             <Sparkles className="text-purple-600 dark:text-purple-400 mt-1 shrink-0" size={18} />
             <div className="flex-1">
               <h4 className="text-sm font-semibold text-purple-900 dark:text-purple-300">Sugestão IA (Mistral 7B)</h4>
-              <p className="text-sm text-purple-800 dark:text-purple-200 mt-1 whitespace-pre-line">{aiSuggestion}</p>
+              <p className="text-sm text-purple-800 dark:text-purple-200 mt-1 whitespace-pre-line leading-relaxed">{aiSuggestion}</p>
             </div>
-            <button onClick={() => setAiSuggestion(null)} className="text-purple-400 hover:text-purple-700 dark:hover:text-purple-300">
+            <button onClick={() => setAiSuggestion(null)} className="text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 transition-colors">
               <X size={16} />
             </button>
           </div>
         )}
 
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-8">
+           
+           {/* Seletor de Categoria Visual */}
            <div className="relative" ref={selectRef}>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Localização da Categoria</label>
-            <div 
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg flex items-center justify-between cursor-pointer bg-gray-50 dark:bg-gray-900 hover:bg-white dark:hover:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                Localização (Categoria)
+            </label>
+            <button 
+              className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all duration-200 text-left group ${showCategorySelect ? 'ring-2 ring-blue-500 border-blue-500 bg-white dark:bg-gray-800' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 hover:bg-white dark:hover:bg-gray-800 hover:border-gray-300'}`}
               onClick={() => setShowCategorySelect(!showCategorySelect)}
             >
-              <span className="text-gray-700 dark:text-gray-200 text-sm">
-                {categoryId ? `ID da Categoria: ${categoryId}` : 'Selecione uma categoria...'} 
-              </span>
-              <ChevronDown size={16} className="text-gray-400" />
-            </div>
+              <div className="flex items-center gap-3 overflow-hidden">
+                 <div className={`p-2 rounded-md ${categoryId ? 'bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300' : 'bg-gray-200 text-gray-500 dark:bg-gray-800 dark:text-gray-400'}`}>
+                    <Folder size={20} />
+                 </div>
+                 <div className="flex flex-col overflow-hidden">
+                    {categoryId ? (
+                        <>
+                            <span className="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                {categoryPath?.split(' > ').pop()}
+                            </span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 truncate">
+                                <CornerDownRight size={10} className="inline" /> {categoryPath}
+                            </span>
+                        </>
+                    ) : (
+                        <span className="text-sm text-gray-500 dark:text-gray-400 italic">Selecione onde salvar este documento...</span>
+                    )}
+                 </div>
+              </div>
+              <ChevronDown size={18} className={`text-gray-400 transition-transform ${showCategorySelect ? 'rotate-180' : ''}`} />
+            </button>
             
             {showCategorySelect && (
-              <div className="absolute top-full left-0 right-0 mt-1 z-10">
+              <div className="absolute top-full left-0 right-0 mt-2 z-10 shadow-xl rounded-lg overflow-hidden animate-in fade-in zoom-in-95 duration-100">
                 <CategoryTreeSelect 
                   categories={categories} 
                   selectedId={categoryId} 
@@ -245,69 +299,81 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
             )}
           </div>
 
+          {/* Título */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Título</label>
+            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Título do Artigo</label>
             <input 
               type="text" 
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full text-xl font-semibold bg-transparent border-b border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white focus:border-blue-500 focus:outline-none py-2 placeholder-gray-300"
-              placeholder="Digite o título do documento..."
+              className="w-full text-2xl font-bold bg-transparent border-b-2 border-gray-100 dark:border-gray-700 text-gray-900 dark:text-white focus:border-blue-500 focus:outline-none py-2 placeholder-gray-300 dark:placeholder-gray-600 transition-colors"
+              placeholder="Digite um título claro e descritivo..."
             />
           </div>
 
+          {/* Editor Rico */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Conteúdo do Artigo</label>
-            <RichTextEditor 
-              value={content}
-              onChange={setContent}
-              className="min-h-[500px]"
-            />
+            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Conteúdo</label>
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500/50 transition-shadow shadow-sm">
+                <RichTextEditor 
+                value={content}
+                onChange={setContent}
+                className="min-h-[500px] border-none" // Remove border from component to use container border
+                />
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                <Tag size={16} /> Tags & Palavras-chave
+          {/* Tags */}
+          <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
+            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-2">
+                <Tag size={14} /> Tags & Metadados
             </label>
             <div className="flex flex-col gap-3">
                 <div className="flex gap-2">
-                    <input 
-                        type="text"
-                        value={tagInput}
-                        onChange={(e) => setTagInput(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder="Adicionar tag (Enter)"
-                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                    />
-                    <Button variant="secondary" onClick={handleAddTag} disabled={!tagInput.trim()}>
-                        <Plus size={16} />
-                    </Button>
+                    <div className="relative flex-1">
+                        <input 
+                            type="text"
+                            value={tagInput}
+                            onChange={(e) => setTagInput(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Digite uma tag e pressione Enter..."
+                            className="w-full pl-3 pr-10 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                        />
+                        <button 
+                            onClick={handleAddTag}
+                            disabled={!tagInput.trim()}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-blue-600 hover:bg-blue-50 rounded disabled:opacity-50 disabled:hover:bg-transparent"
+                        >
+                            <Plus size={18} />
+                        </button>
+                    </div>
+                    
                     <button 
                         onClick={handleGenerateTags}
                         disabled={isGeneratingTags}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${isGeneratingTags ? 'bg-purple-100 text-purple-400 cursor-not-allowed' : 'bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 shadow-sm'}`}
-                        title="Gerar tags com IA (Mistral 7B)"
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all shadow-sm ${isGeneratingTags ? 'bg-purple-50 text-purple-400 cursor-not-allowed border border-purple-100' : 'bg-white border border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300 dark:bg-gray-800 dark:border-purple-900 dark:text-purple-400'}`}
+                        title="Gerar tags automaticamente com IA"
                     >
                         {isGeneratingTags ? (
-                            <span className="animate-pulse">Gerando...</span>
+                            <span className="animate-pulse flex items-center gap-2"><Sparkles size={14} /> Gerando...</span>
                         ) : (
                             <>
-                                <Sparkles size={16} /> Auto-Tag
+                                <Sparkles size={14} /> Auto-Tag
                             </>
                         )}
                     </button>
                 </div>
                 
-                <div className="flex flex-wrap gap-2 min-h-[40px] p-2 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-dashed border-gray-300 dark:border-gray-700">
+                <div className="flex flex-wrap gap-2">
                     {tags.length === 0 && (
-                        <span className="text-gray-400 text-sm italic py-1">Nenhuma tag adicionada. Digite acima ou use a IA.</span>
+                        <span className="text-gray-400 text-sm italic py-2">Nenhuma tag adicionada. Tags ajudam na busca do documento.</span>
                     )}
                     {tags.map(tag => (
-                        <span key={tag} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        <span key={tag} className="inline-flex items-center pl-2.5 pr-1 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800">
                             {tag}
                             <button 
                                 onClick={() => handleRemoveTag(tag)}
-                                className="ml-1.5 text-blue-600 dark:text-blue-300 hover:text-blue-900 dark:hover:text-white focus:outline-none"
+                                className="ml-1.5 p-0.5 hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full transition-colors"
                             >
                                 <X size={12} />
                             </button>

@@ -1,9 +1,10 @@
-
 import React, { useState, useRef } from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { User, Role } from '../types';
 import { Lock, Save, Camera, Upload, Eye, EyeOff, User as UserIcon, Briefcase } from 'lucide-react';
+import { compressImage } from '../lib/image';
+import { useToast } from './Toast';
 
 interface UserProfileProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   onUpdateAvatar,
   onUpdateUser
 }) => {
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<'PROFILE' | 'PASSWORD'>('PROFILE');
 
   // Password State
@@ -50,18 +52,20 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   const [avatarPreview, setAvatarPreview] = useState(user.avatar);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
+      try {
+        // Compress avatar (smaller dimensions needed)
+        const result = await compressImage(file, 400, 0.7);
         setAvatarPreview(result);
         if (onUpdateAvatar) {
            onUpdateAvatar(result);
         }
-      };
-      reader.readAsDataURL(file);
+      } catch (error) {
+        console.error("Erro ao processar avatar", error);
+        toast.error("Erro ao processar imagem.");
+      }
     }
   };
 
@@ -261,19 +265,6 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                         {showNewPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                     </button>
                 </div>
-                {/* Strength Meter */}
-                {newPassword && (
-                    <div className="mt-2 flex gap-1 h-1">
-                        {[1, 2, 3, 4, 5].map(step => (
-                            <div 
-                                key={step} 
-                                className={`flex-1 rounded-full transition-colors duration-300 ${passwordStrength >= step 
-                                    ? (passwordStrength < 3 ? 'bg-red-500' : passwordStrength < 4 ? 'bg-yellow-500' : 'bg-green-500') 
-                                    : 'bg-gray-200 dark:bg-gray-600'}`} 
-                            />
-                        ))}
-                    </div>
-                )}
               </div>
               
               <div>
