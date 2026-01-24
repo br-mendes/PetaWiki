@@ -1010,7 +1010,7 @@ const AppContent = () => {
             onSearch={setSearchQuery}
          />
       ) : (
-         <Sidebar {...commonProps} />
+         <Sidebar {...commonProps} searchQuery={searchQuery} />
       )}
 
       <div className="flex-1 flex flex-col h-full overflow-hidden">
@@ -1022,7 +1022,9 @@ const AppContent = () => {
         )}
 
         <main className="flex-1 overflow-y-auto">
-          {isSearching && (
+          {/* A mensagem de busca agora é tratada pela Sidebar, então removemos daqui para não duplicar */}
+          {/* Mas se quiser manter uma mensagem de "loading" global, pode deixar */}
+          {isSearching && isLoading && (
              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 text-center text-sm text-blue-600 dark:text-blue-300">
                 <span className="animate-pulse">Buscando documentos...</span>
              </div>

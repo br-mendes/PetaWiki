@@ -218,7 +218,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
              <div className="h-full flex flex-col">
                 <Sidebar 
                     {...props} 
-                    // Overrides to hide duplicate controls if desired, or keep them for mobile flexibility
+                    searchQuery={searchQuery}
                 />
              </div>
           </div>

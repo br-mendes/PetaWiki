@@ -4,7 +4,7 @@ import {
   ChevronRight, ChevronDown, Plus, Trash2, 
   Book, Folder, FolderOpen, FileText, 
   LifeBuoy, Server, MessageCircle, Mail, Monitor, 
-  Users, UserPlus, Heart, Library, Settings, LogOut, Sun, Moon, UserCircle
+  Users, UserPlus, Heart, Library, Settings, LogOut, Sun, Moon, UserCircle, Search, File
 } from 'lucide-react';
 import { Category, User, SystemSettings, Document } from '../types';
 import { canUserModifyCategory } from '../lib/hierarchy';
@@ -40,6 +40,8 @@ interface SidebarProps {
   onOpenProfile: () => void;
   toggleTheme: () => void;
   isDarkMode: boolean;
+  // Search Context
+  searchQuery?: string;
 }
 
 const CategoryItem: React.FC<{ 
@@ -200,10 +202,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onLogout,
   onOpenProfile,
   toggleTheme,
-  isDarkMode
+  isDarkMode,
+  searchQuery
 }) => {
   const isAdminOrEditor = user.role === 'ADMIN' || user.role === 'EDITOR';
   const showExpandedLogo = !systemSettings.appName || systemSettings.appName.trim() === '';
+  
+  // Check if we are in search mode
+  const isSearching = searchQuery && searchQuery.trim().length > 0;
 
   return (
     <div className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 h-full flex flex-col transition-colors z-20 shadow-xl">
@@ -239,9 +245,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="mb-4">
           <div className="flex items-center justify-between px-2 mb-2">
             <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              Biblioteca
+              {isSearching ? 'Resultados da Busca' : 'Biblioteca'}
             </h3>
-            {isAdminOrEditor && (
+            {!isSearching && isAdminOrEditor && (
               <button 
                 onClick={() => onCreateCategory(null)}
                 className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
@@ -252,19 +258,47 @@ export const Sidebar: React.FC<SidebarProps> = ({
             )}
           </div>
           
-          {categories.map(cat => (
-            <CategoryItem 
-              key={cat.id} 
-              category={cat} 
-              categoryDocuments={documents.filter(d => d.categoryId === cat.id)}
-              allDocuments={documents}
-              onSelectCategory={onSelectCategory}
-              onSelectDocument={onSelectDocument}
-              onCreate={onCreateCategory}
-              onDelete={onDeleteCategory}
-              user={user}
-            />
-          ))}
+          {isSearching ? (
+             // --- SEARCH MODE: FLAT LIST ---
+             <div className="space-y-1">
+                {documents.length === 0 ? (
+                    <div className="text-sm text-gray-400 px-4 py-4 text-center italic">
+                        Nenhum documento encontrado.
+                    </div>
+                ) : (
+                    documents.map(doc => (
+                        <div 
+                            key={doc.id}
+                            onClick={() => onSelectDocument(doc)}
+                            className="flex flex-col px-3 py-2 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md group transition-colors"
+                        >
+                            <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 font-medium">
+                                <FileText size={14} className="text-blue-500 shrink-0" />
+                                <span className="truncate">{doc.title}</span>
+                            </div>
+                            <div className="ml-5 text-xs text-gray-400 dark:text-gray-500 truncate">
+                                {doc.categoryPath || 'Sem categoria'}
+                            </div>
+                        </div>
+                    ))
+                )}
+             </div>
+          ) : (
+             // --- NORMAL MODE: CATEGORY TREE ---
+             categories.map(cat => (
+                <CategoryItem 
+                  key={cat.id} 
+                  category={cat} 
+                  categoryDocuments={documents.filter(d => d.categoryId === cat.id)}
+                  allDocuments={documents}
+                  onSelectCategory={onSelectCategory}
+                  onSelectDocument={onSelectDocument}
+                  onCreate={onCreateCategory}
+                  onDelete={onDeleteCategory}
+                  user={user}
+                />
+              ))
+          )}
         </div>
       </div>
 
