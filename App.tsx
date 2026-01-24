@@ -226,13 +226,11 @@ const AppContent = () => {
   const visibleDocuments = useMemo(() => {
     if (!currentUser) return [];
     
-    const isSearchingActive = searchQuery.trim().length > 0;
+    // Na nova lógica de busca via Dropdown, a lista "visibleDocuments" (usada na Sidebar)
+    // NÃO deve ser filtrada pela busca. Ela sempre mostra a biblioteca completa.
+    // A busca agora vive num componente separado (Dropdown no Header).
     
-    const sourceDocs = (isSearchingActive && searchResultDocs !== null) 
-        ? searchResultDocs 
-        : activeDocuments;
-
-    const roleFiltered = sourceDocs.filter(doc => {
+    const roleFiltered = activeDocuments.filter(doc => {
       if (doc.deletedAt) return false;
 
       if (currentUser.role === 'ADMIN') return true;
@@ -242,7 +240,7 @@ const AppContent = () => {
     });
 
     return roleFiltered;
-  }, [activeDocuments, searchResultDocs, currentUser, searchQuery]);
+  }, [activeDocuments, currentUser]);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -645,6 +643,7 @@ const AppContent = () => {
   const handleSelectDocument = (document: Document) => {
     if (document.deletedAt) return; 
     setSelectedDocId(document.id);
+    setSearchQuery(''); // Limpar busca ao selecionar, fechando o dropdown
     setCurrentView('DOCUMENT_VIEW');
   };
 
@@ -971,6 +970,7 @@ const AppContent = () => {
             {...commonProps} 
             searchQuery={searchQuery}
             onSearch={setSearchQuery}
+            searchResults={searchResultDocs} 
          />
       ) : (
          <Sidebar {...commonProps} searchQuery={searchQuery} />
@@ -981,6 +981,8 @@ const AppContent = () => {
             <Header 
                 searchQuery={searchQuery}
                 onSearch={setSearchQuery}
+                searchResults={searchResultDocs}
+                onSelectDocument={handleSelectDocument}
             />
         )}
 

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { 
-  ChevronRight, ChevronDown, Plus, Trash2, 
+  ChevronRight, Plus, Trash2, 
   Book, Folder, FolderOpen, FileText, 
   LifeBuoy, Server, MessageCircle, Mail, Monitor, 
   Users, UserPlus, Heart, Library, Settings, LogOut, Sun, Moon, UserCircle, PlusCircle,
@@ -225,9 +225,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const isAdminOrEditor = user.role === 'ADMIN' || user.role === 'EDITOR';
   const showExpandedLogo = !systemSettings.appName || systemSettings.appName.trim() === '';
   
-  // Check if we are in search mode
-  const isSearching = searchQuery && searchQuery.trim().length > 0;
-
   const isDropdown = variant === 'DROPDOWN';
 
   // Base classes differ based on variant
@@ -270,7 +267,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className={`flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 ${isDropdown ? 'max-h-[70vh]' : ''}`}>
         
         {/* Admin Analytics Link - Always visible here if Admin */}
-        {!isSearching && user.role === 'ADMIN' && (
+        {user.role === 'ADMIN' && (
             <div className="mb-4 mt-2 px-1">
                <button 
                  onClick={onNavigateToAnalytics}
@@ -288,12 +285,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div className="mb-4">
           <div className="flex items-center justify-between px-2 mb-3">
             <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-              {isSearching ? 'Resultados da Busca' : 'Biblioteca'}
+              Biblioteca
             </h3>
           </div>
 
-          {/* Botão Principal de Adicionar Raiz - Somente se não estiver buscando */}
-          {!isSearching && isAdminOrEditor && (
+          {/* Botão Principal de Adicionar Raiz */}
+          {isAdminOrEditor && (
             <button 
               onClick={() => onCreateCategory(null)}
               className="w-full flex items-center justify-center gap-2 mb-4 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all shadow-sm group"
@@ -303,54 +300,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </button>
           )}
           
-          {isSearching ? (
-             // --- SEARCH MODE: FLAT LIST ---
-             <div className="space-y-1">
-                {documents.length === 0 ? (
-                    <div className="text-sm text-gray-400 px-4 py-4 text-center italic">
-                        Nenhum documento encontrado.
-                    </div>
-                ) : (
-                    documents.map(doc => (
-                        <div 
-                            key={doc.id}
-                            onClick={() => onSelectDocument(doc)}
-                            className="flex flex-col px-3 py-2 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md group transition-colors"
-                        >
-                            <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200 font-medium">
-                                <FileText size={14} className="text-blue-500 shrink-0" />
-                                <span className="truncate">{doc.title}</span>
-                            </div>
-                            <div className="ml-5 text-xs text-gray-400 dark:text-gray-500 truncate">
-                                {doc.categoryPath || 'Sem categoria'}
-                            </div>
-                        </div>
-                    ))
-                )}
-             </div>
-          ) : (
-             // --- NORMAL MODE: CATEGORY TREE ---
-             <div className="space-y-0.5">
-               {categories.length === 0 && (
-                 <div className="text-center py-8 text-gray-400 text-sm italic">
-                   Nenhuma categoria.<br/>Crie uma para começar.
-                 </div>
-               )}
-               {categories.map(cat => (
-                  <CategoryItem 
-                    key={cat.id} 
-                    category={cat} 
-                    categoryDocuments={documents.filter(d => d.categoryId === cat.id)}
-                    allDocuments={documents}
-                    onSelectCategory={onSelectCategory}
-                    onSelectDocument={onSelectDocument}
-                    onCreate={onCreateCategory}
-                    onDelete={onDeleteCategory}
-                    user={user}
-                  />
-                ))}
-             </div>
-          )}
+          {/* Always show Category Tree */}
+          <div className="space-y-0.5">
+            {categories.length === 0 && (
+                <div className="text-center py-8 text-gray-400 text-sm italic">
+                Nenhuma categoria.<br/>Crie uma para começar.
+                </div>
+            )}
+            {categories.map(cat => (
+                <CategoryItem 
+                key={cat.id} 
+                category={cat} 
+                categoryDocuments={documents.filter(d => d.categoryId === cat.id)}
+                allDocuments={documents}
+                onSelectCategory={onSelectCategory}
+                onSelectDocument={onSelectDocument}
+                onCreate={onCreateCategory}
+                onDelete={onDeleteCategory}
+                user={user}
+                />
+            ))}
+          </div>
         </div>
       </div>
 
