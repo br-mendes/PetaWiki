@@ -3,7 +3,7 @@ import React, { useState, useRef, useMemo } from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { User, SystemSettings, Role, Category, Document } from '../types';
-import { Image, Save, UserCog, UserPlus, FolderTree, Upload, Trash2, Plus, CornerDownRight, ShieldCheck, X, Layout, Sidebar as SidebarIcon, PanelTop, RotateCcw, FileX } from 'lucide-react';
+import { Image, Save, UserCog, UserPlus, FolderTree, Upload, Trash2, Plus, CornerDownRight, ShieldCheck, X, Layout, Sidebar as SidebarIcon, PanelTop, RotateCcw, FileX, Edit } from 'lucide-react';
 import { generateSlug } from '../lib/hierarchy';
 import { sendWelcomeEmail } from '../lib/email';
 import { useToast } from './Toast';
@@ -15,7 +15,8 @@ interface AdminSettingsProps {
   onSaveSettings: (settings: SystemSettings) => void;
   users: User[];
   onUpdateUserRole: (userId: string, newRole: Role) => void;
-  onDeleteUser: (userId: string) => void; // New prop
+  onUpdateUserDetails: (userId: string, data: { name: string, email: string }) => void; // New prop
+  onDeleteUser: (userId: string) => void; 
   onAddUser: (user: Partial<User>) => void;
   categories: Category[]; 
   onUpdateCategory: (id: string, data: Partial<Category>) => void;
@@ -34,6 +35,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   onSaveSettings,
   users,
   onUpdateUserRole,
+  onUpdateUserDetails,
   onDeleteUser,
   onAddUser,
   categories,
@@ -69,6 +71,11 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   const [newUser, setNewUser] = useState({ name: '', email: '', department: 'Geral', role: 'READER' as Role });
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   
+  // User Editing State
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+
   // Category State
   const [newCatName, setNewCatName] = useState('');
   const [newCatParent, setNewCatParent] = useState('');
@@ -150,6 +157,19 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
       }
     }
   };
+
+  const startEditingUser = (user: User) => {
+      setEditingUser(user);
+      setEditName(user.name);
+      setEditEmail(user.email);
+  };
+
+  const saveEditedUser = () => {
+      if (editingUser && editName && editEmail) {
+          onUpdateUserDetails(editingUser.id, { name: editName, email: editEmail });
+          setEditingUser(null);
+      }
+  };
   
   const handleAddCategoryClick = () => {
     if(!newCatName.trim()) return;
@@ -185,6 +205,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   };
 
   return (
+    <>
     <Modal isOpen={isOpen} onClose={onClose} title="Configurações de Admin" size="lg">
       <div className="flex flex-col md:flex-row gap-6 min-h-[500px]">
         {/* Sidebar */}
@@ -498,6 +519,13 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-right">
                             <div className="flex items-center justify-end gap-2">
+                                <button
+                                    onClick={() => startEditingUser(u)}
+                                    className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                    title="Editar Nome/Email"
+                                >
+                                    <Edit size={16} />
+                                </button>
                                 <select 
                                 value={u.role}
                                 onChange={(e) => onUpdateUserRole(u.id, e.target.value as Role)}
@@ -701,5 +729,34 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
         </div>
       </div>
     </Modal>
+
+    {/* User Edit Modal */}
+    <Modal isOpen={!!editingUser} onClose={() => setEditingUser(null)} title="Editar Usuário" size="sm">
+        <div className="space-y-4">
+            <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome de Exibição</label>
+                <input 
+                    type="text" 
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-blue-500 outline-none"
+                />
+            </div>
+            <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">E-mail (Login)</label>
+                <input 
+                    type="email" 
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-blue-500 outline-none"
+                />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+                <Button variant="ghost" onClick={() => setEditingUser(null)}>Cancelar</Button>
+                <Button onClick={saveEditedUser}>Salvar Alterações</Button>
+            </div>
+        </div>
+    </Modal>
+    </>
   );
 };

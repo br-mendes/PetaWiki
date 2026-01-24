@@ -320,6 +320,43 @@ const AppContent = () => {
     }
   };
 
+  const handleUpdateUserDetails = async (userId: string, data: { name: string, email: string }) => {
+    // 1. Check duplicate email (local check)
+    const emailExists = users.some(u => u.email === data.email && u.id !== userId);
+    if (emailExists) {
+        toast.error("Este e-mail já está sendo usado por outro usuário.");
+        return;
+    }
+
+    // 2. Optimistic Update
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...data } : u));
+    
+    // Update current user if it's the admin editing themselves
+    if (currentUser && currentUser.id === userId) {
+        setCurrentUser(prev => prev ? { ...prev, ...data } : null);
+    }
+
+    try {
+        // 3. DB Update
+        if (userId === 'mock_admin') {
+           toast.success("Simulação: Detalhes atualizados.");
+           return;
+        }
+
+        const { error } = await supabase.from('users').update({ 
+            name: data.name, 
+            email: data.email 
+        }).eq('id', userId);
+
+        if (error) throw error;
+        toast.success('Dados do usuário atualizados.');
+
+    } catch (e) {
+        toast.error('Erro ao salvar dados no banco.');
+        // Revert on error could be implemented here fetching data again
+    }
+  };
+
   const handleDeleteUser = async (userId: string) => {
     if (currentUser?.role !== 'ADMIN') return;
     if (currentUser?.id === userId) {
@@ -936,6 +973,7 @@ const AppContent = () => {
         onSaveSettings={setSystemSettings}
         users={users}
         onUpdateUserRole={handleUpdateUserRole}
+        onUpdateUserDetails={handleUpdateUserDetails}
         onDeleteUser={handleDeleteUser}
         onAddUser={handleAddUser}
         categories={categories}
