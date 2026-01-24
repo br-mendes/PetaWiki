@@ -12,7 +12,7 @@ import { LoginPage } from './components/LoginPage';
 import { AdminSettings } from './components/AdminSettings';
 import { UserProfile } from './components/UserProfile';
 import { Role, Document, Category, User, DocumentTemplate, DocumentTranslation, SupportedLanguage, SystemSettings, DocumentVersion } from './types';
-import { MOCK_TEMPLATES, DEFAULT_SYSTEM_SETTINGS } from './constants';
+import { MOCK_TEMPLATES, DEFAULT_SYSTEM_SETTINGS, MOCK_USERS } from './constants';
 import { supabase } from './lib/supabase';
 import { 
   buildCategoryTree, 
@@ -89,9 +89,33 @@ const AppContent = () => {
   // Computed Properties
   const categoryTree = useMemo(() => buildCategoryTree(categories), [categories]);
   
-  // Separating Active Docs from Trash
+  // --- VISIBILITY & FILTERING RULES ---
+  // 1. activeDocuments: All non-deleted docs (used for logic/admin)
+  // 2. visibleDocuments: Docs visible to the CURRENT USER based on role
+  // 3. trashDocuments: Only deleted docs (for Admin Trash view)
+  
   const activeDocuments = useMemo(() => documents.filter(d => !d.deletedAt), [documents]);
   const trashDocuments = useMemo(() => documents.filter(d => d.deletedAt), [documents]);
+
+  const visibleDocuments = useMemo(() => {
+    if (!currentUser) return [];
+
+    return activeDocuments.filter(doc => {
+      // Rule 1: ADMIN sees everything active
+      if (currentUser.role === 'ADMIN') return true;
+
+      // Rule 2: EDITOR sees PUBLISHED and DRAFT/PENDING
+      // (Editors need to see drafts to edit them)
+      if (currentUser.role === 'EDITOR') return true;
+
+      // Rule 3: READER sees ONLY PUBLISHED
+      if (currentUser.role === 'READER') {
+        return doc.status === 'PUBLISHED';
+      }
+
+      return false;
+    });
+  }, [activeDocuments, currentUser]);
 
   // Apply Theme Effect
   useEffect(() => {
@@ -185,12 +209,24 @@ const AppContent = () => {
 
         setDocuments(mappedDocs);
         setCategories(mappedCats); 
-        setUsers(mappedUsers);
+        
+        // Persistence Logic:
+        // Use users from DB if available (ensures persistence).
+        // If DB is empty (first run), fallback to MOCK_USERS to allow initial login.
+        if (mappedUsers.length > 0) {
+            setUsers(mappedUsers);
+        } else {
+            console.warn("DB Users Empty. Using Mocks.");
+            setUsers(MOCK_USERS);
+        }
+        
         setTemplates(MOCK_TEMPLATES); 
         
       } catch (e) {
         console.error("Erro crítico ao carregar dados:", e);
-        toast.error("Erro ao conectar ao banco de dados.");
+        // Fallback to mocks if DB fails, ensures UI still works for demo
+        setUsers(MOCK_USERS);
+        toast.error("Erro ao conectar ao banco de dados. Usando dados locais.");
       } finally {
         setIsLoading(false);
       }
@@ -299,6 +335,11 @@ const AppContent = () => {
             const userToDelete = users.find(u => u.id === userId);
             setUsers(prev => prev.filter(u => u.id !== userId));
             try {
+                // Check if user is mock
+                if (userId === 'mock_admin') {
+                   toast.success('Simulação: Usuário mock excluído.');
+                   return;
+                }
                 await supabase.from('users').delete().eq('id', userId);
                 toast.success(`Usuário ${userToDelete?.name} excluído.`);
             } catch (e) {
@@ -349,6 +390,12 @@ const AppContent = () => {
     setCurrentUser(updatedUser);
     setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedUser : u));
 
+    if (currentUser.id === 'mock_admin') {
+       toast.warning('Aviso: Senha de usuário mock não persiste no DB.');
+       // We allow the change in memory for the session
+       return true;
+    }
+
     try {
         const { error } = await supabase.from('users').update({ password: newPass }).eq('id', currentUser.id);
         if (error) throw error;
@@ -366,6 +413,11 @@ const AppContent = () => {
     
     setCurrentUser(updatedUser);
     setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedUser : u));
+
+    if (currentUser.id === 'mock_admin') {
+       // Mock update only in memory
+       return;
+    }
 
     try {
         await supabase.from('users').update({ avatar: base64 }).eq('id', currentUser.id);
@@ -395,7 +447,7 @@ const AppContent = () => {
   };
 
   const handleSelectCategory = (category: Category) => {
-    const docsInCat = activeDocuments.filter(d => d.categoryId === category.id);
+    const docsInCat = visibleDocuments.filter(d => d.categoryId === category.id);
     if (docsInCat.length === 0) {
       if (isAdminOrEditor && (!category.children || category.children.length === 0)) {
         setConfirmModal({
@@ -751,7 +803,7 @@ const AppContent = () => {
     return (
         <div className="flex flex-col h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 text-blue-600 gap-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="animate-pulse">Conectando ao Supabase...</p>
+            <p className="animate-pulse">Preparando tudo para você...</p>
         </div>
     );
   }
@@ -762,7 +814,7 @@ const AppContent = () => {
 
   const commonProps = {
     categories: categoryTree,
-    documents: activeDocuments, // Sidebar/Search only sees non-deleted docs
+    documents: visibleDocuments, // Sidebar/Search only sees docs permitted by user role
     onSelectCategory: handleSelectCategory,
     onSelectDocument: handleSelectDocument,
     onNavigateHome: () => setCurrentView('HOME'),

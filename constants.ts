@@ -18,11 +18,18 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
   landingDescription: 'O hub central para o conhecimento corporativo. Organize, compartilhe e colabore na documentação com segurança baseada em funções.'
 };
 
-// Mocks removidos para forçar uso do Banco de Dados.
-// As variáveis são mantidas como arrays vazios para evitar quebras de importação imediata, 
-// mas o App.tsx não as utilizará para inicialização.
-
-export const MOCK_USERS: User[] = [];
+export const MOCK_USERS: User[] = [
+  {
+    id: 'mock_admin',
+    username: 'admin',
+    email: 'admin@petawiki.com',
+    password: 'admin',
+    name: 'Admin',
+    role: 'ADMIN',
+    avatar: 'https://ui-avatars.com/api/?name=Admin&background=111827&color=fff',
+    department: 'Gestão'
+  }
+];
 
 export const CURRENT_USER: User | null = null;
 
