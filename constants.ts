@@ -16,6 +16,18 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
   // Landing Page (Pública)
   landingTitle: 'Peta Wiki Corporativo',
   landingDescription: 'O hub central para o conhecimento corporativo. Organize, compartilhe e colabore na documentação com segurança baseada em funções.',
+  
+  heroTags: [
+    { icon: 'shield', text: 'Segurança Empresarial' },
+    { icon: 'users', text: 'Colaboração em Equipe' },
+    { icon: 'search', text: 'Busca Inteligente' }
+  ],
+
+  landingFeatures: [
+    { icon: 'book', title: 'Conhecimento Estruturado', description: 'Organize documentos em categorias hierárquicas com profundidade de aninhamento ilimitada.' },
+    { icon: 'shield', title: 'Acesso Baseado em Funções', description: 'Permissões estritas para Admins, Editores e Leitores garantem integridade e segurança dos dados.' },
+    { icon: 'users', title: 'Ferramentas Colaborativas', description: 'Tradução integrada, sugestões de IA e ferramentas de exportação para capacitar sua força de trabalho.' }
+  ],
 
   // Rodapé
   footerBottomText: 'Feito com 💙 na Peta.',

@@ -1,13 +1,26 @@
 
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Shield, Users, Search, Lock, Mail, ArrowLeft, Send, Check, AlertCircle, User as UserIcon, Eye, EyeOff } from 'lucide-react';
+import { BookOpen, Shield, Users, Search, Lock, Mail, ArrowLeft, Send, Check, AlertCircle, User as UserIcon, Eye, EyeOff, Zap, Globe, Layout, Star } from 'lucide-react';
 import { Button } from './Button';
-import { SystemSettings } from '../types';
+import { SystemSettings, LandingFeature, HeroTag } from '../types';
 import { sendPasswordResetEmail } from '../lib/email';
 import { Modal } from './Modal';
 import { supabase } from '../lib/supabase';
 import { useToast } from './Toast';
 import { DEFAULT_SYSTEM_SETTINGS } from '../constants';
+
+// Mapa de ícones disponíveis para renderização dinâmica
+const ICON_MAP: Record<string, React.ElementType> = {
+  'shield': Shield,
+  'users': Users,
+  'search': Search,
+  'book': BookOpen,
+  'lock': Lock,
+  'zap': Zap,
+  'globe': Globe,
+  'layout': Layout,
+  'star': Star
+};
 
 interface LoginPageProps {
   onLogin: (username: string, password: string) => void;
@@ -193,6 +206,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
     }
   };
 
+  // Helper to render icon
+  const renderIcon = (iconName: string, size: number = 16, className?: string) => {
+    const Icon = ICON_MAP[iconName.toLowerCase()] || Star;
+    return <Icon size={size} className={className} />;
+  };
+
   // Prefer Collapsed logo for Login page splash as requested
   const displayLogo = settings.logoCollapsedUrl || settings.logoExpandedUrl;
 
@@ -200,9 +219,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
   const displayTitle = settings.landingTitle || settings.appName || 'Peta Wiki';
   const displayDescription = settings.landingDescription || 'O hub central para o conhecimento corporativo. Organize, compartilhe e colabore na documentação com segurança baseada em funções.';
 
-  // Fallback for footer to ensure it displays even if settings are partial
+  // Footer Config
   const footerColumns = settings.footerColumns || DEFAULT_SYSTEM_SETTINGS.footerColumns || [];
   const footerText = settings.footerBottomText || DEFAULT_SYSTEM_SETTINGS.footerBottomText || 'Feito com 💙 na Peta.';
+
+  // Feature Config
+  const heroTags = settings.heroTags || DEFAULT_SYSTEM_SETTINGS.heroTags || [];
+  const landingFeatures = settings.landingFeatures || DEFAULT_SYSTEM_SETTINGS.landingFeatures || [];
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors">
@@ -219,10 +242,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
             <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-2xl whitespace-pre-line">
               {displayDescription}
             </p>
+            {/* Hero Tags (Items 1, 2, 3) */}
             <div className="flex flex-wrap gap-4 justify-center md:justify-start text-sm font-medium text-blue-200">
-               <span className="flex items-center gap-1"><Shield size={16}/> Segurança Empresarial</span>
-               <span className="flex items-center gap-1"><Users size={16}/> Colaboração em Equipe</span>
-               <span className="flex items-center gap-1"><Search size={16}/> Busca Inteligente</span>
+               {heroTags.map((tag, idx) => (
+                 <span key={idx} className="flex items-center gap-1">
+                    {renderIcon(tag.icon, 16)} {tag.text}
+                 </span>
+               ))}
             </div>
           </div>
 
@@ -392,44 +418,35 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
         </div>
       </div>
 
-      {/* Feature Grid */}
+      {/* Feature Grid (Items 4, 5, 6) */}
       <div className="max-w-6xl mx-auto py-16 px-6 grid md:grid-cols-3 gap-8">
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center text-blue-600 dark:text-blue-400 mb-4">
-            <BookOpen size={24} />
-          </div>
-          <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">Conhecimento Estruturado</h3>
-          <p className="text-gray-600 dark:text-gray-400">
-            Organize documentos em categorias hierárquicas com profundidade de aninhamento ilimitada.
-          </p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/40 rounded-lg flex items-center justify-center text-purple-600 dark:text-purple-400 mb-4">
-            <Shield size={24} />
-          </div>
-          <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">Acesso Baseado em Funções</h3>
-          <p className="text-gray-600 dark:text-gray-400">
-            Permissões estritas para Admins, Editores e Leitores garantem integridade e segurança dos dados.
-          </p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-lg flex items-center justify-center text-green-600 dark:text-green-400 mb-4">
-            <Users size={24} />
-          </div>
-          <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">Ferramentas Colaborativas</h3>
-          <p className="text-gray-600 dark:text-gray-400">
-            Tradução integrada, sugestões de IA e ferramentas de exportação para capacitar sua força de trabalho.
-          </p>
-        </div>
+        {landingFeatures.map((feat, idx) => {
+          const colors = [
+            'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400',
+            'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400',
+            'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400'
+          ];
+          const colorClass = colors[idx % colors.length];
+
+          return (
+            <div key={idx} className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
+              <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${colorClass}`}>
+                {renderIcon(feat.icon, 24)}
+              </div>
+              <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">{feat.title}</h3>
+              <p className="text-gray-600 dark:text-gray-400">{feat.description}</p>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Footer */}
-      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto">
-        <div className="max-w-6xl mx-auto py-12 px-6">
+      {/* Footer (Centered & Blue Gradient) */}
+      <footer className="bg-gradient-to-r from-blue-700 to-blue-900 border-t border-blue-800 mt-auto text-white">
+        <div className="max-w-6xl mx-auto py-12 px-6 text-center">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {footerColumns.map((col, idx) => (
               <div key={idx}>
-                <h4 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4">
+                <h4 className="text-sm font-bold uppercase tracking-wider mb-4 text-blue-200">
                   {col.title}
                 </h4>
                 <ul className="space-y-3">
@@ -439,7 +456,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
                         href={link.url} 
                         target="_blank" 
                         rel="noopener noreferrer" 
-                        className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                        className="text-blue-100 hover:text-white hover:underline transition-colors"
                       >
                         {link.label}
                       </a>
@@ -450,8 +467,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
             ))}
           </div>
           
-          <div className="border-t border-gray-200 dark:border-gray-700 mt-12 pt-8 text-center">
-            <p className="text-gray-500 dark:text-gray-400 font-medium">
+          <div className="border-t border-white/40 mt-12 pt-8">
+            <p className="text-blue-200 font-medium">
               {footerText}
             </p>
           </div>
@@ -465,6 +482,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
         title="Recuperação de Senha"
         size="sm"
       >
+        {/* ... (Modal content unchanged) ... */}
         <div className="space-y-4">
             <p className="text-sm text-gray-600 dark:text-gray-300">
                 Digite seu e-mail abaixo para receber um link de redefinição de senha.
@@ -507,6 +525,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
         title={callbackParams?.action === 'setup-password' ? 'Definir Senha de Acesso' : 'Redefinir Senha'}
         size="sm"
       >
+        {/* ... (Callback modal content unchanged) ... */}
         <div className="space-y-4">
             <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded text-sm text-blue-800 dark:text-blue-200">
                 {callbackParams?.action === 'setup-password' 

@@ -19,6 +19,17 @@ export interface FooterColumn {
   links: FooterLink[];
 }
 
+export interface HeroTag {
+  text: string;
+  icon: string; // nome do icone lucide
+}
+
+export interface LandingFeature {
+  title: string;
+  description: string;
+  icon: string; // nome do icone lucide
+}
+
 export interface SystemSettings {
   appName: string;
   logoCollapsedUrl: string; // 1:1 Icon
@@ -35,6 +46,10 @@ export interface SystemSettings {
   // Configurações da Landing Page / Login (Pré-login)
   landingTitle?: string;
   landingDescription?: string;
+  
+  // Novos itens editáveis (1,2,3 e 4,5,6)
+  heroTags?: HeroTag[];
+  landingFeatures?: LandingFeature[];
 
   // Configurações do Rodapé
   footerColumns?: FooterColumn[];

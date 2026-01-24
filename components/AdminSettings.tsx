@@ -2,8 +2,8 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
-import { User, SystemSettings, Role, Category, Document, FooterColumn } from '../types';
-import { Image, Save, UserCog, UserPlus, FolderTree, Upload, Trash2, Plus, CornerDownRight, ShieldCheck, X, Layout, Sidebar as SidebarIcon, PanelTop, RotateCcw, FileX, Edit, Link, ExternalLink, Columns } from 'lucide-react';
+import { User, SystemSettings, Role, Category, Document, FooterColumn, LandingFeature, HeroTag } from '../types';
+import { Image, Save, UserCog, UserPlus, FolderTree, Upload, Trash2, Plus, CornerDownRight, ShieldCheck, X, Layout, Sidebar as SidebarIcon, PanelTop, RotateCcw, FileX, Edit, Link, ExternalLink, Columns, Star, Zap, Globe, Lock, BookOpen, Users, Search } from 'lucide-react';
 import { generateSlug } from '../lib/hierarchy';
 import { sendWelcomeEmail } from '../lib/email';
 import { useToast } from './Toast';
@@ -63,6 +63,8 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   // Public Landing State
   const [landingTitle, setLandingTitle] = useState(settings.landingTitle || settings.appName || 'Peta Wiki');
   const [landingDescription, setLandingDescription] = useState(settings.landingDescription || 'O hub central para o conhecimento corporativo.');
+  const [heroTags, setHeroTags] = useState<HeroTag[]>(settings.heroTags || DEFAULT_SYSTEM_SETTINGS.heroTags || []);
+  const [landingFeatures, setLandingFeatures] = useState<LandingFeature[]>(settings.landingFeatures || DEFAULT_SYSTEM_SETTINGS.landingFeatures || []);
 
   // Footer State
   const [footerColumns, setFooterColumns] = useState<FooterColumn[]>(settings.footerColumns || DEFAULT_SYSTEM_SETTINGS.footerColumns || []);
@@ -88,6 +90,8 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   const collapsedInputRef = useRef<HTMLInputElement>(null);
   const expandedInputRef = useRef<HTMLInputElement>(null);
   const catNameInputRef = useRef<HTMLInputElement>(null);
+
+  const availableIcons = ['shield', 'users', 'search', 'book', 'lock', 'zap', 'globe', 'layout', 'star'];
 
   const sortedCategories = useMemo(() => {
     const grouped = new Map<string | null, Category[]>();
@@ -123,12 +127,15 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
         homeDescription,
         landingTitle,
         landingDescription,
+        heroTags,
+        landingFeatures,
         footerColumns,
         footerBottomText
     });
     toast.success('Configurações do sistema atualizadas!');
   };
 
+  // ... (User, Domain, Category handlers unchanged) ...
   const handleAddDomain = () => {
       const d = newDomain.trim().toLowerCase();
       if (d && !allowedDomains.includes(d)) {
@@ -149,14 +156,10 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
     e.preventDefault();
     if (newUser.name && newUser.email) {
       setIsSendingEmail(true);
-      
       onAddUser(newUser);
-
       const emailResult = await sendWelcomeEmail(newUser, settings);
-      
       setIsSendingEmail(false);
       setNewUser({ name: '', email: '', department: 'Geral', role: 'READER' });
-      
       if (emailResult.success) {
         toast.success('Usuário adicionado e convite enviado!');
       } else {
@@ -180,9 +183,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   
   const handleAddCategoryClick = () => {
     if(!newCatName.trim()) return;
-    
     const defaultIcon = newCatParent ? 'folder' : 'library';
-
     onAddCategory({
       name: newCatName,
       parentId: newCatParent || null,
@@ -190,7 +191,6 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
       description: 'Nova categoria adicionada via admin',
       icon: defaultIcon
     });
-    
     setNewCatName('');
     toast.success('Categoria incluída na estrutura.');
   };
@@ -234,6 +234,19 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
     const newCols = [...footerColumns];
     newCols[colIndex].links[linkIndex][field] = value;
     setFooterColumns(newCols);
+  };
+
+  // Feature Handlers
+  const handleUpdateFeature = (index: number, field: keyof LandingFeature, value: string) => {
+    const newFeatures = [...landingFeatures];
+    newFeatures[index] = { ...newFeatures[index], [field]: value };
+    setLandingFeatures(newFeatures);
+  };
+
+  const handleUpdateTag = (index: number, field: keyof HeroTag, value: string) => {
+    const newTags = [...heroTags];
+    newTags[index] = { ...newTags[index], [field]: value };
+    setHeroTags(newTags);
   };
 
   return (
@@ -307,9 +320,6 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                          <span className={`mt-2 text-sm font-medium ${layoutMode === 'NAVBAR' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'}`}>Superior (Navbar)</span>
                       </button>
                    </div>
-                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                     * Os controles de perfil, tema e admin acompanharão a posição do menu.
-                   </p>
                 </div>
 
                 <div className="space-y-6">
@@ -369,7 +379,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                    {/* Seção 1: Landing Page (Pública) */}
                    <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 mb-4">
                      <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 mb-3 uppercase tracking-wide">Página de Login (Pública)</h4>
-                     <div className="space-y-3">
+                     <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Título Principal (H1)</label>
                           <input 
@@ -377,7 +387,6 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                             value={landingTitle}
                             onChange={(e) => setLandingTitle(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 outline-none bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-                            placeholder="ex: Peta Wiki Corporativo"
                           />
                         </div>
                         <div>
@@ -387,8 +396,67 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                             value={landingDescription}
                             onChange={(e) => setLandingDescription(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 outline-none bg-white dark:bg-gray-900 text-gray-900 dark:text-white resize-none"
-                            placeholder="Texto descritivo para visitantes..."
                           />
+                        </div>
+
+                        {/* Edit Hero Tags (Items 1, 2, 3) */}
+                        <div className="pt-2">
+                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Itens de Destaque (Abaixo do Texto)</label>
+                            <div className="grid gap-3">
+                                {heroTags.map((tag, idx) => (
+                                    <div key={idx} className="flex gap-2">
+                                        <select 
+                                            value={tag.icon}
+                                            onChange={(e) => handleUpdateTag(idx, 'icon', e.target.value)}
+                                            className="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm"
+                                        >
+                                            {availableIcons.map(ic => <option key={ic} value={ic}>{ic}</option>)}
+                                        </select>
+                                        <input 
+                                            type="text"
+                                            value={tag.text}
+                                            onChange={(e) => handleUpdateTag(idx, 'text', e.target.value)}
+                                            className="flex-1 px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm"
+                                            placeholder="Texto do destaque"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Edit Feature Cards (Items 4, 5, 6) */}
+                        <div className="pt-4 border-t border-gray-200 dark:border-gray-700 mt-4">
+                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Grid de Funcionalidades</label>
+                            <div className="space-y-4">
+                                {landingFeatures.map((feat, idx) => (
+                                    <div key={idx} className="bg-white dark:bg-gray-900 p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
+                                        <div className="flex justify-between mb-2">
+                                            <span className="text-xs font-semibold text-gray-500 uppercase">Card {idx + 1}</span>
+                                            <select 
+                                                value={feat.icon}
+                                                onChange={(e) => handleUpdateFeature(idx, 'icon', e.target.value)}
+                                                className="text-xs border border-gray-300 dark:border-gray-600 rounded bg-transparent text-gray-700 dark:text-gray-300"
+                                            >
+                                                {availableIcons.map(ic => <option key={ic} value={ic}>{ic}</option>)}
+                                            </select>
+                                        </div>
+                                        <input 
+                                            type="text"
+                                            value={feat.title}
+                                            onChange={(e) => handleUpdateFeature(idx, 'title', e.target.value)}
+                                            className="w-full mb-2 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-transparent text-gray-900 dark:text-white font-bold"
+                                            placeholder="Título do Card"
+                                        />
+                                        <textarea 
+                                            rows={2}
+                                            value={feat.description}
+                                            onChange={(e) => handleUpdateFeature(idx, 'description', e.target.value)}
+                                            className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-xs bg-transparent text-gray-600 dark:text-gray-400 resize-none"
+                                            placeholder="Descrição do Card"
+                                        />
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                      </div>
                    </div>
@@ -430,6 +498,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
             </div>
           )}
 
+          {/* ... (Restante das abas FOOTER, SECURITY, USERS, CATEGORIES, TRASH mantidas iguais) ... */}
           {activeTab === 'FOOTER' && (
              <div className="space-y-6">
                 <div>
@@ -680,6 +749,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
             </div>
           )}
 
+          {/* ... (Categories and Trash tabs unchanged) ... */}
           {activeTab === 'CATEGORIES' && (
              <div className="space-y-6">
               <div className="flex justify-between items-center">
