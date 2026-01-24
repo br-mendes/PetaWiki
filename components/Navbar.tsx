@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
-  Search, Settings, User as UserIcon, Shield, LogOut, Moon, Sun, UserCircle, Menu, X
+  Search, Settings, Shield, LogOut, Moon, Sun, UserCircle, Menu, X, ChevronDown
 } from 'lucide-react';
 import { Category, User, SystemSettings, Document } from '../types';
 import { Button } from './Button';
@@ -29,9 +29,25 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = (props) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+
   const { user, systemSettings, toggleTheme, isDarkMode, onOpenProfile, onLogout, onOpenSettings, onNavigateToAnalytics, onNavigateHome } = props;
 
   const showExpandedLogo = !systemSettings.appName || systemSettings.appName.trim() === '';
+
+  // Close profile menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
     <>
@@ -111,33 +127,65 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
 
           <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1 hidden sm:block"></div>
 
-          <div className="flex items-center gap-3 group relative cursor-pointer">
-            <div className="text-right hidden md:block">
-              <div className="text-sm font-medium text-gray-800 dark:text-gray-200">{user.name}</div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center justify-end gap-1">
-                <Shield size={10} />
-                {user.role}
+          {/* User Profile Dropdown */}
+          <div className="relative" ref={profileMenuRef}>
+            <button 
+              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              className="flex items-center gap-3 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-transparent focus:outline-none"
+            >
+              <div className="text-right hidden md:block">
+                <div className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-none">{user.name}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center justify-end gap-1">
+                  <Shield size={10} />
+                  {user.role}
+                </div>
               </div>
-            </div>
-            <div className="w-9 h-9 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-blue-700 dark:text-blue-200 font-bold border-2 border-white dark:border-gray-600 shadow-sm overflow-hidden">
-               {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : user.name.charAt(0)}
-            </div>
+              <div className="w-9 h-9 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-blue-700 dark:text-blue-200 font-bold border-2 border-white dark:border-gray-600 shadow-sm overflow-hidden shrink-0">
+                 {user.avatar ? <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" /> : user.name.charAt(0)}
+              </div>
+              <ChevronDown size={16} className={`text-gray-400 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
             
-            {/* Dropdown for Profile/Logout */}
-            <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-100 dark:border-gray-700 hidden group-hover:block p-1 z-50">
-               <button 
-                 onClick={onOpenProfile}
-                 className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 rounded mb-1"
-               >
-                 <UserCircle size={16} className="mr-2" /> Meu Perfil
-               </button>
-               <button 
-                 onClick={onLogout}
-                 className="flex items-center w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
-               >
-                 <LogOut size={16} className="mr-2" /> Sair
-               </button>
-            </div>
+            {/* Dropdown Menu */}
+            {isProfileMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-2 z-50 animate-in fade-in zoom-in-95 duration-100 origin-top-right">
+                 {/* Mobile Info (visible mostly on small screens inside dropdown) */}
+                 <div className="md:hidden px-4 py-3 border-b border-gray-100 dark:border-gray-700 mb-2">
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">{user.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
+                 </div>
+
+                 <div className="space-y-1">
+                   <button 
+                     onClick={() => {
+                        onOpenProfile();
+                        setIsProfileMenuOpen(false);
+                     }}
+                     className="flex items-center w-full px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700/50 hover:text-blue-700 dark:hover:text-blue-400 rounded-lg transition-colors group"
+                   >
+                     <div className="p-1.5 bg-gray-100 dark:bg-gray-700 rounded-md mr-3 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
+                        <UserCircle size={18} className="text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                     </div>
+                     Editar Perfil
+                   </button>
+                   
+                   <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2"></div>
+
+                   <button 
+                     onClick={() => {
+                        onLogout();
+                        setIsProfileMenuOpen(false);
+                     }}
+                     className="flex items-center w-full px-4 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
+                   >
+                     <div className="p-1.5 bg-red-50 dark:bg-red-900/10 rounded-md mr-3 group-hover:bg-red-100 dark:group-hover:bg-red-900/30 transition-colors">
+                        <LogOut size={18} className="text-red-500 dark:text-red-400" />
+                     </div>
+                     Sair do Sistema
+                   </button>
+                 </div>
+              </div>
+            )}
           </div>
         </div>
       </header>
