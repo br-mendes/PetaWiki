@@ -163,9 +163,10 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
     setIsExporting(true);
     setIsExportMenuOpen(false);
 
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // Pequeno delay para a UI atualizar
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-    // Export always uses original content now
+    // O objeto exportDoc é usado para passar o conteúdo "limpo" se necessário
     const exportDoc = {
       ...document,
       title: document.title,
@@ -181,7 +182,7 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
     }
     
     setIsExporting(false);
-    toast.success(`Exportação ${format} concluída.`);
+    toast.success(`Exportação ${format} iniciada.`);
   };
 
   return (
@@ -260,28 +261,29 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
                     </Button>
 
                     {isExportMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-50 border border-gray-200 dark:border-gray-700 animate-in fade-in zoom-in duration-100">
+                    <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg z-50 border border-gray-200 dark:border-gray-700 animate-in fade-in zoom-in duration-100">
                         <div className="py-1">
                         <button 
                             onClick={() => handleExport('PDF')}
-                            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
-                            <FileType size={16} className="mr-2 text-red-500" />
-                            Exportar PDF
+                            <FileType size={16} className="mr-3 text-red-500" />
+                            <span>Exportar PDF</span>
                         </button>
                         <button 
                             onClick={() => handleExport('DOCX')}
-                            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
-                            <FileText size={16} className="mr-2 text-blue-700" />
-                            Exportar DOCX (Word)
+                            <FileText size={16} className="mr-3 text-blue-700" />
+                            <span>Exportar Word (.doc)</span>
                         </button>
+                        <div className="h-px bg-gray-100 dark:bg-gray-700 my-1"></div>
                         <button 
                             onClick={() => handleExport('MARKDOWN')}
-                            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            className="flex items-center w-full px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
-                            <File size={16} className="mr-2 text-gray-500" />
-                            Exportar Markdown
+                            <File size={16} className="mr-3 text-gray-500" />
+                            <span>Exportar Markdown</span>
                         </button>
                         </div>
                     </div>
