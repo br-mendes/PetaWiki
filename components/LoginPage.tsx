@@ -89,6 +89,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
   const passwordStrength = calculatePasswordStrength(newPassword);
   const resetPasswordStrength = calculatePasswordStrength(newCallbackPassword);
 
+  const isValidEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
+
   const handleCallbackSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       
@@ -148,6 +152,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
     setIsLoading(true);
 
     if (isSignUpMode) {
+      if (!isValidEmail(newEmail)) {
+        setError('Por favor, insira um e-mail válido.');
+        setIsLoading(false);
+        return;
+      }
+
       // Validate Sign Up
       if (newPassword !== confirmPassword) {
         setError('As senhas não coincidem.');
@@ -175,6 +185,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
     } else {
       // Login
       if (username && password) {
+         if (!isValidEmail(username)) {
+            setError('Por favor, insira um e-mail válido.');
+            setIsLoading(false);
+            return;
+         }
          onLogin(username, password); 
       } else {
         setError('Por favor, insira usuário e senha');
@@ -186,6 +201,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!resetEmail) return;
+
+    if (!isValidEmail(resetEmail)) {
+        setResetMessage({ type: 'error', text: 'E-mail inválido.' });
+        return;
+    }
 
     setIsSendingReset(true);
     setResetMessage(null);

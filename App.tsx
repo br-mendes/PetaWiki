@@ -18,7 +18,6 @@ import {
   buildCategoryTree, 
   getCategoryPath 
 } from './lib/hierarchy';
-import { translateDocument } from './lib/translate';
 import { ToastProvider, useToast } from './components/Toast';
 import { Modal } from './components/Modal';
 import { Button } from './components/Button';
@@ -812,27 +811,6 @@ const AppContent = () => {
     toast.success('Template salvo com sucesso!');
   };
 
-  const handleCreateTranslation = async (targetLangs: SupportedLanguage[]) => {
-    if (!selectedDocument) return;
-    for (const lang of targetLangs) {
-      const result = await translateDocument(selectedDocument.title, selectedDocument.content, lang);
-      const translation: DocumentTranslation = {
-        id: `trans_${selectedDocument.id}_${lang}_${Date.now()}`,
-        documentId: selectedDocument.id,
-        language: lang,
-        translatedTitle: result.title,
-        translatedContent: result.content,
-        status: 'SYNCED',
-        lastSyncedAt: new Date().toISOString()
-      };
-      setTranslations(prev => [
-        ...prev.filter(t => !(t.documentId === selectedDocument.id && t.language === lang)),
-        translation
-      ]);
-    }
-    toast.success('Tradução concluída.');
-  };
-
   const handleSaveDocument = async (data: Partial<Document>) => {
     if (!currentUser) return;
     let updatedDocs = [...documents];
@@ -1114,7 +1092,6 @@ const AppContent = () => {
               document={currentView === 'DOCUMENT_EDIT' ? selectedDocument : null}
               user={currentUser}
               onSave={handleSaveDocument}
-              onTranslate={currentView === 'DOCUMENT_EDIT' ? handleCreateTranslation : undefined}
               onCancel={() => {
                 selectedDocument ? setCurrentView('DOCUMENT_VIEW') : setCurrentView('HOME');
               }}

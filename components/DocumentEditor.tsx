@@ -1,11 +1,10 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Save, Sparkles, X, Type, Tag, Globe, ChevronDown, CheckCircle, AlertCircle, Copy, Plus, Folder, CornerDownRight, ArrowLeft } from 'lucide-react';
+import { Save, Sparkles, X, Tag, ChevronDown, Copy, Plus, Folder, CornerDownRight, ArrowLeft } from 'lucide-react';
 import { generateAiResponse } from '../lib/ai';
-import { Document, User, Category, SupportedLanguage } from '../types';
+import { Document, User, Category } from '../types';
 import { Button } from './Button';
 import { CategoryTreeSelect } from './CategoryTreeSelect';
-import { TranslationModal } from './TranslationModal';
 import { RichTextEditor } from './RichTextEditor';
 import { useToast } from './Toast';
 import { getCategoryPath } from '../lib/hierarchy';
@@ -14,7 +13,6 @@ interface DocumentEditorProps {
   document?: Document | null; // Null means new doc
   user: User;
   onSave: (doc: Partial<Document>) => void;
-  onTranslate?: (langs: SupportedLanguage[]) => Promise<void>; // New prop
   onCancel: () => void;
   categories: Category[]; // Tree structure for selection
   allCategories: Category[]; // Flat list for path lookup
@@ -28,7 +26,6 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   document, 
   user, 
   onSave, 
-  onTranslate, 
   onCancel, 
   categories,
   allCategories,
@@ -51,10 +48,6 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   const [isGeneratingTags, setIsGeneratingTags] = useState(false);
   const [aiSuggestion, setAiSuggestion] = useState<string | null>(null);
   
-  // Translation State
-  const [isTranslationModalOpen, setIsTranslationModalOpen] = useState(false);
-  const [isTranslating, setIsTranslating] = useState(false);
-
   // UI State
   const [showCategorySelect, setShowCategorySelect] = useState(false);
   const selectRef = useRef<HTMLDivElement>(null);
@@ -148,16 +141,6 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
     }
   };
 
-  const handleTranslationRequest = async (langs: SupportedLanguage[]) => {
-    if (onTranslate) {
-      setIsTranslating(true);
-      await onTranslate(langs);
-      setIsTranslating(false);
-      setIsTranslationModalOpen(false);
-      // Success toast handled by parent
-    }
-  };
-
   const categoryPath = categoryId ? getCategoryPath(categoryId, allCategories) : null;
 
   return (
@@ -223,16 +206,6 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
               <Sparkles size={14} />
               {isGenerating ? 'Analisando...' : 'Revisão IA'}
             </button>
-            
-            {document && onTranslate && (
-              <button 
-                className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 hover:border-blue-200 transition-colors"
-                onClick={() => setIsTranslationModalOpen(true)}
-              >
-                <Globe size={14} />
-                Traduzir
-              </button>
-            )}
           </div>
           <div className="text-xs text-gray-400 font-mono hidden sm:block">
              {content.length} caracteres
@@ -384,13 +357,6 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
           </div>
         </div>
       </div>
-
-      <TranslationModal 
-        isOpen={isTranslationModalOpen}
-        onClose={() => setIsTranslationModalOpen(false)}
-        onTranslate={handleTranslationRequest}
-        isTranslating={isTranslating}
-      />
     </div>
   );
 };
