@@ -4,7 +4,7 @@ import {
   ChevronRight, ChevronDown, Plus, Trash2, 
   Book, Folder, FolderOpen, FileText, 
   LifeBuoy, Server, MessageCircle, Mail, Monitor, 
-  Users, UserPlus, Heart, Library, Settings, LogOut, Sun, Moon, UserCircle, Search, File
+  Users, UserPlus, Heart, Library, Settings, LogOut, Sun, Moon, UserCircle
 } from 'lucide-react';
 import { Category, User, SystemSettings, Document } from '../types';
 import { canUserModifyCategory } from '../lib/hierarchy';
@@ -42,6 +42,8 @@ interface SidebarProps {
   isDarkMode: boolean;
   // Search Context
   searchQuery?: string;
+  // Variant
+  variant?: 'SIDEBAR' | 'DRAWER' | 'DROPDOWN';
 }
 
 const CategoryItem: React.FC<{ 
@@ -203,7 +205,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenProfile,
   toggleTheme,
   isDarkMode,
-  searchQuery
+  searchQuery,
+  variant = 'SIDEBAR'
 }) => {
   const isAdminOrEditor = user.role === 'ADMIN' || user.role === 'EDITOR';
   const showExpandedLogo = !systemSettings.appName || systemSettings.appName.trim() === '';
@@ -211,37 +214,46 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Check if we are in search mode
   const isSearching = searchQuery && searchQuery.trim().length > 0;
 
+  const isDropdown = variant === 'DROPDOWN';
+
+  // Base classes differ based on variant
+  const containerClasses = isDropdown 
+    ? "w-full h-full flex flex-col bg-white dark:bg-gray-800" 
+    : "w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 h-full flex flex-col transition-colors z-20 shadow-xl";
+
   return (
-    <div className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 h-full flex flex-col transition-colors z-20 shadow-xl">
-      {/* 1. Header Area with Logo */}
-      <div className="p-4 border-b border-gray-100 dark:border-gray-800 shrink-0">
-        <div 
-          onClick={onNavigateHome}
-          className="flex items-center gap-3 cursor-pointer group"
-        >
-          {showExpandedLogo ? (
-             <img 
-               src={systemSettings.logoExpandedUrl} 
-               alt="Logo" 
-               className="w-full h-auto object-contain max-h-12 rounded" 
-             />
-          ) : (
-            <>
+    <div className={containerClasses}>
+      {/* 1. Header Area with Logo (Hidden in Dropdown mode) */}
+      {!isDropdown && (
+        <div className="p-4 border-b border-gray-100 dark:border-gray-800 shrink-0">
+          <div 
+            onClick={onNavigateHome}
+            className="flex items-center gap-3 cursor-pointer group"
+          >
+            {showExpandedLogo ? (
               <img 
-                src={systemSettings.logoCollapsedUrl} 
+                src={systemSettings.logoExpandedUrl} 
                 alt="Logo" 
-                className="w-8 h-8 object-contain rounded shrink-0" 
+                className="w-full h-auto object-contain max-h-12 rounded" 
               />
-              <span className="font-bold text-lg text-blue-900 dark:text-blue-400 leading-tight truncate">
-                {systemSettings.appName}
-              </span>
-            </>
-          )}
+            ) : (
+              <>
+                <img 
+                  src={systemSettings.logoCollapsedUrl} 
+                  alt="Logo" 
+                  className="w-8 h-8 object-contain rounded shrink-0" 
+                />
+                <span className="font-bold text-lg text-blue-900 dark:text-blue-400 leading-tight truncate">
+                  {systemSettings.appName}
+                </span>
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 2. Scrollable Navigation Area */}
-      <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+      <div className={`flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 ${isDropdown ? 'max-h-[70vh]' : ''}`}>
         <div className="mb-4">
           <div className="flex items-center justify-between px-2 mb-2">
             <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -302,54 +314,56 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* 3. Footer Area with User Controls */}
-      <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 shrink-0">
-        <div className="flex items-center gap-3 mb-3 px-1">
-            <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full border border-gray-300 dark:border-gray-600" />
-            <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{user.name}</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate capitalize">{user.role.toLowerCase()}</p>
-            </div>
-        </div>
-        
-        <div className="grid grid-cols-4 gap-1">
-             <button 
-                onClick={onOpenProfile} 
-                title="Meu Perfil"
-                className="flex items-center justify-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
-             >
-                <UserCircle size={18} />
-             </button>
-             
-             <button 
-                onClick={toggleTheme} 
-                title="Alternar Tema"
-                className="flex items-center justify-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
-             >
-                {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-             </button>
+      {/* 3. Footer Area with User Controls (Hidden in Dropdown mode) */}
+      {!isDropdown && (
+        <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 shrink-0">
+          <div className="flex items-center gap-3 mb-3 px-1">
+              <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full border border-gray-300 dark:border-gray-600" />
+              <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{user.name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate capitalize">{user.department || user.role.toLowerCase()}</p>
+              </div>
+          </div>
+          
+          <div className="grid grid-cols-4 gap-1">
+              <button 
+                  onClick={onOpenProfile} 
+                  title="Meu Perfil"
+                  className="flex items-center justify-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
+              >
+                  <UserCircle size={18} />
+              </button>
+              
+              <button 
+                  onClick={toggleTheme} 
+                  title="Alternar Tema"
+                  className="flex items-center justify-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
+              >
+                  {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
 
-             {user.role === 'ADMIN' ? (
-                <button 
-                    onClick={onOpenSettings} 
-                    title="Configurações Admin"
-                    className="flex items-center justify-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
-                >
-                    <Settings size={18} />
-                </button>
-             ) : (
-                <div /> /* Spacer */
-             )}
+              {user.role === 'ADMIN' ? (
+                  <button 
+                      onClick={onOpenSettings} 
+                      title="Configurações Admin"
+                      className="flex items-center justify-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
+                  >
+                      <Settings size={18} />
+                  </button>
+              ) : (
+                  <div /> /* Spacer */
+              )}
 
-             <button 
-                onClick={onLogout} 
-                title="Sair"
-                className="flex items-center justify-center p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 transition-colors"
-             >
-                <LogOut size={18} />
-             </button>
+              <button 
+                  onClick={onLogout} 
+                  title="Sair"
+                  className="flex items-center justify-center p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 transition-colors"
+              >
+                  <LogOut size={18} />
+              </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

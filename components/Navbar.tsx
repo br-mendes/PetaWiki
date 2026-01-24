@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  Search, Settings, Shield, LogOut, Moon, Sun, UserCircle, Menu, X, ChevronDown
+  Search, Settings, Shield, LogOut, Moon, Sun, UserCircle, Menu, X, ChevronDown, Book
 } from 'lucide-react';
 import { Category, User, SystemSettings, Document } from '../types';
 import { Button } from './Button';
@@ -31,7 +31,14 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = (props) => {
+  // Drawer/Sidebar State (Mobile or Sidebar Mode)
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  // Navbar Dropdown State (Navbar Mode)
+  const [isNavDropdownOpen, setIsNavDropdownOpen] = useState(false);
+  const navDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Profile Dropdown State
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -43,12 +50,16 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
   } = props;
 
   const showExpandedLogo = !systemSettings.appName || systemSettings.appName.trim() === '';
+  const isNavbarMode = systemSettings.layoutMode === 'NAVBAR';
 
-  // Close profile menu when clicking outside
+  // Close menus when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
         setIsProfileMenuOpen(false);
+      }
+      if (navDropdownRef.current && !navDropdownRef.current.contains(event.target as Node)) {
+        setIsNavDropdownOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -87,17 +98,42 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
             )}
           </div>
 
-          <button 
-            onClick={() => setIsMenuOpen(true)}
-            className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors"
-          >
-            <Menu size={18} />
-            <span className="hidden sm:inline">Biblioteca</span>
-          </button>
+          {isNavbarMode ? (
+             /* NAVBAR MODE: Dropdown Menu Trigger */
+             <div className="relative" ref={navDropdownRef}>
+                <button 
+                  onClick={() => setIsNavDropdownOpen(!isNavDropdownOpen)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isNavDropdownOpen ? 'bg-blue-50 text-blue-700 dark:bg-gray-800 dark:text-blue-400' : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
+                >
+                  <Menu size={18} />
+                  <span className="hidden sm:inline">Navegar</span>
+                  <ChevronDown size={14} className={`transition-transform ${isNavDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
+
+                {isNavDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
+                     <Sidebar 
+                        {...props} 
+                        variant="DROPDOWN" // Reuse Sidebar logic but stripped down
+                        searchQuery={searchQuery}
+                     />
+                  </div>
+                )}
+             </div>
+          ) : (
+             /* SIDEBAR MODE: Drawer Trigger */
+             <button 
+                onClick={() => setIsMenuOpen(true)}
+                className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors"
+             >
+                <Menu size={18} />
+                <span className="hidden sm:inline">Biblioteca</span>
+             </button>
+          )}
         </div>
 
-        {/* Center: Search Bar */}
-        <div className="flex-1 max-w-xl px-4">
+        {/* Center: Search Bar (Resized to max-w-sm) */}
+        <div className="flex-1 max-w-md px-4 hidden md:block">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <input 
@@ -147,7 +183,8 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                 <div className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-none">{user.name}</div>
                 <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center justify-end gap-1">
                   <Shield size={10} />
-                  {user.role}
+                  {/* CHANGED: Show Department instead of Role */}
+                  <span className="capitalize">{user.department || user.role.toLowerCase()}</span>
                 </div>
               </div>
               <div className="w-9 h-9 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-blue-700 dark:text-blue-200 font-bold border-2 border-white dark:border-gray-600 shadow-sm overflow-hidden shrink-0">
@@ -200,8 +237,8 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
         </div>
       </header>
 
-      {/* Mobile/Desktop Drawer for Categories */}
-      {isMenuOpen && (
+      {/* Mobile/Desktop Drawer for Categories (Only if NOT in Navbar Mode) */}
+      {isMenuOpen && !isNavbarMode && (
         <div className="fixed inset-0 z-40 flex">
           {/* Backdrop */}
           <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}></div>
@@ -214,11 +251,11 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                 </button>
              </div>
              
-             {/* Reuse Sidebar logic inside Drawer, but we can hide the footer controls since they are in navbar */}
              <div className="h-full flex flex-col">
                 <Sidebar 
                     {...props} 
                     searchQuery={searchQuery}
+                    variant="DRAWER"
                 />
              </div>
           </div>
