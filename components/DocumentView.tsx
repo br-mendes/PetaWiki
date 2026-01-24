@@ -38,6 +38,7 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   
   // Real-time View Count State
+  // Inicializa com o valor da prop, mas será sobrescrito pelo retorno do banco
   const [liveViews, setLiveViews] = useState(document.views);
   const viewRegistered = useRef(false);
 
@@ -63,29 +64,30 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
 
   // --- View Tracking Logic ---
   useEffect(() => {
-    // Reset ref when document changes to allow recounting
+    // Ao mudar o documento, reseta flags
     viewRegistered.current = false;
+    // Setamos inicialmente para o que veio via props (cache local) para evitar layout shift
     setLiveViews(document.views);
   }, [document.id]);
 
   useEffect(() => {
     const registerView = async () => {
-      // Prevent double counting in StrictMode or re-renders
+      // Evita contagem dupla em StrictMode
       if (viewRegistered.current) return;
       viewRegistered.current = true;
 
       try {
-        // Call RPC to atomic increment and log event
-        const { error } = await supabase.rpc('register_view', {
+        // Chamada RPC agora retorna o inteiro atualizado do banco
+        const { data: newCount, error } = await supabase.rpc('register_view', {
           p_doc_id: document.id,
           p_user_id: user.id
         });
 
         if (error) {
             console.error("Failed to register view:", error);
-        } else {
-            // Optimistic update locally
-            setLiveViews(prev => prev + 1);
+        } else if (typeof newCount === 'number') {
+            // Atualiza com o valor real vindo do banco (Single Source of Truth)
+            setLiveViews(newCount);
         }
       } catch (err) {
         console.error(err);
@@ -235,7 +237,7 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
                Atualizado {new Date(document.updatedAt).toLocaleDateString()}
             </span>
             <span className="flex items-center gap-1">
-               {liveViews} visualizações
+               <Eye size={14} className="mr-1" /> {liveViews} visualizações
             </span>
             
             <div className="relative inline-flex items-center">
