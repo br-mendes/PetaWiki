@@ -1,4 +1,5 @@
 
+
 export type Role = 'ADMIN' | 'EDITOR' | 'READER';
 
 export type DocStatus = 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED';
@@ -36,6 +37,7 @@ export interface User {
   role: Role;
   avatar: string;
   department: string;
+  themePreference?: 'light' | 'dark'; // Preference stored in DB
 }
 
 export interface Category {

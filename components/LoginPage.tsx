@@ -139,7 +139,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
 
           <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 text-gray-800 dark:text-gray-200">
             <h2 className="text-2xl font-bold mb-6 text-center text-gray-900 dark:text-white">
-              {isSignUpMode ? 'Criar Conta' : 'Login do Sistema'}
+              {isSignUpMode ? 'Criar Conta' : 'Faça login ou cadastre-se'}
             </h2>
             
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -222,15 +222,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
                 /* LOGIN FORM */
                 <>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Usuário / Email</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">E-mail</label>
                     <div className="relative">
                        <input 
                         type="text" 
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                         placeholder="ex: admin"
                       />
+                      <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                     </div>
                   </div>
                   

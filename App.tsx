@@ -50,7 +50,7 @@ const AppContent = () => {
     return DEFAULT_SYSTEM_SETTINGS;
   });
   
-  // Theme State
+  // Theme State - Inicializa com localStorage, mas será sobrescrito pelo perfil do usuário ao logar
   const [isDarkMode, setIsDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
        return localStorage.getItem('theme') === 'dark';
@@ -204,15 +204,14 @@ const AppContent = () => {
             name: u.name,
             role: u.role,
             department: u.department,
-            avatar: u.avatar
+            avatar: u.avatar,
+            themePreference: u.theme_preference // Load theme preference
         }));
 
         setDocuments(mappedDocs);
         setCategories(mappedCats); 
         
         // Persistence Logic:
-        // Use users from DB if available (ensures persistence).
-        // If DB is empty (first run), fallback to MOCK_USERS to allow initial login.
         if (mappedUsers.length > 0) {
             setUsers(mappedUsers);
         } else {
@@ -224,7 +223,6 @@ const AppContent = () => {
         
       } catch (e) {
         console.error("Erro crítico ao carregar dados:", e);
-        // Fallback to mocks if DB fails, ensures UI still works for demo
         setUsers(MOCK_USERS);
         toast.error("Erro ao conectar ao banco de dados. Usando dados locais.");
       } finally {
@@ -242,6 +240,16 @@ const AppContent = () => {
     if (foundUser && foundUser.password === passwordInput) {
       setCurrentUser(foundUser);
       setIsAuthenticated(true);
+      
+      // Apply User Theme Preference Immediately
+      if (foundUser.themePreference) {
+          setIsDarkMode(foundUser.themePreference === 'dark');
+      } else {
+          // If no preference in DB, stick with local or default to light? 
+          // Let's stick with current local state to not jar the user, but maybe save it to DB later?
+          // For now, respect local state if DB is null.
+      }
+
       toast.success(`Bem-vindo, ${foundUser.name}!`);
     } else {
       toast.error('Usuário ou senha inválidos.');
@@ -273,7 +281,8 @@ const AppContent = () => {
           name: name,
           role: 'READER', // Segurança: Default é leitor
           department: 'Geral',
-          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
+          themePreference: 'light' // Default
       };
 
       // 4. Persistir
@@ -286,7 +295,8 @@ const AppContent = () => {
             name: newUser.name,
             role: newUser.role,
             department: newUser.department,
-            avatar: newUser.avatar
+            avatar: newUser.avatar,
+            theme_preference: 'light'
           });
 
           if (error) throw error;
@@ -305,7 +315,33 @@ const AppContent = () => {
     setIsAuthenticated(false);
     setCurrentUser(null);
     setCurrentView('HOME');
+    // We keep the current theme active (last used) rather than resetting
     toast.info('Você saiu do sistema.');
+  };
+
+  const handleToggleTheme = async () => {
+      const newMode = !isDarkMode;
+      setIsDarkMode(newMode);
+      
+      // If user is logged in, save to DB
+      if (currentUser) {
+          try {
+             // Optimistic update locally
+             setCurrentUser({ ...currentUser, themePreference: newMode ? 'dark' : 'light' });
+             
+             // Update in User list locally
+             setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, themePreference: newMode ? 'dark' : 'light' } : u));
+
+             // Update DB
+             await supabase.from('users').update({ 
+                 theme_preference: newMode ? 'dark' : 'light' 
+             }).eq('id', currentUser.id);
+             
+          } catch (error) {
+              console.error("Erro ao salvar preferência de tema", error);
+              // Not critical enough to show a toast error usually
+          }
+      }
   };
 
   // --- User Management Handlers ---
@@ -395,7 +431,8 @@ const AppContent = () => {
       role: userData.role || 'READER',
       department: userData.department || 'Geral',
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=random`,
-      password: '123'
+      password: '123',
+      themePreference: 'light'
     };
     
     setUsers(prev => [...prev, newUser]);
@@ -409,7 +446,8 @@ const AppContent = () => {
             name: newUser.name,
             role: newUser.role,
             department: newUser.department,
-            avatar: newUser.avatar
+            avatar: newUser.avatar,
+            theme_preference: 'light'
         });
         toast.success('Usuário criado com sucesso.');
     } catch (e) { toast.error('Erro ao criar usuário no banco.'); }
@@ -862,7 +900,7 @@ const AppContent = () => {
     onOpenSettings: () => setIsAdminSettingsOpen(true),
     onLogout: handleLogout,
     onOpenProfile: () => setIsProfileOpen(true),
-    toggleTheme: () => setIsDarkMode(!isDarkMode),
+    toggleTheme: handleToggleTheme,
     isDarkMode,
     onNavigateToAnalytics: () => setCurrentView('ANALYTICS')
   };
