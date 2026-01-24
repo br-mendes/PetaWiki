@@ -25,6 +25,9 @@ interface NavbarProps {
   isDarkMode: boolean;
   // Navigation
   onNavigateToAnalytics: () => void;
+  // Search
+  searchQuery: string;
+  onSearch: (query: string) => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = (props) => {
@@ -32,7 +35,12 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
-  const { user, systemSettings, toggleTheme, isDarkMode, onOpenProfile, onLogout, onOpenSettings, onNavigateToAnalytics, onNavigateHome } = props;
+  const { 
+    user, systemSettings, toggleTheme, isDarkMode, 
+    onOpenProfile, onLogout, onOpenSettings, 
+    onNavigateToAnalytics, onNavigateHome,
+    searchQuery, onSearch
+  } = props;
 
   const showExpandedLogo = !systemSettings.appName || systemSettings.appName.trim() === '';
 
@@ -94,6 +102,8 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <input 
               type="text" 
+              value={searchQuery}
+              onChange={(e) => onSearch(e.target.value)}
               placeholder="Buscar documentos..." 
               className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-gray-800 dark:text-white transition-all"
             />

@@ -53,6 +53,9 @@ const AppContent = () => {
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
   
+  // Search State
+  const [searchQuery, setSearchQuery] = useState('');
+  
   // Data State
   const [documents, setDocuments] = useState<Document[]>([]);
   const [translations, setTranslations] = useState<DocumentTranslation[]>([]); 
@@ -166,13 +169,32 @@ const AppContent = () => {
 
   const visibleDocuments = useMemo(() => {
     if (!currentUser) return [];
-    return activeDocuments.filter(doc => {
+    
+    // 1. Role-based filtering
+    const roleFiltered = activeDocuments.filter(doc => {
       if (currentUser.role === 'ADMIN') return true;
       if (currentUser.role === 'EDITOR') return true;
       if (currentUser.role === 'READER') return doc.status === 'PUBLISHED';
       return false;
     });
-  }, [activeDocuments, currentUser]);
+
+    // 2. Search query filtering
+    if (!searchQuery.trim()) {
+      return roleFiltered;
+    }
+
+    const query = searchQuery.toLowerCase();
+    return roleFiltered.filter(doc => {
+      const matchTitle = doc.title.toLowerCase().includes(query);
+      // Strip HTML tags for content search to check text body
+      const plainContent = doc.content.replace(/<[^>]+>/g, '').toLowerCase();
+      const matchContent = plainContent.includes(query);
+      const matchTags = doc.tags.some(tag => tag.toLowerCase().includes(query));
+      
+      return matchTitle || matchContent || matchTags;
+    });
+
+  }, [activeDocuments, currentUser, searchQuery]);
 
   // Apply Theme Effect
   useEffect(() => {
@@ -212,10 +234,6 @@ const AppContent = () => {
             supabase.from('users').select('*'),
             supabase.from('system_settings').select('settings').single()
         ]);
-
-        // Trata erros individualmente para não falhar tudo se apenas um falhar (ex: settings table missing)
-        // Mas neste bloco 'try', qualquer erro em Promise.all joga pro catch
-        // Vamos manter assim, pois a correção do schema deve resolver.
 
         if (docsRes.error) throw new Error(`Erro Docs: ${docsRes.error.message}`);
         if (catsRes.error) throw new Error(`Erro Cats: ${catsRes.error.message}`);
@@ -286,11 +304,7 @@ const AppContent = () => {
         
       } catch (e) {
         console.error("Erro crítico ao carregar dados:", e);
-        // Fallback apenas em erro grave
-        // Não sobrescrevemos users com mock se já tivermos sessão válida, para evitar logout
         if (users.length === 0) setUsers(MOCK_USERS);
-        
-        // Tentar ler configurações do LS como fallback extremo se DB falhar
         const savedLocal = localStorage.getItem('peta_wiki_settings');
         if (savedLocal) setSystemSettings(JSON.parse(savedLocal));
         toast.error("Erro ao conectar ao banco de dados.");
@@ -309,15 +323,11 @@ const AppContent = () => {
     if (foundUser && foundUser.password === passwordInput) {
       setCurrentUser(foundUser);
       setIsAuthenticated(true);
-      
-      // Iniciar Sessão no LocalStorage
       const sessionData = { user: foundUser, lastActive: Date.now() };
       localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
-      
       if (foundUser.themePreference) {
           setIsDarkMode(foundUser.themePreference === 'dark');
       }
-
       toast.success(`Bem-vindo, ${foundUser.name}!`);
     } else {
       toast.error('Usuário ou senha inválidos.');
@@ -388,24 +398,16 @@ const AppContent = () => {
     }
   };
 
-  // --- Global Settings Handler ---
   const handleSaveSettingsGlobal = async (newSettings: SystemSettings) => {
-      // 1. Atualiza estado local
       setSystemSettings(newSettings);
-
-      // 2. Persiste no Banco de Dados (Tabela Singleton id=1)
       try {
           const { error } = await supabase.from('system_settings').upsert({ 
               id: 1, 
               settings: newSettings,
               updated_at: new Date().toISOString()
           });
-
           if (error) throw error;
-          
-          // Opcional: Atualizar LocalStorage como cache secundário/fallback
           localStorage.setItem('peta_wiki_settings', JSON.stringify(newSettings));
-          
       } catch (e) {
           console.error("Erro ao salvar configurações globais:", e);
           toast.error("Erro ao salvar configurações no banco de dados.");
@@ -418,31 +420,24 @@ const AppContent = () => {
       
       if (currentUser) {
           try {
-             // Atualiza usuário localmente na sessão e na lista
              const updatedUser = { ...currentUser, themePreference: newMode ? 'dark' : 'light' as 'dark' | 'light' };
              setCurrentUser(updatedUser);
              setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedUser : u));
-             
-             // Atualiza Session Storage para manter consistência no reload
              const storedSession = localStorage.getItem(SESSION_KEY);
              if (storedSession) {
                  const sessionData = JSON.parse(storedSession);
                  sessionData.user = updatedUser;
                  localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
              }
-
-             // Persiste no DB
              await supabase.from('users').update({ 
                  theme_preference: newMode ? 'dark' : 'light' 
              }).eq('id', currentUser.id);
-             
           } catch (error) {
               console.error("Erro ao salvar preferência de tema", error);
           }
       }
   };
 
-  // ... (Restante dos handlers: User Update, Role Change, Delete User, Add User - Mantidos iguais)
   const handleUpdateUserRole = async (userId: string, newRole: Role) => {
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
     try {
@@ -463,7 +458,6 @@ const AppContent = () => {
     if (currentUser && currentUser.id === userId) {
         const updated = { ...currentUser, ...data };
         setCurrentUser(updated);
-        // Atualiza sessão
         const stored = localStorage.getItem(SESSION_KEY);
         if (stored) {
              const s = JSON.parse(stored);
@@ -573,7 +567,6 @@ const AppContent = () => {
     setCurrentUser(updatedUser);
     setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedUser : u));
 
-    // Atualiza sessão
     const stored = localStorage.getItem(SESSION_KEY);
     if (stored) {
          const s = JSON.parse(stored);
@@ -587,8 +580,6 @@ const AppContent = () => {
         toast.success('Avatar atualizado.');
     } catch(e) { toast.error('Erro ao salvar avatar.'); }
   };
-
-  // ... (Restante dos handlers de Categoria, Documento e Template - Mantidos iguais ao original, apenas omitidos para brevidade se não alterados, mas vou incluir os essenciais para o contexto do arquivo XML completo)
 
   const selectedDocument = documents.find(d => d.id === selectedDocId) || null;
   const selectedTranslations = translations.filter(t => t.documentId === selectedDocId);
@@ -945,13 +936,22 @@ const AppContent = () => {
     <div className={`flex h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans transition-colors duration-200 ${isNavbarMode ? 'flex-col' : 'flex-row'}`}>
       
       {isNavbarMode ? (
-         <Navbar {...commonProps} />
+         <Navbar 
+            {...commonProps} 
+            searchQuery={searchQuery}
+            onSearch={setSearchQuery}
+         />
       ) : (
          <Sidebar {...commonProps} />
       )}
 
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        {!isNavbarMode && <Header />}
+        {!isNavbarMode && (
+            <Header 
+                searchQuery={searchQuery}
+                onSearch={setSearchQuery}
+            />
+        )}
 
         <main className="flex-1 overflow-y-auto">
           {currentView === 'HOME' && (
