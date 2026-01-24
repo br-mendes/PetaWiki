@@ -1,10 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookOpen, Shield, Users, Search, Lock, Mail, ArrowLeft, Send, Check, AlertCircle, User as UserIcon, Eye, EyeOff } from 'lucide-react';
 import { Button } from './Button';
 import { SystemSettings } from '../types';
 import { sendPasswordResetEmail } from '../lib/email';
 import { Modal } from './Modal';
+import { supabase } from '../lib/supabase';
+import { useToast } from './Toast';
 
 interface LoginPageProps {
   onLogin: (username: string, password: string) => void;
@@ -13,6 +15,7 @@ interface LoginPageProps {
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, settings }) => {
+  const toast = useToast();
   const [isSignUpMode, setIsSignUpMode] = useState(false);
   
   // Login State
@@ -35,6 +38,66 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
   const [resetEmail, setResetEmail] = useState('');
   const [isSendingReset, setIsSendingReset] = useState(false);
   const [resetMessage, setResetMessage] = useState<{type: 'success'|'error', text: string} | null>(null);
+
+  // Reset/Setup Password Callback State
+  const [isResetCallbackOpen, setIsResetCallbackOpen] = useState(false);
+  const [callbackParams, setCallbackParams] = useState<{action: string, email: string, token: string} | null>(null);
+  const [newCallbackPassword, setNewCallbackPassword] = useState('');
+  const [confirmCallbackPassword, setConfirmCallbackPassword] = useState('');
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+
+  // Check URL for callback actions (reset-password, setup-password)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const action = params.get('action');
+    const email = params.get('email');
+    const token = params.get('token');
+
+    if (email && (action === 'reset-password' || action === 'setup-password')) {
+        setCallbackParams({ action, email, token: token || '' });
+        setIsResetCallbackOpen(true);
+        // Clear sensitive params from URL visually without reload
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
+  const handleCallbackSubmit = async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (newCallbackPassword !== confirmCallbackPassword) {
+          toast.error('As senhas não coincidem.');
+          return;
+      }
+      if (newCallbackPassword.length < 3) {
+          toast.error('A senha deve ter pelo menos 3 caracteres.');
+          return;
+      }
+      if (!callbackParams?.email) return;
+
+      setIsSavingPassword(true);
+      try {
+          // Atualiza senha no Supabase
+          const { error } = await supabase
+              .from('users')
+              .update({ password: newCallbackPassword })
+              .eq('email', callbackParams.email);
+
+          if (error) throw error;
+
+          toast.success('Senha definida com sucesso! Você já pode fazer login.');
+          setIsResetCallbackOpen(false);
+          setNewCallbackPassword('');
+          setConfirmCallbackPassword('');
+          
+          // Pre-fill login
+          setUsername(callbackParams.email);
+          
+      } catch (err) {
+          console.error(err);
+          toast.error('Erro ao atualizar a senha. Tente novamente.');
+      } finally {
+          setIsSavingPassword(false);
+      }
+  };
 
   const calculatePasswordStrength = (pass: string) => {
     let score = 0;
@@ -380,6 +443,59 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
                     </Button>
                     <Button type="submit" disabled={isSendingReset || !resetEmail}>
                         {isSendingReset ? 'Enviando...' : <span className="flex items-center gap-2"><Send size={14} /> Enviar Link</span>}
+                    </Button>
+                </div>
+            </form>
+        </div>
+      </Modal>
+
+      {/* Callback Modal (Reset/Setup Password) */}
+      <Modal 
+        isOpen={isResetCallbackOpen} 
+        onClose={() => setIsResetCallbackOpen(false)} 
+        title={callbackParams?.action === 'setup-password' ? 'Definir Senha de Acesso' : 'Redefinir Senha'}
+        size="sm"
+      >
+        <div className="space-y-4">
+            <div className="bg-blue-50 dark:bg-blue-900/30 p-3 rounded text-sm text-blue-800 dark:text-blue-200">
+                {callbackParams?.action === 'setup-password' 
+                    ? `Bem-vindo! Defina uma senha segura para sua conta: ${callbackParams?.email}`
+                    : `Crie uma nova senha para: ${callbackParams?.email}`
+                }
+            </div>
+            
+            <form onSubmit={handleCallbackSubmit} className="space-y-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nova Senha</label>
+                    <div className="relative">
+                        <input 
+                            type="password" 
+                            value={newCallbackPassword}
+                            onChange={(e) => setNewCallbackPassword(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            placeholder="Mínimo 3 caracteres"
+                            required
+                        />
+                    </div>
+                </div>
+                
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirmar Senha</label>
+                    <div className="relative">
+                        <input 
+                            type="password" 
+                            value={confirmCallbackPassword}
+                            onChange={(e) => setConfirmCallbackPassword(e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            placeholder="Repita a senha"
+                            required
+                        />
+                    </div>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                    <Button type="submit" disabled={isSavingPassword}>
+                        {isSavingPassword ? 'Salvando...' : 'Definir Senha'}
                     </Button>
                 </div>
             </form>
