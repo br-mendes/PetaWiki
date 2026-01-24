@@ -2,11 +2,12 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
-import { User, SystemSettings, Role, Category, Document } from '../types';
-import { Image, Save, UserCog, UserPlus, FolderTree, Upload, Trash2, Plus, CornerDownRight, ShieldCheck, X, Layout, Sidebar as SidebarIcon, PanelTop, RotateCcw, FileX, Edit } from 'lucide-react';
+import { User, SystemSettings, Role, Category, Document, FooterColumn } from '../types';
+import { Image, Save, UserCog, UserPlus, FolderTree, Upload, Trash2, Plus, CornerDownRight, ShieldCheck, X, Layout, Sidebar as SidebarIcon, PanelTop, RotateCcw, FileX, Edit, Link, ExternalLink, Columns } from 'lucide-react';
 import { generateSlug } from '../lib/hierarchy';
 import { sendWelcomeEmail } from '../lib/email';
 import { useToast } from './Toast';
+import { DEFAULT_SYSTEM_SETTINGS } from '../constants';
 
 interface AdminSettingsProps {
   isOpen: boolean;
@@ -47,7 +48,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   onPermanentDeleteDocument
 }) => {
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<'BRANDING' | 'SECURITY' | 'USERS' | 'CATEGORIES' | 'TRASH'>('BRANDING');
+  const [activeTab, setActiveTab] = useState<'BRANDING' | 'FOOTER' | 'SECURITY' | 'USERS' | 'CATEGORIES' | 'TRASH'>('BRANDING');
   
   // Branding State
   const [appName, setAppName] = useState(settings.appName);
@@ -62,6 +63,10 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   // Public Landing State
   const [landingTitle, setLandingTitle] = useState(settings.landingTitle || settings.appName || 'Peta Wiki');
   const [landingDescription, setLandingDescription] = useState(settings.landingDescription || 'O hub central para o conhecimento corporativo.');
+
+  // Footer State
+  const [footerColumns, setFooterColumns] = useState<FooterColumn[]>(settings.footerColumns || DEFAULT_SYSTEM_SETTINGS.footerColumns || []);
+  const [footerBottomText, setFooterBottomText] = useState(settings.footerBottomText || DEFAULT_SYSTEM_SETTINGS.footerBottomText || '');
 
   // Security State
   const [allowedDomains, setAllowedDomains] = useState<string[]>(settings.allowedDomains || []);
@@ -117,7 +122,9 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
         homeTitle,
         homeDescription,
         landingTitle,
-        landingDescription
+        landingDescription,
+        footerColumns,
+        footerBottomText
     });
     toast.success('Configurações do sistema atualizadas!');
   };
@@ -204,6 +211,31 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
     }
   };
 
+  // Footer Handlers
+  const handleUpdateColumnTitle = (colIndex: number, newTitle: string) => {
+    const newCols = [...footerColumns];
+    newCols[colIndex].title = newTitle;
+    setFooterColumns(newCols);
+  };
+
+  const handleAddLink = (colIndex: number) => {
+    const newCols = [...footerColumns];
+    newCols[colIndex].links.push({ label: 'Novo Link', url: 'https://' });
+    setFooterColumns(newCols);
+  };
+
+  const handleRemoveLink = (colIndex: number, linkIndex: number) => {
+    const newCols = [...footerColumns];
+    newCols[colIndex].links.splice(linkIndex, 1);
+    setFooterColumns(newCols);
+  };
+
+  const handleUpdateLink = (colIndex: number, linkIndex: number, field: 'label'|'url', value: string) => {
+    const newCols = [...footerColumns];
+    newCols[colIndex].links[linkIndex][field] = value;
+    setFooterColumns(newCols);
+  };
+
   return (
     <>
     <Modal isOpen={isOpen} onClose={onClose} title="Configurações de Admin" size="lg">
@@ -215,6 +247,12 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
             className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'BRANDING' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
           >
             <Layout size={16} /> Layout & Home
+          </button>
+           <button
+            onClick={() => setActiveTab('FOOTER')}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'FOOTER' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
+          >
+            <Columns size={16} /> Rodapé
           </button>
           <button
             onClick={() => setActiveTab('SECURITY')}
@@ -392,9 +430,98 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
             </div>
           )}
 
+          {activeTab === 'FOOTER' && (
+             <div className="space-y-6">
+                <div>
+                   <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Configuração do Rodapé</h3>
+                   <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                     Personalize as colunas, links e o texto final exibidos no rodapé da página inicial.
+                   </p>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Grid de Colunas */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {footerColumns.map((col, colIndex) => (
+                      <div key={colIndex} className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+                        <div className="mb-3">
+                          <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                            Título da Coluna {colIndex + 1}
+                          </label>
+                          <input 
+                             type="text" 
+                             value={col.title}
+                             onChange={(e) => handleUpdateColumnTitle(colIndex, e.target.value)}
+                             className="w-full px-2 py-1.5 text-sm font-bold border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
+                          />
+                        </div>
+                        
+                        <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                           {col.links.map((link, linkIndex) => (
+                             <div key={linkIndex} className="p-2 bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700 relative group">
+                                <button 
+                                  onClick={() => handleRemoveLink(colIndex, linkIndex)}
+                                  className="absolute top-1 right-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  title="Remover Link"
+                                >
+                                  <X size={14} />
+                                </button>
+                                <div className="mb-1.5 pr-4">
+                                  <input 
+                                    type="text" 
+                                    value={link.label}
+                                    placeholder="Nome do Link"
+                                    onChange={(e) => handleUpdateLink(colIndex, linkIndex, 'label', e.target.value)}
+                                    className="w-full text-sm bg-transparent border-none p-0 focus:ring-0 text-gray-800 dark:text-gray-200 placeholder-gray-400 font-medium"
+                                  />
+                                </div>
+                                <div className="flex items-center gap-1.5 text-gray-400">
+                                   <ExternalLink size={12} className="shrink-0" />
+                                   <input 
+                                    type="text" 
+                                    value={link.url}
+                                    placeholder="https://..."
+                                    onChange={(e) => handleUpdateLink(colIndex, linkIndex, 'url', e.target.value)}
+                                    className="w-full text-xs bg-transparent border-none p-0 focus:ring-0 text-blue-600 dark:text-blue-400 placeholder-gray-400"
+                                   />
+                                </div>
+                             </div>
+                           ))}
+                        </div>
+
+                        <button 
+                          onClick={() => handleAddLink(colIndex)}
+                          className="mt-3 w-full py-1.5 flex items-center justify-center gap-1 text-xs font-medium text-blue-600 dark:text-blue-400 border border-dashed border-blue-300 dark:border-blue-700 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                        >
+                           <Plus size={12} /> Adicionar Link
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Texto Final */}
+                  <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Texto de Rodapé (Copyright/Créditos)</label>
+                     <input 
+                        type="text"
+                        value={footerBottomText}
+                        onChange={(e) => setFooterBottomText(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                        placeholder="Ex: Feito com ❤️ na Empresa."
+                     />
+                  </div>
+
+                  <div className="pt-4 flex justify-end">
+                     <Button onClick={handleSaveSettings}>
+                        <Save size={16} className="mr-2" /> Salvar Rodapé
+                     </Button>
+                  </div>
+                </div>
+             </div>
+          )}
+
           {activeTab === 'SECURITY' && (
               <div className="space-y-6">
-                  {/* ... código existente da aba de segurança mantido ... */}
                    <div>
                       <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Auto-Cadastro (Self Sign-up)</h3>
                       <p className="text-sm text-gray-500 mb-4">
@@ -554,7 +681,6 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
           )}
 
           {activeTab === 'CATEGORIES' && (
-             // ... código existente da aba de categorias mantido ...
              <div className="space-y-6">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">Estrutura de Categorias</h3>

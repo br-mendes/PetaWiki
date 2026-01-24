@@ -7,6 +7,7 @@ import { sendPasswordResetEmail } from '../lib/email';
 import { Modal } from './Modal';
 import { supabase } from '../lib/supabase';
 import { useToast } from './Toast';
+import { DEFAULT_SYSTEM_SETTINGS } from '../constants';
 
 interface LoginPageProps {
   onLogin: (username: string, password: string) => void;
@@ -93,20 +94,23 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
 
       setIsSavingPassword(true);
       try {
-          console.log(`Atualizando senha para: ${callbackParams.email}`);
+          console.log(`Solicitando atualização de senha para: ${callbackParams.email}`);
           
-          // Atualiza senha no Supabase
-          const { data, error } = await supabase
-              .from('users')
-              .update({ password: newCallbackPassword })
-              .eq('email', callbackParams.email.trim()) // Trim é importante aqui
-              .select(); // Select confirma se houve update
+          // Chama a API segura para atualizar a senha
+          const response = await fetch('/api/reset-password', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  email: callbackParams.email.trim(),
+                  password: newCallbackPassword,
+                  token: callbackParams.token
+              })
+          });
 
-          if (error) throw error;
-          
-          // Se data vier vazio, significa que o email não foi encontrado ou RLS bloqueou
-          if (!data || data.length === 0) {
-             throw new Error("Usuário não encontrado ou erro de permissão. Verifique o e-mail.");
+          const data = await response.json();
+
+          if (!response.ok) {
+              throw new Error(data.error || 'Erro ao atualizar senha.');
           }
 
           toast.success('Senha definida com sucesso! Você já pode fazer login.');
@@ -195,6 +199,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
   // Use customized texts specific for LANDING PAGE, falling back to defaults
   const displayTitle = settings.landingTitle || settings.appName || 'Peta Wiki';
   const displayDescription = settings.landingDescription || 'O hub central para o conhecimento corporativo. Organize, compartilhe e colabore na documentação com segurança baseada em funções.';
+
+  // Fallback for footer to ensure it displays even if settings are partial
+  const footerColumns = settings.footerColumns || DEFAULT_SYSTEM_SETTINGS.footerColumns || [];
+  const footerText = settings.footerBottomText || DEFAULT_SYSTEM_SETTINGS.footerBottomText || 'Feito com 💙 na Peta.';
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors">
@@ -414,6 +422,41 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
           </p>
         </div>
       </div>
+
+      {/* Footer */}
+      <footer className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-auto">
+        <div className="max-w-6xl mx-auto py-12 px-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {footerColumns.map((col, idx) => (
+              <div key={idx}>
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider mb-4">
+                  {col.title}
+                </h4>
+                <ul className="space-y-3">
+                  {col.links.map((link, lIdx) => (
+                    <li key={lIdx}>
+                      <a 
+                        href={link.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                      >
+                        {link.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          
+          <div className="border-t border-gray-200 dark:border-gray-700 mt-12 pt-8 text-center">
+            <p className="text-gray-500 dark:text-gray-400 font-medium">
+              {footerText}
+            </p>
+          </div>
+        </div>
+      </footer>
 
       {/* Forgot Password Modal */}
       <Modal 

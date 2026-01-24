@@ -1,5 +1,4 @@
 
-
 export type Role = 'ADMIN' | 'EDITOR' | 'READER';
 
 export type DocStatus = 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED';
@@ -9,6 +8,16 @@ export type TemplateCategory = 'POLICY' | 'SOP' | 'FAQ' | 'MEETING_MINUTES' | 'K
 export type SupportedLanguage = 'pt' | 'en' | 'es' | 'fr' | 'de' | 'it';
 
 export type TranslationStatus = 'SYNCED' | 'OUT_OF_SYNC' | 'ERROR';
+
+export interface FooterLink {
+  label: string;
+  url: string;
+}
+
+export interface FooterColumn {
+  title: string;
+  links: FooterLink[];
+}
 
 export interface SystemSettings {
   appName: string;
@@ -26,6 +35,10 @@ export interface SystemSettings {
   // Configurações da Landing Page / Login (Pré-login)
   landingTitle?: string;
   landingDescription?: string;
+
+  // Configurações do Rodapé
+  footerColumns?: FooterColumn[];
+  footerBottomText?: string;
 }
 
 export interface User {

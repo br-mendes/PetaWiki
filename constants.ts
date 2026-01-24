@@ -15,7 +15,32 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
 
   // Landing Page (Pública)
   landingTitle: 'Peta Wiki Corporativo',
-  landingDescription: 'O hub central para o conhecimento corporativo. Organize, compartilhe e colabore na documentação com segurança baseada em funções.'
+  landingDescription: 'O hub central para o conhecimento corporativo. Organize, compartilhe e colabore na documentação com segurança baseada em funções.',
+
+  // Rodapé
+  footerBottomText: 'Feito com 💙 na Peta.',
+  footerColumns: [
+    {
+      title: 'Redes',
+      links: [
+        { label: 'Instagram', url: 'https://www.instagram.com/petacorp/' },
+        { label: 'LinkedIn', url: 'https://www.linkedin.com/company/petacorp/' }
+      ]
+    },
+    {
+      title: 'Links',
+      links: [
+        { label: 'Site', url: 'https://www.petacorp.com.br/' }
+      ]
+    },
+    {
+      title: 'Contato',
+      links: [
+        { label: 'Trabalhe conosco', url: 'https://petacorp.vagas.solides.com.br/' },
+        { label: 'Suporte Técnico', url: 'https://glpi.petacorp.com.br/' }
+      ]
+    }
+  ]
 };
 
 export const MOCK_USERS: User[] = [
