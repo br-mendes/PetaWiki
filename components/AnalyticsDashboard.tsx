@@ -5,13 +5,13 @@ import {
   BarChart, Bar, Legend
 } from 'recharts';
 import { 
-  Users, FileText, Eye, TrendingUp, Download, Search, 
-  Briefcase, Clock, Activity, ArrowUpRight, ArrowDownRight, Layout
+  Users, FileText, Eye, TrendingUp, Search, 
+  Briefcase, Activity, Layout
 } from 'lucide-react';
 import { Button } from './Button';
 import { StatusBadge } from './Badge';
 import { supabase } from '../lib/supabase';
-import { DailyStat, DepartmentStat, SearchQueryStat, Document } from '../types';
+import { DailyStat, DepartmentStat, SearchQueryStat } from '../types';
 
 // --- Interfaces para Dados Reais ---
 
@@ -69,10 +69,19 @@ export const AnalyticsDashboard: React.FC = () => {
         // 1. Daily Stats (Last 30 Days)
         const { data: dailyData, error: dailyError } = await supabase.rpc('get_daily_analytics');
         if (!dailyError && dailyData) {
-            setDailyStats(dailyData);
+            const normalizedDaily = dailyData.map((d: any) => ({
+                date: d.date,
+                views: Number(d.views || 0),
+                edits: Number(d.edits || 0),
+                uniqueUsers: Number(d.unique_users ?? d.uniqueUsers ?? 0)
+            }));
+            
+            setDailyStats(normalizedDaily);
+            
             // Calc Totals from Daily
-            const viewsSum = dailyData.reduce((acc: number, curr: any) => acc + (curr.views || 0), 0);
-            const usersSum = dailyData.reduce((acc: number, curr: any) => acc + (curr.unique_users || 0), 0);
+            const viewsSum = normalizedDaily.reduce((acc: number, curr: any) => acc + curr.views, 0);
+            const usersSum = normalizedDaily.reduce((acc: number, curr: any) => acc + curr.uniqueUsers, 0);
+            
             setTotalViews(viewsSum);
             setTotalUniqueUsers(usersSum);
         }
@@ -83,10 +92,10 @@ export const AnalyticsDashboard: React.FC = () => {
             // Mapear snake_case para camelCase
             const mappedDept = deptData.map((d: any) => ({
                 name: d.name,
-                docCount: d.doc_count,
-                viewCount: d.view_count,
-                publishedCount: d.published_count,
-                draftCount: d.draft_count,
+                docCount: Number(d.doc_count || 0),
+                viewCount: Number(d.view_count || 0),
+                publishedCount: Number(d.published_count || 0),
+                draftCount: Number(d.draft_count || 0),
                 avgPublishTime: '-' // Calculo complexo, ignorar por agora
             }));
             setDepartmentStats(mappedDept);
@@ -95,7 +104,7 @@ export const AnalyticsDashboard: React.FC = () => {
         // 3. Search Queries
         const { data: searchData, error: searchError } = await supabase.rpc('get_top_searches');
         if (!searchError && searchData) {
-            setSearchQueries(searchData.map((s: any) => ({ query: s.query, count: s.count, trend: 0 })));
+            setSearchQueries(searchData.map((s: any) => ({ query: s.query, count: Number(s.count || 0), trend: 0 })));
         }
 
         // 4. Content Performance (Top Docs by View)
@@ -200,7 +209,7 @@ export const AnalyticsDashboard: React.FC = () => {
                     contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'}}
                   />
                   <Area type="monotone" dataKey="views" name="Visualizações" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorViews)" />
-                  <Area type="monotone" dataKey="unique_users" name="Usuários Únicos" stroke="#10b981" strokeWidth={2} fillOpacity={0.1} fill="#10b981" />
+                  <Area type="monotone" dataKey="uniqueUsers" name="Usuários Únicos" stroke="#10b981" strokeWidth={2} fillOpacity={0.1} fill="#10b981" />
                   <Legend verticalAlign="top" height={36}/>
                 </AreaChart>
               </ResponsiveContainer>
