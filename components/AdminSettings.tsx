@@ -3,13 +3,14 @@ import React, { useState, useRef, useMemo } from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { User, SystemSettings, Role, Category, Document, FooterColumn, LandingFeature, HeroTag } from '../types';
-import { Image, Save, UserCog, UserPlus, FolderTree, Upload, Trash2, Plus, CornerDownRight, ShieldCheck, X, Layout, Sidebar as SidebarIcon, PanelTop, RotateCcw, FileX, Edit, Link, ExternalLink, Columns, Star, Zap, Globe, Lock, BookOpen, Users, Search, ToggleLeft, ToggleRight, LayoutTemplate, Palette } from 'lucide-react';
+import { Image, Save, UserCog, UserPlus, FolderTree, Upload, Trash2, Plus, CornerDownRight, ShieldCheck, X, Layout, Sidebar as SidebarIcon, PanelTop, RotateCcw, FileX, Edit, Link, ExternalLink, Columns, Star, Zap, Globe, Lock, BookOpen, Users, Search, ToggleLeft, ToggleRight, LayoutTemplate, Palette, Tag, Grid } from 'lucide-react';
 import { generateSlug } from '../lib/hierarchy';
 import { sendWelcomeEmail } from '../lib/email';
 import { useToast } from './Toast';
 import { compressImage } from '../lib/image';
 import { DEFAULT_SYSTEM_SETTINGS } from '../constants';
 import { RichTextEditor } from './RichTextEditor';
+import { ICON_MAP, IconRenderer } from './IconRenderer';
 
 interface AdminSettingsProps {
   isOpen: boolean;
@@ -40,6 +41,8 @@ const GRADIENT_OPTIONS = [
     { name: 'Tech Índigo', class: 'bg-gradient-to-r from-indigo-700 to-cyan-700' },
     { name: 'Rosa Vibrante', class: 'bg-gradient-to-r from-pink-700 to-rose-900' },
 ];
+
+const AVAILABLE_ICONS = Object.keys(ICON_MAP).sort();
 
 export const AdminSettings: React.FC<AdminSettingsProps> = ({
   isOpen,
@@ -129,6 +132,36 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
     traverse(null, 0);
     return result;
   }, [categories]);
+
+  // Handlers for Hero Tags
+  const handleUpdateHeroTag = (index: number, field: keyof HeroTag, value: string) => {
+    const newTags = [...heroTags];
+    newTags[index] = { ...newTags[index], [field]: value };
+    setHeroTags(newTags);
+  };
+
+  const handleAddHeroTag = () => {
+    setHeroTags([...heroTags, { icon: 'star', text: 'Novo Destaque' }]);
+  };
+
+  const handleRemoveHeroTag = (index: number) => {
+    setHeroTags(heroTags.filter((_, i) => i !== index));
+  };
+
+  // Handlers for Landing Features
+  const handleUpdateFeature = (index: number, field: keyof LandingFeature, value: string) => {
+    const newFeatures = [...landingFeatures];
+    newFeatures[index] = { ...newFeatures[index], [field]: value };
+    setLandingFeatures(newFeatures);
+  };
+
+  const handleAddFeature = () => {
+    setLandingFeatures([...landingFeatures, { icon: 'book', title: 'Novo Recurso', description: 'Descrição curta do recurso.' }]);
+  };
+
+  const handleRemoveFeature = (index: number) => {
+    setLandingFeatures(landingFeatures.filter((_, i) => i !== index));
+  };
 
   const handleSaveSettings = () => {
     onSaveSettings({ 
@@ -496,6 +529,89 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                 ))}
                             </div>
                         </div>
+
+                        {/* Editor de Hero Tags */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                                <Tag size={16} /> Tags de Destaque (Hero)
+                            </label>
+                            <div className="space-y-2">
+                                {heroTags.map((tag, idx) => (
+                                    <div key={idx} className="flex items-center gap-2">
+                                        <select
+                                            value={tag.icon}
+                                            onChange={(e) => handleUpdateHeroTag(idx, 'icon', e.target.value)}
+                                            className="w-32 px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-sm"
+                                        >
+                                            {AVAILABLE_ICONS.map(ic => <option key={ic} value={ic}>{ic}</option>)}
+                                        </select>
+                                        <input 
+                                            type="text" 
+                                            value={tag.text}
+                                            onChange={(e) => handleUpdateHeroTag(idx, 'text', e.target.value)}
+                                            className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm"
+                                            placeholder="Texto do destaque"
+                                        />
+                                        <button onClick={() => handleRemoveHeroTag(idx)} className="text-red-500 hover:text-red-700 p-1">
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+                                ))}
+                                <Button size="sm" variant="secondary" onClick={handleAddHeroTag}>
+                                    <Plus size={14} className="mr-1" /> Adicionar Tag
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Editor de Landing Features */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                                <Grid size={16} /> Blocos de Recursos (Features)
+                            </label>
+                            <div className="space-y-3">
+                                {landingFeatures.map((feat, idx) => (
+                                    <div key={idx} className="p-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg relative group">
+                                        <button onClick={() => handleRemoveFeature(idx)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <X size={16} />
+                                        </button>
+                                        <div className="flex gap-3 items-start">
+                                             <div className="shrink-0 pt-1">
+                                                <select
+                                                    value={feat.icon}
+                                                    onChange={(e) => handleUpdateFeature(idx, 'icon', e.target.value)}
+                                                    className="w-24 px-1 py-1 border border-gray-300 dark:border-gray-600 rounded text-xs bg-gray-50 dark:bg-gray-800"
+                                                >
+                                                    {AVAILABLE_ICONS.map(ic => <option key={ic} value={ic}>{ic}</option>)}
+                                                </select>
+                                                <div className="mt-2 flex justify-center text-blue-600 dark:text-blue-400">
+                                                    <IconRenderer iconName={feat.icon} size={24} />
+                                                </div>
+                                             </div>
+                                             <div className="flex-1 space-y-2">
+                                                <input 
+                                                    type="text" 
+                                                    value={feat.title}
+                                                    onChange={(e) => handleUpdateFeature(idx, 'title', e.target.value)}
+                                                    className="w-full px-2 py-1 border-b border-gray-200 dark:border-gray-700 bg-transparent focus:border-blue-500 outline-none font-bold text-sm"
+                                                    placeholder="Título do Recurso"
+                                                />
+                                                <textarea 
+                                                    rows={2}
+                                                    value={feat.description}
+                                                    onChange={(e) => handleUpdateFeature(idx, 'description', e.target.value)}
+                                                    className="w-full px-2 py-1 bg-transparent border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-600 dark:text-gray-400 resize-none"
+                                                    placeholder="Descrição do recurso..."
+                                                />
+                                             </div>
+                                        </div>
+                                    </div>
+                                ))}
+                                <Button size="sm" variant="secondary" onClick={handleAddFeature}>
+                                    <Plus size={14} className="mr-1" /> Adicionar Recurso
+                                </Button>
+                            </div>
+                        </div>
+
                      </div>
                    </div>
 
