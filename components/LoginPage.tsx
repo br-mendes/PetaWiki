@@ -1,25 +1,14 @@
 
+
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Shield, Users, Search, Lock, Mail, ArrowLeft, Send, Check, AlertCircle, User as UserIcon, Eye, EyeOff, Zap, Globe, Layout, Star } from 'lucide-react';
+import { Lock, Mail, AlertCircle, User as UserIcon, Eye, EyeOff, Send } from 'lucide-react';
 import { Button } from './Button';
 import { SystemSettings, LandingFeature, HeroTag } from '../types';
 import { sendPasswordResetEmail } from '../lib/email';
 import { Modal } from './Modal';
-import { supabase } from '../lib/supabase';
 import { useToast } from './Toast';
 import { DEFAULT_SYSTEM_SETTINGS } from '../constants';
-
-const ICON_MAP: Record<string, React.ElementType> = {
-  'shield': Shield,
-  'users': Users,
-  'search': Search,
-  'book': BookOpen,
-  'lock': Lock,
-  'zap': Zap,
-  'globe': Globe,
-  'layout': Layout,
-  'star': Star
-};
+import { IconRenderer } from './IconRenderer';
 
 interface LoginPageProps {
   onLogin: (username: string, password: string) => void;
@@ -211,11 +200,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
     }
   };
 
-  const renderIcon = (iconName: string, size: number = 16, className?: string) => {
-    const Icon = ICON_MAP[iconName.toLowerCase()] || Star;
-    return <Icon size={size} className={className} />;
-  };
-
   const displayLogo = settings.logoCollapsedUrl || settings.logoExpandedUrl;
   const displayTitle = settings.landingTitle || settings.appName || 'Peta Wiki';
   const displayDescription = settings.landingDescription || 'O hub central para o conhecimento corporativo. Organize, compartilhe e colabore na documentação com segurança baseada em funções.';
@@ -244,7 +228,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
             <div className="flex flex-wrap gap-4 justify-center md:justify-start text-sm font-medium text-white/80">
                {heroTags.map((tag, idx) => (
                  <span key={idx} className="flex items-center gap-1">
-                    {renderIcon(tag.icon, 16)} {tag.text}
+                    <IconRenderer iconName={tag.icon} size={16} /> {tag.text}
                  </span>
                ))}
             </div>
@@ -425,7 +409,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
           return (
             <div key={idx} className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow">
               <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-4 ${colorClass}`}>
-                {renderIcon(feat.icon, 24)}
+                <IconRenderer iconName={feat.icon} size={24} />
               </div>
               <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">{feat.title}</h3>
               <p className="text-gray-600 dark:text-gray-400">{feat.description}</p>
