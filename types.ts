@@ -48,6 +48,7 @@ export interface SystemSettings {
   // Configurações da Landing Page / Login (Pré-login)
   landingTitle?: string;
   landingDescription?: string;
+  landingGradient?: string; // Novo: Classe CSS do gradiente de fundo
   
   // Novos itens editáveis (1,2,3 e 4,5,6)
   heroTags?: HeroTag[];

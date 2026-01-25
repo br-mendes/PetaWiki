@@ -219,6 +219,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
   const displayLogo = settings.logoCollapsedUrl || settings.logoExpandedUrl;
   const displayTitle = settings.landingTitle || settings.appName || 'Peta Wiki';
   const displayDescription = settings.landingDescription || 'O hub central para o conhecimento corporativo. Organize, compartilhe e colabore na documentação com segurança baseada em funções.';
+  const landingGradient = settings.landingGradient || 'bg-gradient-to-r from-blue-700 to-blue-900';
 
   const footerColumns = settings.footerColumns || DEFAULT_SYSTEM_SETTINGS.footerColumns || [];
   const footerText = settings.footerBottomText || DEFAULT_SYSTEM_SETTINGS.footerBottomText || 'Feito com 💙 na Peta.';
@@ -228,7 +229,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col transition-colors">
-      <div className="bg-gradient-to-r from-blue-700 to-blue-900 text-white py-16 px-6">
+      <div className={`${landingGradient} text-white py-16 px-6 transition-colors duration-500`}>
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12">
           <div className="flex-1 text-center md:text-left">
             <div className="flex items-center justify-center md:justify-start gap-6 mb-6">
@@ -237,10 +238,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
                 {displayTitle}
               </h1>
             </div>
-            <p className="text-xl md:text-2xl text-blue-100 mb-8 max-w-2xl whitespace-pre-line">
+            <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl whitespace-pre-line">
               {displayDescription}
             </p>
-            <div className="flex flex-wrap gap-4 justify-center md:justify-start text-sm font-medium text-blue-200">
+            <div className="flex flex-wrap gap-4 justify-center md:justify-start text-sm font-medium text-white/80">
                {heroTags.map((tag, idx) => (
                  <span key={idx} className="flex items-center gap-1">
                     {renderIcon(tag.icon, 16)} {tag.text}
@@ -433,12 +434,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
         })}
       </div>
 
-      <footer className="bg-gradient-to-r from-blue-700 to-blue-900 border-t border-blue-800 mt-auto text-white">
+      <footer className={`${landingGradient} border-t border-white/20 mt-auto text-white transition-colors duration-500`}>
         <div className="max-w-6xl mx-auto py-12 px-6 text-center">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {footerColumns.map((col, idx) => (
               <div key={idx}>
-                <h4 className="text-sm font-bold uppercase tracking-wider mb-4 text-blue-200">
+                <h4 className="text-sm font-bold uppercase tracking-wider mb-4 text-white/80">
                   {col.title}
                 </h4>
                 <ul className="space-y-3">
@@ -459,8 +460,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
             ))}
           </div>
           
-          <div className="border-t border-white/40 mt-12 pt-8">
-            <p className="text-blue-200 font-medium">
+          <div className="border-t border-white/20 mt-12 pt-8">
+            <p className="text-blue-100 font-medium">
               {footerText}
             </p>
           </div>

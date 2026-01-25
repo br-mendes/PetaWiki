@@ -3,7 +3,7 @@ import React, { useState, useRef, useMemo } from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { User, SystemSettings, Role, Category, Document, FooterColumn, LandingFeature, HeroTag } from '../types';
-import { Image, Save, UserCog, UserPlus, FolderTree, Upload, Trash2, Plus, CornerDownRight, ShieldCheck, X, Layout, Sidebar as SidebarIcon, PanelTop, RotateCcw, FileX, Edit, Link, ExternalLink, Columns, Star, Zap, Globe, Lock, BookOpen, Users, Search, ToggleLeft, ToggleRight, LayoutTemplate } from 'lucide-react';
+import { Image, Save, UserCog, UserPlus, FolderTree, Upload, Trash2, Plus, CornerDownRight, ShieldCheck, X, Layout, Sidebar as SidebarIcon, PanelTop, RotateCcw, FileX, Edit, Link, ExternalLink, Columns, Star, Zap, Globe, Lock, BookOpen, Users, Search, ToggleLeft, ToggleRight, LayoutTemplate, Palette } from 'lucide-react';
 import { generateSlug } from '../lib/hierarchy';
 import { sendWelcomeEmail } from '../lib/email';
 import { useToast } from './Toast';
@@ -30,6 +30,16 @@ interface AdminSettingsProps {
   onRestoreDocument: (doc: Document) => void;
   onPermanentDeleteDocument: (doc: Document) => void;
 }
+
+const GRADIENT_OPTIONS = [
+    { name: 'Oceano (Padrão)', class: 'bg-gradient-to-r from-blue-700 to-blue-900' },
+    { name: 'Esmeralda', class: 'bg-gradient-to-r from-emerald-700 to-emerald-900' },
+    { name: 'Roxo Real', class: 'bg-gradient-to-r from-violet-700 to-violet-900' },
+    { name: 'Grafite', class: 'bg-gradient-to-r from-slate-700 to-slate-900' },
+    { name: 'Laranja Solar', class: 'bg-gradient-to-r from-orange-600 to-red-800' },
+    { name: 'Tech Índigo', class: 'bg-gradient-to-r from-indigo-700 to-cyan-700' },
+    { name: 'Rosa Vibrante', class: 'bg-gradient-to-r from-pink-700 to-rose-900' },
+];
 
 export const AdminSettings: React.FC<AdminSettingsProps> = ({
   isOpen,
@@ -67,6 +77,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   // Public Landing State
   const [landingTitle, setLandingTitle] = useState(settings.landingTitle || settings.appName || 'Peta Wiki');
   const [landingDescription, setLandingDescription] = useState(settings.landingDescription || 'O hub central para o conhecimento corporativo.');
+  const [landingGradient, setLandingGradient] = useState(settings.landingGradient || 'bg-gradient-to-r from-blue-700 to-blue-900');
   const [heroTags, setHeroTags] = useState<HeroTag[]>(settings.heroTags || DEFAULT_SYSTEM_SETTINGS.heroTags || []);
   const [landingFeatures, setLandingFeatures] = useState<LandingFeature[]>(settings.landingFeatures || DEFAULT_SYSTEM_SETTINGS.landingFeatures || []);
 
@@ -132,6 +143,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
         homeContent,
         landingTitle,
         landingDescription,
+        landingGradient,
         heroTags,
         landingFeatures,
         footerColumns,
@@ -461,6 +473,28 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                             onChange={(e) => setLandingDescription(e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 outline-none bg-white dark:bg-gray-900 text-gray-900 dark:text-white resize-none"
                           />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                                <Palette size={16} /> Tema de Cores (Gradiente de Fundo)
+                            </label>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                {GRADIENT_OPTIONS.map((opt) => (
+                                    <button
+                                        key={opt.name}
+                                        onClick={() => setLandingGradient(opt.class)}
+                                        className={`relative h-16 rounded-lg transition-all border-2 flex items-end justify-start p-2 text-white font-bold text-xs shadow-sm hover:shadow-md ${opt.class} ${landingGradient === opt.class ? 'border-white ring-2 ring-blue-500 scale-105 z-10' : 'border-transparent hover:scale-105'}`}
+                                    >
+                                        <span className="drop-shadow-md">{opt.name}</span>
+                                        {landingGradient === opt.class && (
+                                            <div className="absolute top-1 right-1 bg-white text-blue-600 rounded-full p-0.5">
+                                                <ShieldCheck size={12} />
+                                            </div>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                      </div>
                    </div>

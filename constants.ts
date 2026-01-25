@@ -18,6 +18,7 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
   // Landing Page (Pública)
   landingTitle: 'Peta Wiki Corporativo',
   landingDescription: 'O hub central para o conhecimento corporativo. Organize, compartilhe e colabore na documentação com segurança baseada em funções.',
+  landingGradient: 'bg-gradient-to-r from-blue-700 to-blue-900', // Padrão
   
   heroTags: [
     { icon: 'shield', text: 'Segurança Empresarial' },
