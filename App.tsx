@@ -265,7 +265,7 @@ const AppContent = () => {
             slug: c.slug,
             parentId: c.parent_id,
             departmentId: c.department_id,
-            order: c.order,
+            order: c.sort_order, // Mapeamento DB sort_order -> App order
             docCount: c.doc_count,
             description: c.description,
             icon: c.icon
@@ -560,7 +560,7 @@ const AppContent = () => {
         description: newCategory.description,
         icon: newCategory.icon,
         doc_count: 0,
-        order: newCategory.order
+        sort_order: newCategory.order // Mapeamento App order -> DB sort_order
     });
 
     if (error) {
