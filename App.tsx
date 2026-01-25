@@ -196,7 +196,7 @@ const AppContent = () => {
             }
 
         } catch (error) {
-            // Fallback para busca local
+            // Fallback para busca local se RPC falhar (o que não deve mais acontecer)
             const queryLower = searchQuery.toLowerCase();
             const localResults = activeDocuments.filter(d => {
                 const matchTitle = d.title.toLowerCase().includes(queryLower);
@@ -251,7 +251,7 @@ const AppContent = () => {
       setIsLoading(true);
       try {
         const [docsRes, catsRes, usersRes, settingsRes] = await Promise.all([
-            supabase.from('documents').select('*'), // Traz TODOS, inclusive deletados (para popular lixeira)
+            supabase.from('documents').select('*'), // Importante: Select * traz tudo, incluindo deletados
             supabase.from('categories').select('*'),
             supabase.from('users').select('*'),
             supabase.from('system_settings').select('settings').single()
@@ -280,7 +280,7 @@ const AppContent = () => {
           authorId: d.author_id,
           createdAt: d.created_at,
           updatedAt: d.updated_at,
-          deletedAt: d.deleted_at, // Crítico: Mapear corretamente o campo do banco
+          deletedAt: d.deleted_at, // Crítico: Mapear para deletedAt para a Lixeira funcionar
           views: d.views,
           tags: d.tags || [],
           categoryPath: getCategoryPath(d.category_id, mappedCats),
@@ -325,7 +325,7 @@ const AppContent = () => {
     fetchData();
   }, []);
 
-  // ... (Login, SignUp, Logout, SaveSettings, ToggleTheme, User Management functions unchanged) ...
+  // ... (Funções de Login, Logout e Configuração mantidas) ...
   const handleLogin = (usernameInput: string, passwordInput: string) => {
     const foundUser = users.find(u => u.username === usernameInput || u.email === usernameInput);
     if (foundUser && foundUser.password === passwordInput) {
@@ -449,7 +449,6 @@ const AppContent = () => {
   };
 
   const handleAddUser = async (userData: Partial<User>) => {
-    // Mesma lógica do original ...
     const newUser: User = {
       id: `u${Date.now()}`,
       username: userData.email?.split('@')[0] || 'user',
@@ -501,6 +500,8 @@ const AppContent = () => {
   const isAdminOrEditor = currentUser?.role === 'ADMIN' || currentUser?.role === 'EDITOR';
 
   const handleSelectDocument = (document: Document) => {
+    // Permite selecionar documentos deletados apenas se não estivermos na view principal (ex: apenas visualização admin)
+    // Mas geralmente a lixeira tem suas ações próprias.
     if (document.deletedAt) return; 
     setSelectedDocId(document.id);
     setSearchQuery(''); 
@@ -683,8 +684,9 @@ const AppContent = () => {
         message: `Remover "${doc.title}"?`,
         onConfirm: async () => {
             const now = new Date().toISOString();
-            // Atualiza estado local imediatamente
+            // Atualiza estado local imediatamente e marca como deletado
             setDocuments(prev => prev.map(d => d.id === doc.id ? { ...d, deletedAt: now } : d));
+            
             if (selectedDocId === doc.id) {
                 setCurrentView('HOME');
                 setSelectedDocId(null);
