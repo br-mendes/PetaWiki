@@ -8,10 +8,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
-    // Define process.env globalmente para compatibilidade
-    define: {
-      'process.env': {}
-    },
+    // Removed 'define: { process.env: {} }' to prevent blocking access to real env vars in Node context
     build: {
       outDir: 'dist',
       sourcemap: false,
