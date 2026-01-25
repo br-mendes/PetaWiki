@@ -81,22 +81,50 @@ const AppContent = () => {
 
   // --- SESSÃO E INATIVIDADE ---
   useEffect(() => {
-    const restoreSession = () => {
+    const restoreSession = async () => {
         const savedSession = localStorage.getItem(SESSION_KEY);
         if (savedSession) {
             try {
                 const { user, lastActive } = JSON.parse(savedSession);
                 const now = Date.now();
                 if (now - lastActive < INACTIVITY_LIMIT) {
+                    // 1. Restaurar sessão localmente (Optimistic)
                     setCurrentUser(user);
                     setIsAuthenticated(true);
                     
-                    const refreshedSession = { user, lastActive: now };
+                    // 2. Buscar dados frescos do usuário no banco (especialmente tema)
+                    const { data: freshData } = await supabase
+                        .from('users')
+                        .select('theme_preference, role, avatar, name, department')
+                        .eq('id', user.id)
+                        .single();
+
+                    let finalUser = user;
+
+                    if (freshData) {
+                        // Sincronizar tema
+                        if (freshData.theme_preference) {
+                            setIsDarkMode(freshData.theme_preference === 'dark');
+                        } else {
+                            // Fallback se nulo no banco: Forçar Light
+                            setIsDarkMode(false);
+                            await supabase.from('users').update({ theme_preference: 'light' }).eq('id', user.id);
+                            freshData.theme_preference = 'light';
+                        }
+                        
+                        // Atualizar usuário com dados do banco
+                        finalUser = { 
+                            ...user, 
+                            ...freshData,
+                            themePreference: freshData.theme_preference 
+                        };
+                        setCurrentUser(finalUser);
+                    }
+
+                    // Atualizar sessão com timestamp e dados novos
+                    const refreshedSession = { user: finalUser, lastActive: now };
                     localStorage.setItem(SESSION_KEY, JSON.stringify(refreshedSession));
                     
-                    if (user.themePreference) {
-                        setIsDarkMode(user.themePreference === 'dark');
-                    }
                 } else {
                     localStorage.removeItem(SESSION_KEY);
                 }
@@ -243,7 +271,7 @@ const AppContent = () => {
     if (link) {
       link.href = systemSettings.logoCollapsedUrl;
     }
-    // Prioriza appName, depois landingTitle, depois o padrão
+    // Sincroniza o título da aba: AppName > LandingTitle (H1) > Default
     document.title = systemSettings.appName || systemSettings.landingTitle || 'Peta Wiki';
   }, [systemSettings]);
 
@@ -330,11 +358,26 @@ const AppContent = () => {
   const handleLogin = (usernameInput: string, passwordInput: string) => {
     const foundUser = users.find(u => u.username === usernameInput || u.email === usernameInput);
     if (foundUser && foundUser.password === passwordInput) {
-      setCurrentUser(foundUser);
+      
+      // Determina preferência, default para light se nulo
+      const themePref = foundUser.themePreference || 'light';
+      
+      // Se não tinha preferência, salva 'light' no banco para evitar nulos futuros
+      if (!foundUser.themePreference) {
+          supabase.from('users').update({ theme_preference: 'light' }).eq('id', foundUser.id).then();
+      }
+
+      const userWithSettings = { ...foundUser, themePreference: themePref };
+
+      setCurrentUser(userWithSettings);
       setIsAuthenticated(true);
-      const sessionData = { user: foundUser, lastActive: Date.now() };
+      
+      // Aplica tema imediatamente
+      setIsDarkMode(themePref === 'dark');
+
+      const sessionData = { user: userWithSettings, lastActive: Date.now() };
       localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
-      if (foundUser.themePreference) setIsDarkMode(foundUser.themePreference === 'dark');
+      
       toast.success(`Bem-vindo, ${foundUser.name}!`);
     } else {
       toast.error('Usuário ou senha inválidos.');
