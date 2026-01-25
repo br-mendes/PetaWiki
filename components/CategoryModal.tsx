@@ -4,7 +4,8 @@ import { Modal } from './Modal';
 import { Button } from './Button';
 import { Category, User } from '../types';
 import { generateSlug, isSlugUnique, getCategoryDepth } from '../lib/hierarchy';
-import { Folder, FolderOpen, ChevronRight, Hash, Type } from 'lucide-react';
+import { ChevronRight, Hash, Type, Folder } from 'lucide-react';
+import { ICON_MAP, IconRenderer } from './IconRenderer';
 
 interface CategoryModalProps {
   isOpen: boolean;
@@ -15,7 +16,8 @@ interface CategoryModalProps {
   onSave: (categoryData: Partial<Category>) => void;
 }
 
-const COMMON_ICONS = ['📁', '📂', '📘', '📚', '🚀', '💡', '🔒', '👥', '⚙️', '📢', '🔥', '⭐'];
+// Obtém as chaves dos ícones disponíveis para sugestão
+const SUGGESTED_ICONS = Object.keys(ICON_MAP);
 
 export const CategoryModal: React.FC<CategoryModalProps> = ({
   isOpen,
@@ -29,7 +31,8 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
   const [slug, setSlug] = useState('');
   const [isManualSlug, setIsManualSlug] = useState(false);
   const [description, setDescription] = useState('');
-  const [icon, setIcon] = useState('📁');
+  // Padrão 'folder' (Lucide) em vez de emoji para manter consistência
+  const [icon, setIcon] = useState('folder');
   const [departmentId, setDepartmentId] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +43,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
       setSlug('');
       setIsManualSlug(false);
       setDescription('');
-      setIcon('📁');
+      setIcon('folder');
       setDepartmentId(user.role === 'ADMIN' ? 'Global' : user.department);
       setError(null);
     }
@@ -81,7 +84,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
       name,
       slug: finalSlug,
       description,
-      icon,
+      icon, // Agora salva a string chave do ícone (ex: 'users')
       parentId,
       departmentId: user.role === 'ADMIN' && departmentId === 'Global' ? undefined : departmentId,
     });
@@ -118,22 +121,25 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                 </React.Fragment>
             ))}
             <ChevronRight size={14} className="text-gray-400 shrink-0" />
-            <span className="font-bold text-gray-900 dark:text-white flex items-center gap-1">
-               {icon || '📁'} {name || 'Nova Categoria'}
+            <span className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
+               <IconRenderer iconName={icon} size={16} className="text-blue-600 dark:text-blue-400" /> {name || 'Nova Categoria'}
             </span>
         </div>
 
         <div className="grid grid-cols-[auto_1fr] gap-4 items-start">
-            {/* Icon Picker */}
+            {/* Icon Preview Box */}
             <div className="space-y-1">
                 <label className="block text-xs font-medium text-gray-500 uppercase">Ícone</label>
-                <div className="relative group">
+                <div className="relative group w-16 h-16 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-sm transition-colors hover:border-blue-400">
+                    <IconRenderer iconName={icon} size={32} />
+                    
+                    {/* Input invisível caso o usuário queira colar um emoji manualmente, mas priorizamos a seleção */}
                     <input
                         type="text"
-                        maxLength={2}
                         value={icon}
                         onChange={e => setIcon(e.target.value)}
-                        className="w-16 h-16 text-center text-3xl border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 dark:text-white cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        title="Clique nos ícones abaixo para selecionar"
                     />
                 </div>
             </div>
@@ -147,14 +153,14 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                         required
                         value={name}
                         onChange={e => setName(e.target.value)}
-                        className="w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-medium"
+                        className="w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white font-medium transition-shadow"
                         placeholder="Ex: Recursos Humanos"
                         autoFocus
                     />
                     <Type className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 </div>
                 
-                {/* Advanced Slug Toggle (Hidden unless needed basically) */}
+                {/* Advanced Slug Toggle */}
                 <div className="flex items-center gap-2 mt-1.5">
                     <Hash size={12} className="text-gray-400" />
                     <input 
@@ -169,18 +175,23 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
             </div>
         </div>
 
-        {/* Quick Icon Suggestions */}
+        {/* Lucide Icon Suggestions */}
         <div>
-            <label className="block text-xs font-medium text-gray-500 mb-2">Sugestões de Ícones</label>
-            <div className="flex flex-wrap gap-2">
-                {COMMON_ICONS.map(ic => (
+            <label className="block text-xs font-medium text-gray-500 mb-2">Estilo do Ícone</label>
+            <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto pr-1 custom-scrollbar">
+                {SUGGESTED_ICONS.map(ic => (
                     <button
                         key={ic}
                         type="button"
                         onClick={() => setIcon(ic)}
-                        className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-all text-lg ${icon === ic ? 'bg-blue-100 border-blue-500 dark:bg-blue-900/30 dark:border-blue-400 scale-110' : 'bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                        className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-all ${
+                            icon === ic 
+                            ? 'bg-blue-100 border-blue-500 text-blue-600 dark:bg-blue-900/30 dark:border-blue-400 dark:text-blue-300 shadow-sm scale-105' 
+                            : 'bg-white border-gray-200 text-gray-500 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-300'
+                        }`}
+                        title={ic}
                     >
-                        {ic}
+                        <IconRenderer iconName={ic} size={18} />
                     </button>
                 ))}
             </div>
@@ -192,19 +203,19 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
             rows={2}
             value={description}
             onChange={e => setDescription(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm transition-shadow"
             placeholder="Para que serve esta categoria..."
           />
         </div>
 
-        {/* Department Scope - Only show for Admin creating Root categories */}
+        {/* Department Scope */}
         {user.role === 'ADMIN' && !parentId && (
           <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-100 dark:border-yellow-800">
             <label className="block text-xs font-bold text-yellow-800 dark:text-yellow-500 uppercase mb-2">Visibilidade</label>
             <select
               value={departmentId}
               onChange={e => setDepartmentId(e.target.value)}
-              className="w-full px-3 py-2 border border-yellow-200 dark:border-yellow-700 rounded-md focus:ring-2 focus:ring-yellow-500 outline-none bg-white dark:bg-gray-900 text-sm"
+              className="w-full px-3 py-2 border border-yellow-200 dark:border-yellow-700 rounded-md focus:ring-2 focus:ring-yellow-500 outline-none bg-white dark:bg-gray-900 text-sm cursor-pointer"
             >
               <option value="Global">Global (Visível para todos)</option>
               <option value="Gestão">Restrito: Gestão</option>
@@ -219,7 +230,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
         )}
 
         {error && (
-          <div className="text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg flex items-center gap-2 border border-red-100 dark:border-red-800">
+          <div className="text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg flex items-center gap-2 border border-red-100 dark:border-red-800 animate-pulse">
             ⚠️ {error}
           </div>
         )}
