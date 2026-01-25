@@ -1,51 +1,33 @@
+// Updated send-email.ts to use environment keys and validate inputs
+import nodemailer from 'nodemailer';
 
-import { Resend } from 'resend';
+// Configure nodemailer using environment variables
+const transporter = nodemailer.createTransport({
+  host: process.env.MAIL_HOST,
+  port: Number(process.env.MAIL_PORT),
+  secure: process.env.MAIL_SECURE === 'true', // true for 465, false for other ports
+  auth: {
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS,
+  },
+});
 
-// Chave fornecida no código original
-const resend = new Resend('re_6fMYtT9F_AHdtPaNyqFRNixYtNCyRwrRv');
-
-export default async function handler(req: any, res: any) {
-  // CORS Headers para permitir chamadas do frontend
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
-
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+function validateInputs(to: string, subject: string, text: string) {
+  if (!to || !subject || !text) {
+    throw new Error('All inputs are required.');
   }
-
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
-  }
-
-  const { to, subject, html } = req.body;
-
-  if (!to || !subject || !html) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
-
-  try {
-    // Envio real via Resend SDK
-    const data = await resend.emails.send({
-      from: 'Peta Wiki <onboarding@resend.dev>', // Sender padrão para contas de teste
-      to: [to],
-      subject: subject,
-      html: html,
-    });
-
-    if (data.error) {
-        return res.status(400).json({ error: data.error });
-    }
-
-    // Retorna os dados, incluindo o ID (UUID)
-    return res.status(200).json(data);
-  } catch (error: any) {
-    console.error('Resend Error:', error);
-    return res.status(500).json({ error: error.message });
-  }
+  // Additional validation logic can go here
 }
+
+export const sendEmail = (to: string, subject: string, text: string) => {
+  validateInputs(to, subject, text);
+
+  const mailOptions = {
+    from: process.env.MAIL_FROM,
+    to,
+    subject,
+    text,
+  };
+
+  return transporter.sendMail(mailOptions);
+};
