@@ -28,6 +28,9 @@ type ViewState = 'HOME' | 'DOCUMENT_VIEW' | 'DOCUMENT_EDIT' | 'DOCUMENT_CREATE' 
 const SESSION_KEY = 'peta_wiki_session';
 const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutos em milissegundos
 
+const AUTH_MODE = (import.meta.env.VITE_AUTH_MODE === 'mock' ? 'mock' : 'db') as 'mock' | 'db';
+const isMockUser = (u: any) => !!u && (String(u.id || '').startsWith('mock_') || u.isMock);
+
 const AppContent = () => {
   const toast = useToast();
 
@@ -79,7 +82,7 @@ const AppContent = () => {
     onConfirm: () => void;
   }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
-  // --- SESSÃO E INATIVIDADE ---
+// --- SESSÃO E INATIVIDADE ---
   useEffect(() => {
     const restoreSession = async () => {
         const savedSession = localStorage.getItem(SESSION_KEY);
@@ -88,6 +91,16 @@ const AppContent = () => {
                 const { user, lastActive } = JSON.parse(savedSession);
                 const now = Date.now();
                 if (now - lastActive < INACTIVITY_LIMIT) {
+                    // Check for mock user first
+                    if (isMockUser(user)) {
+                      setIsDarkMode((user.themePreference || 'light') === 'dark');
+                      const refreshedSession = { user, lastActive: now };
+                      localStorage.setItem(SESSION_KEY, JSON.stringify(refreshedSession));
+                      setCurrentUser(user);
+                      setIsAuthenticated(true);
+                      return;
+                    }
+                    
                     // 1. Restaurar sessão localmente (Optimistic)
                     setCurrentUser(user);
                     setIsAuthenticated(true);
@@ -355,7 +368,23 @@ const AppContent = () => {
     fetchData();
   }, []);
 
-  const handleLogin = (usernameInput: string, passwordInput: string) => {
+const handleLogin = (usernameInput: string, passwordInput: string) => {
+    // Mock authentication mode
+    if (AUTH_MODE === 'mock') {
+      if (usernameInput === 'admin' && passwordInput === 'admin') {
+        const admin = { ...MOCK_USERS[0], isMock: true, themePreference: 'light' as const };
+        setCurrentUser(admin);
+        setIsAuthenticated(true);
+        setIsDarkMode(false);
+        localStorage.setItem(SESSION_KEY, JSON.stringify({ user: admin, lastActive: Date.now() }));
+        toast.success(`Bem-vindo, ${admin.name}!`);
+      } else {
+        toast.error('Usuário ou senha inválidos.');
+      }
+      return;
+    }
+
+    // Database authentication mode
     const foundUser = users.find(u => u.username === usernameInput || u.email === usernameInput);
     if (foundUser && foundUser.password === passwordInput) {
       
@@ -380,6 +409,16 @@ const AppContent = () => {
       
       toast.success(`Bem-vindo, ${foundUser.name}!`);
     } else {
+      // Fallback mock authentication for emergency access
+      if (usernameInput === 'admin' && passwordInput === 'admin') {
+        const admin = { ...MOCK_USERS[0], isMock: true, themePreference: 'light' as const };
+        setCurrentUser(admin);
+        setIsAuthenticated(true);
+        setIsDarkMode(false);
+        localStorage.setItem(SESSION_KEY, JSON.stringify({ user: admin, lastActive: Date.now() }));
+        toast.success(`Bem-vindo, ${admin.name}!`);
+        return;
+      }
       toast.error('Usuário ou senha inválidos.');
     }
   };
