@@ -84,7 +84,13 @@ BEGIN
         ALTER TABLE public.analytics_events ADD COLUMN event_type text CHECK (event_type IN ('VIEW', 'SEARCH', 'EXPORT'));
     END IF;
 
-    -- 2. Garantir document_id (e corrigir tipo se for UUID)
+    -- 2. CORREÇÃO CRÍTICA: event_name (Legado)
+    -- Se existir uma coluna event_name antiga que é NOT NULL, removemos a obrigatoriedade
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'analytics_events' AND column_name = 'event_name' AND is_nullable = 'NO') THEN
+        ALTER TABLE public.analytics_events ALTER COLUMN event_name DROP NOT NULL;
+    END IF;
+
+    -- 3. Garantir document_id (e corrigir tipo se for UUID)
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'analytics_events' AND column_name = 'document_id') THEN
         ALTER TABLE public.analytics_events ADD COLUMN document_id text REFERENCES public.documents(id) ON DELETE SET NULL;
     ELSE
@@ -98,7 +104,7 @@ BEGIN
         END IF;
     END IF;
 
-    -- 3. Garantir user_id (e corrigir tipo se for UUID)
+    -- 4. Garantir user_id (e corrigir tipo se for UUID)
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'analytics_events' AND column_name = 'user_id') THEN
         ALTER TABLE public.analytics_events ADD COLUMN user_id text REFERENCES public.users(id) ON DELETE SET NULL;
     ELSE
@@ -110,7 +116,7 @@ BEGIN
         END IF;
     END IF;
 
-    -- 4. Garantir metadata
+    -- 5. Garantir metadata
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'analytics_events' AND column_name = 'metadata') THEN
         ALTER TABLE public.analytics_events ADD COLUMN metadata jsonb DEFAULT '{}'::jsonb;
     END IF;
