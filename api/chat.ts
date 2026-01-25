@@ -22,22 +22,29 @@ export default async function handler(req: any, res: any) {
   try {
     const { prompt, systemInstruction, temperature = 0.7 } = req.body;
 
-    if (!prompt) {
-      return res.status(400).json({ error: 'Prompt is required' });
+    if (!prompt || typeof prompt !== 'string') {
+      return res.status(400).json({ error: 'Prompt is required and must be a string' });
     }
 
     // Inicializa o cliente Gemini com a chave de ambiente
     // Certifique-se de que a variável API_KEY está definida no seu ambiente Vercel (.env)
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = process.env.API_KEY;
+    
+    if (!apiKey) {
+      console.error("API_KEY não configurada no ambiente.");
+      return res.status(500).json({ error: 'Server configuration error: Missing API Key' });
+    }
+
+    const ai = new GoogleGenAI({ apiKey });
 
     // Usa o modelo recomendado para tarefas de texto rápidas e sugestões
     const modelId = 'gemini-3-flash-preview';
 
     const response = await ai.models.generateContent({
       model: modelId,
-      contents: prompt,
+      contents: prompt.trim(),
       config: {
-        systemInstruction: systemInstruction,
+        systemInstruction: systemInstruction || undefined,
         temperature: temperature,
       }
     });

@@ -29,10 +29,23 @@ export async function generateAiResponse(
       })
     });
 
-    const data: AiResponse = await response.json();
+    // Ler o corpo como texto primeiro para evitar falha no response.json() se o retorno não for JSON (ex: erro 504 do Vercel)
+    const rawBody = await response.text();
+    let data: AiResponse | null = null;
 
-    if (!response.ok || !data.success) {
-        throw new Error(data.error || `Erro na API de IA: ${response.statusText}`);
+    if (rawBody) {
+      try {
+        data = JSON.parse(rawBody) as AiResponse;
+      } catch (e) {
+        console.error("Falha ao fazer parse do JSON da API:", e, rawBody);
+        // Se falhar o parse, tratamos como null para cair no erro abaixo
+        data = null;
+      }
+    }
+
+    if (!response.ok || !data?.success) {
+        const errorMsg = data?.error || `Erro na API de IA (${response.status}): ${response.statusText}`;
+        throw new Error(errorMsg);
     }
 
     return data.response.trim();
