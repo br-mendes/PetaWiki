@@ -76,21 +76,41 @@ CREATE TABLE IF NOT EXISTS public.analytics_events (
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- MIGRATION: Garantir colunas na analytics_events (Caso a tabela já exista sem elas)
+-- MIGRATION: Correção de Tipos e Garantia de Colunas
 DO $$
 BEGIN
+    -- 1. Garantir event_type
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'analytics_events' AND column_name = 'event_type') THEN
         ALTER TABLE public.analytics_events ADD COLUMN event_type text CHECK (event_type IN ('VIEW', 'SEARCH', 'EXPORT'));
     END IF;
 
+    -- 2. Garantir document_id (e corrigir tipo se for UUID)
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'analytics_events' AND column_name = 'document_id') THEN
         ALTER TABLE public.analytics_events ADD COLUMN document_id text REFERENCES public.documents(id) ON DELETE SET NULL;
+    ELSE
+        -- Se existe e é UUID, converte para TEXT para compatibilidade com o app
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'analytics_events' AND column_name = 'document_id' AND data_type = 'uuid') THEN
+             -- Tenta remover constraint antiga se existir para evitar conflito na conversão
+             ALTER TABLE public.analytics_events DROP CONSTRAINT IF EXISTS analytics_events_document_id_fkey;
+             ALTER TABLE public.analytics_events ALTER COLUMN document_id TYPE text USING document_id::text;
+             -- Recria constraint correta
+             ALTER TABLE public.analytics_events ADD CONSTRAINT analytics_events_document_id_fkey FOREIGN KEY (document_id) REFERENCES public.documents(id) ON DELETE SET NULL;
+        END IF;
     END IF;
 
+    -- 3. Garantir user_id (e corrigir tipo se for UUID)
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'analytics_events' AND column_name = 'user_id') THEN
         ALTER TABLE public.analytics_events ADD COLUMN user_id text REFERENCES public.users(id) ON DELETE SET NULL;
+    ELSE
+        -- Se existe e é UUID, converte para TEXT
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'analytics_events' AND column_name = 'user_id' AND data_type = 'uuid') THEN
+             ALTER TABLE public.analytics_events DROP CONSTRAINT IF EXISTS analytics_events_user_id_fkey;
+             ALTER TABLE public.analytics_events ALTER COLUMN user_id TYPE text USING user_id::text;
+             ALTER TABLE public.analytics_events ADD CONSTRAINT analytics_events_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+        END IF;
     END IF;
 
+    -- 4. Garantir metadata
     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'analytics_events' AND column_name = 'metadata') THEN
         ALTER TABLE public.analytics_events ADD COLUMN metadata jsonb DEFAULT '{}'::jsonb;
     END IF;
