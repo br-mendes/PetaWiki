@@ -196,7 +196,7 @@ const AppContent = () => {
             }
 
         } catch (error) {
-            // Fallback para busca local se RPC falhar (o que não deve mais acontecer)
+            // Fallback para busca local
             const queryLower = searchQuery.toLowerCase();
             const localResults = activeDocuments.filter(d => {
                 const matchTitle = d.title.toLowerCase().includes(queryLower);
@@ -251,7 +251,7 @@ const AppContent = () => {
       setIsLoading(true);
       try {
         const [docsRes, catsRes, usersRes, settingsRes] = await Promise.all([
-            supabase.from('documents').select('*'), // Importante: Select * traz tudo, incluindo deletados
+            supabase.from('documents').select('*'), // Traz TODOS, inclusive deletados
             supabase.from('categories').select('*'),
             supabase.from('users').select('*'),
             supabase.from('system_settings').select('settings').single()
@@ -280,7 +280,7 @@ const AppContent = () => {
           authorId: d.author_id,
           createdAt: d.created_at,
           updatedAt: d.updated_at,
-          deletedAt: d.deleted_at, // Crítico: Mapear para deletedAt para a Lixeira funcionar
+          deletedAt: d.deleted_at, 
           views: d.views,
           tags: d.tags || [],
           categoryPath: getCategoryPath(d.category_id, mappedCats),
@@ -325,7 +325,6 @@ const AppContent = () => {
     fetchData();
   }, []);
 
-  // ... (Funções de Login, Logout e Configuração mantidas) ...
   const handleLogin = (usernameInput: string, passwordInput: string) => {
     const foundUser = users.find(u => u.username === usernameInput || u.email === usernameInput);
     if (foundUser && foundUser.password === passwordInput) {
@@ -341,6 +340,7 @@ const AppContent = () => {
   };
 
   const handleSignUp = async (name: string, email: string, password: string): Promise<boolean> => {
+      // ... (mantido igual)
       const domain = email.split('@')[1];
       const allowedDomains = systemSettings.allowedDomains || [];
       if (!allowedDomains.includes(domain)) {
@@ -380,8 +380,8 @@ const AppContent = () => {
           setUsers([...users, newUser]);
           toast.success('Conta criada! Faça login.');
           return true;
-      } catch (e) {
-          toast.error('Erro ao criar conta.');
+      } catch (e: any) {
+          toast.error(`Erro ao criar conta: ${e.message}`);
           return false;
       }
   };
@@ -395,6 +395,7 @@ const AppContent = () => {
     else toast.info('Você saiu do sistema.');
   };
 
+  // ... (Settings, Theme, User Management functions unchaged) ...
   const handleSaveSettingsGlobal = async (newSettings: SystemSettings) => {
       setSystemSettings(newSettings);
       try {
@@ -460,8 +461,11 @@ const AppContent = () => {
       password: '123',
       themePreference: 'light'
     };
+    
+    // Optimistic Update
     setUsers(prev => [...prev, newUser]);
-    await supabase.from('users').insert({
+    
+    const { error } = await supabase.from('users').insert({
         id: newUser.id,
         username: newUser.username,
         email: newUser.email,
@@ -472,7 +476,13 @@ const AppContent = () => {
         avatar: newUser.avatar,
         theme_preference: 'light'
     });
-    toast.success('Usuário criado.');
+
+    if (error) {
+       toast.error(`Erro ao salvar usuário: ${error.message}`);
+       // Revert optimistic update if needed, but for now just warn
+    } else {
+       toast.success('Usuário criado.');
+    }
   };
 
   const handleUpdatePassword = async (oldPass: string, newPass: string): Promise<boolean> => {
@@ -500,8 +510,6 @@ const AppContent = () => {
   const isAdminOrEditor = currentUser?.role === 'ADMIN' || currentUser?.role === 'EDITOR';
 
   const handleSelectDocument = (document: Document) => {
-    // Permite selecionar documentos deletados apenas se não estivermos na view principal (ex: apenas visualização admin)
-    // Mas geralmente a lixeira tem suas ações próprias.
     if (document.deletedAt) return; 
     setSelectedDocId(document.id);
     setSearchQuery(''); 
@@ -539,8 +547,11 @@ const AppContent = () => {
       description: data.description,
       icon: data.icon
     };
+    
+    // Optimistic Update
     setCategories([...categories, newCategory]);
-    await supabase.from('categories').insert({
+    
+    const { error } = await supabase.from('categories').insert({
         id: newCategory.id,
         name: newCategory.name,
         slug: newCategory.slug,
@@ -551,7 +562,15 @@ const AppContent = () => {
         doc_count: 0,
         order: newCategory.order
     });
-    toast.success('Categoria criada.');
+
+    if (error) {
+        console.error("Erro ao criar categoria:", error);
+        toast.error(`Erro ao salvar categoria: ${error.message}`);
+        // Remove from optimistic state
+        setCategories(prev => prev.filter(c => c.id !== newCategory.id));
+    } else {
+        toast.success('Categoria criada com sucesso.');
+    }
   };
   
   const handleUpdateCategory = async (id: string, data: Partial<Category>) => {
@@ -566,8 +585,9 @@ const AppContent = () => {
         message: 'Tem certeza?',
         onConfirm: async () => {
             setCategories(categories.filter(c => c.id !== categoryId));
-            await supabase.from('categories').delete().eq('id', categoryId);
-            toast.success('Categoria excluída.');
+            const { error } = await supabase.from('categories').delete().eq('id', categoryId);
+            if(error) toast.error("Erro ao excluir do banco.");
+            else toast.success('Categoria excluída.');
         }
     });
   };
@@ -598,7 +618,6 @@ const AppContent = () => {
   const handleSaveDocument = async (data: Partial<Document>) => {
     if (!currentUser) return;
     
-    // Determine Target Category
     const targetCategoryId = data.categoryId || selectedDocument?.categoryId || (categories[0]?.id || 'c1'); 
     
     if (currentView === 'DOCUMENT_CREATE') {
@@ -618,10 +637,11 @@ const AppContent = () => {
         versions: []
       };
       
+      // Optimistic
       setDocuments(prev => [...prev, newDoc]);
       setCategories(prev => prev.map(c => c.id === targetCategoryId ? { ...c, docCount: c.docCount + 1 } : c));
 
-      await supabase.from('documents').insert({ 
+      const { error } = await supabase.from('documents').insert({ 
             id: newDoc.id,
             title: newDoc.title,
             content: newDoc.content,
@@ -631,12 +651,22 @@ const AppContent = () => {
             tags: newDoc.tags,
             views: 0
       });
-      // Atualizar contador no banco
-      const currentCat = categories.find(c => c.id === targetCategoryId);
-      if (currentCat) {
-          await supabase.from('categories').update({ doc_count: currentCat.docCount + 1 }).eq('id', targetCategoryId);
+
+      if (error) {
+          console.error("Erro ao criar documento:", error);
+          toast.error(`Erro ao salvar documento: ${error.message}`);
+          // Revert optimistic update
+          setDocuments(prev => prev.filter(d => d.id !== newDoc.id));
+      } else {
+          // Atualizar contador no banco
+          const currentCat = categories.find(c => c.id === targetCategoryId);
+          if (currentCat) {
+              await supabase.from('categories').update({ doc_count: currentCat.docCount + 1 }).eq('id', targetCategoryId);
+          }
+          toast.success('Documento salvo e persistido.');
+          setSelectedDocId(newDoc.id);
+          setCurrentView('DOCUMENT_VIEW');
       }
-      setSelectedDocId(newDoc.id);
 
     } else if (selectedDocument) {
       const oldDoc = documents.find(d => d.id === selectedDocument.id)!;
@@ -657,7 +687,7 @@ const AppContent = () => {
           versions: updatedVersions
       } : d));
 
-      await supabase.from('documents').update({ 
+      const { error } = await supabase.from('documents').update({ 
             title: data.title,
             content: data.content,
             category_id: targetCategoryId,
@@ -665,10 +695,15 @@ const AppContent = () => {
             updated_at: new Date().toISOString(),
             status: data.status || selectedDocument.status
       }).eq('id', selectedDocument.id);
+
+      if (error) {
+          toast.error(`Erro ao atualizar: ${error.message}`);
+      } else {
+          toast.success('Documento atualizado.');
+      }
+      
+      setCurrentView('DOCUMENT_VIEW');
     }
-    
-    setCurrentView('DOCUMENT_VIEW');
-    toast.success('Documento salvo.');
   };
 
   const handleRestoreVersion = async (version: DocumentVersion) => {
@@ -684,7 +719,6 @@ const AppContent = () => {
         message: `Remover "${doc.title}"?`,
         onConfirm: async () => {
             const now = new Date().toISOString();
-            // Atualiza estado local imediatamente e marca como deletado
             setDocuments(prev => prev.map(d => d.id === doc.id ? { ...d, deletedAt: now } : d));
             
             if (selectedDocId === doc.id) {
@@ -692,10 +726,10 @@ const AppContent = () => {
                 setSelectedDocId(null);
             }
             
-            await supabase.from('documents').update({ deleted_at: now }).eq('id', doc.id);
-            toast.success('Documento na lixeira.');
+            const { error } = await supabase.from('documents').update({ deleted_at: now }).eq('id', doc.id);
+            if (error) toast.error("Erro ao mover para lixeira no banco.");
+            else toast.success('Documento na lixeira.');
             
-            // Decrement doc count
             const cat = categories.find(c => c.id === doc.categoryId);
             if (cat) {
                setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, docCount: Math.max(0, c.docCount - 1) } : c));
@@ -706,9 +740,11 @@ const AppContent = () => {
   };
 
   const handleRestoreDocument = async (doc: Document) => {
-      setDocuments(prev => prev.map(d => d.id === doc.id ? { ...d, deletedAt: undefined } : d)); // Set undefined/null locally
-      await supabase.from('documents').update({ deleted_at: null }).eq('id', doc.id);
-      toast.success('Documento restaurado.');
+      setDocuments(prev => prev.map(d => d.id === doc.id ? { ...d, deletedAt: undefined } : d)); 
+      const { error } = await supabase.from('documents').update({ deleted_at: null }).eq('id', doc.id);
+      
+      if(error) toast.error("Erro ao restaurar.");
+      else toast.success('Documento restaurado.');
       
       const cat = categories.find(c => c.id === doc.categoryId);
       if (cat) {
@@ -724,8 +760,9 @@ const AppContent = () => {
           message: `Esta ação é irreversível.`,
           onConfirm: async () => {
               setDocuments(prev => prev.filter(d => d.id !== doc.id));
-              await supabase.from('documents').delete().eq('id', doc.id);
-              toast.success('Excluído permanentemente.');
+              const { error } = await supabase.from('documents').delete().eq('id', doc.id);
+              if (error) toast.error("Erro ao excluir permanentemente.");
+              else toast.success('Excluído permanentemente.');
           }
       });
   };
