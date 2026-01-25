@@ -237,12 +237,14 @@ const AppContent = () => {
     }
   }, [isDarkMode]);
 
+  // --- Sincronização do Título da Aba (Browser Tab) ---
   useEffect(() => {
     const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
     if (link) {
       link.href = systemSettings.logoCollapsedUrl;
     }
-    document.title = systemSettings.appName || 'Peta Wiki';
+    // Prioriza appName, depois landingTitle, depois o padrão
+    document.title = systemSettings.appName || systemSettings.landingTitle || 'Peta Wiki';
   }, [systemSettings]);
 
   // Initial Fetch
