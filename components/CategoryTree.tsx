@@ -129,8 +129,22 @@ export const CategoryTree: React.FC<CategoryTreeProps> = ({
   onCategoryDelete,
   showControls = false
 }) => {
-  return (
+return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+      {/* Botão "Todas" */}
+      <div 
+        className={`flex items-center py-2 px-2 rounded-md cursor-pointer transition-colors ${
+          selectedId === null 
+            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' 
+            : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
+        }`}
+        onClick={() => onCategorySelect?.(null)}
+      >
+        <div className="mr-2 w-4 h-4 flex items-center justify-center text-gray-400">
+          📄
+        </div>
+        <span className="flex-1 text-sm font-medium">Todas</span>
+      </div>
       {categories.map(category => (
         <TreeNode
           key={category.id}

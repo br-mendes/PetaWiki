@@ -264,7 +264,17 @@ const searchParams: any = {
     const debounceTimer = setTimeout(performSearch, 800);
     return () => clearTimeout(debounceTimer);
 
-  }, [searchQuery, categories, documents, currentUser]); 
+  }, [searchQuery, categories, documents, currentUser]);
+
+  // Listen for clear category filter event
+  useEffect(() => {
+    const handleClearFilter = () => {
+      setActiveCategoryId(null);
+    };
+    
+    window.addEventListener('clearCategoryFilter', handleClearFilter);
+    return () => window.removeEventListener('clearCategoryFilter', handleClearFilter);
+  }, []); 
 
   // --- VISIBLE DOCUMENTS (Sidebar) ---
   const visibleDocuments = useMemo(() => {
@@ -315,10 +325,7 @@ const [docsRes, cats, usersRes, settingsRes] = await Promise.all([
 
         if (docsRes.error) throw new Error(`Docs: ${docsRes.error.message}`);
         
-// Set categories from lib/categories
-        setCategories(cats);
-
-        const mappedCats = cats.map((c: any) => ({
+const mappedCats = cats.map((c: any) => ({
           id: c.id,
           name: c.name,
           slug: c.slug,
@@ -332,20 +339,17 @@ const [docsRes, cats, usersRes, settingsRes] = await Promise.all([
 
         setCategories(mappedCats);
 
-        const defaultCat =
-          mappedCats.find(c => c.slug === 'geral' && !c.parentId) ||
-          mappedCats.find(c => !c.parentId) ||
-          mappedCats[0] ||
-          null;
+const geral = mappedCats.find(c => c.slug === 'geral' && !c.parentId) || null;
+        const fallbackCatId = geral?.id || mappedCats[0]?.id || null;
 
-        setDefaultCategoryId(defaultCat?.id ?? null);
-        setActiveCategoryId(prev => prev ?? (defaultCat?.id ?? null));
+        setDefaultCategoryId(fallbackCatId);
+        setActiveCategoryId(prev => prev ?? fallbackCatId);
 
         const mappedDocs = (docsRes.data || []).map((d: any) => ({
           id: d.id,
           title: d.title,
           content: d.content,
-          categoryId: d.category_id,
+          categoryId: d.category_id || fallbackCatId || '',
           status: d.status,
           authorId: d.author_id,
           createdAt: d.created_at,
@@ -756,7 +760,7 @@ const newCategory: Category = {
     
     if (currentView === 'DOCUMENT_CREATE') {
       const newDoc: Document = {
-        id: `d${Date.now()}`,
+        id: (crypto?.randomUUID?.() ?? `d${Date.now()}`),
         title: data.title || 'Sem Título',
         content: data.content || '',
         categoryId: targetCategoryId, 
@@ -771,9 +775,8 @@ const newCategory: Category = {
         versions: []
       };
       
-      // Optimistic
+// Optimistic
       setDocuments(prev => [...prev, newDoc]);
-      setCategories(prev => prev.map(c => c.id === targetCategoryId ? { ...c, docCount: c.docCount + 1 } : c));
 
       const { error } = await supabase.from('documents').insert({ 
             id: newDoc.id,
@@ -791,12 +794,7 @@ const newCategory: Category = {
           toast.error(`Erro ao salvar documento: ${error.message}`);
           // Revert optimistic update
           setDocuments(prev => prev.filter(d => d.id !== newDoc.id));
-      } else {
-          // Atualizar contador no banco
-          const currentCat = categories.find(c => c.id === targetCategoryId);
-          if (currentCat) {
-              await supabase.from('categories').update({ doc_count: currentCat.docCount + 1 }).eq('id', targetCategoryId);
-          }
+} else {
           toast.success('Documento salvo e persistido.');
           setSelectedDocId(newDoc.id);
           setCurrentView('DOCUMENT_VIEW');
@@ -860,15 +858,9 @@ const newCategory: Category = {
                 setSelectedDocId(null);
             }
             
-            const { error } = await supabase.from('documents').update({ deleted_at: now }).eq('id', doc.id);
+const { error } = await supabase.from('documents').update({ deleted_at: now }).eq('id', doc.id);
             if (error) toast.error("Erro ao mover para lixeira no banco.");
             else toast.success('Documento na lixeira.');
-            
-            const cat = categories.find(c => c.id === doc.categoryId);
-            if (cat) {
-               setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, docCount: Math.max(0, c.docCount - 1) } : c));
-               await supabase.from('categories').update({ doc_count: Math.max(0, cat.docCount - 1) }).eq('id', cat.id);
-            }
         }
     });
   };
@@ -877,14 +869,8 @@ const newCategory: Category = {
       setDocuments(prev => prev.map(d => d.id === doc.id ? { ...d, deletedAt: undefined } : d)); 
       const { error } = await supabase.from('documents').update({ deleted_at: null }).eq('id', doc.id);
       
-      if(error) toast.error("Erro ao restaurar.");
+if(error) toast.error("Erro ao restaurar.");
       else toast.success('Documento restaurado.');
-      
-      const cat = categories.find(c => c.id === doc.categoryId);
-      if (cat) {
-         setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, docCount: c.docCount + 1 } : c));
-         await supabase.from('categories').update({ doc_count: cat.docCount + 1 }).eq('id', cat.id);
-      }
   };
 
   const handlePermanentDeleteDocument = async (doc: Document) => {
@@ -1026,7 +1012,7 @@ const commonProps = {
               user={currentUser}
               onSave={handleSaveDocument}
               onCancel={() => { selectedDocument ? setCurrentView('DOCUMENT_VIEW') : setCurrentView('HOME'); }}
-              categories={categoryTree}
+categories={categories.map(c => ({ id: c.id, name: c.name, parentId: c.parentId }))}
               allCategories={categories} 
               initialCategoryId={
               currentView === 'DOCUMENT_CREATE'
@@ -1035,7 +1021,59 @@ const commonProps = {
             }
               initialContent={currentView === 'DOCUMENT_CREATE' ? newDocTemplate?.content : undefined}
               initialTags={currentView === 'DOCUMENT_CREATE' ? newDocTemplate?.tags : undefined}
-              onCreateTemplate={handleCreateTemplate}
+onCreateTemplate={handleCreateTemplate}
+              onChangeCategory={async (categoryId) => {
+                if (!selectedDocument) return;
+
+                // Atualiza no estado local
+                setSelectedDocument((d: any) => d ? ({ ...d, categoryId }) : d);
+
+                // Persiste no Supabase
+                const { error } = await supabase
+                  .from("documents")
+                  .update({ category_id: categoryId })
+                  .eq("id", selectedDocument.id);
+
+                if (error) {
+                  console.error(error);
+                  toast.error("Falha ao mover documento de pasta.");
+                  return;
+                }
+
+                // Se você estiver filtrando por pasta e mover para outra, atualiza lista
+                const fetchData = async () => {
+                  let q = supabase.from("documents").select("*");
+                  if (activeCategoryId) q = q.eq("category_id", activeCategoryId);
+
+                  const [docsRes, cats] = await Promise.all([
+                    q,
+                    listCategories(),
+                  ]);
+
+                  if (docsRes.error) throw new Error(`Docs: ${docsRes.error.message}`);
+                  
+                  const mappedDocs = (docsRes.data || []).map((d: any) => ({
+                    id: d.id,
+                    title: d.title,
+                    content: d.content,
+                    categoryId: d.category_id || activeCategoryId || '',
+                    status: d.status,
+                    authorId: d.author_id,
+                    createdAt: d.created_at,
+                    updatedAt: d.updated_at,
+                    deletedAt: d.deleted_at, 
+                    views: d.views,
+                    tags: d.tags || [],
+                    categoryPath: getCategoryPath(d.category_id, cats),
+                    versions: [] 
+                  }));
+
+                  setDocuments(mappedDocs);
+                  setCategories(cats);
+                };
+
+                await fetchData();
+              }}
             />
           )}
         </main>

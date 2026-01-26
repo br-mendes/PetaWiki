@@ -308,12 +308,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
           
 {/* Always show Category Tree */}
-          <CategoryTree
+<CategoryTree
             categories={categories}
             selectedId={activeCategoryId}
-            onSelect={(categoryId) => {
-              const selectedCat = categories.find(c => c.id === categoryId);
-              if (selectedCat) onSelectCategory(selectedCat);
+            onCategorySelect={(categoryId) => {
+              if (categoryId === null) {
+                // Botão "Todas" - limpa o filtro
+                if (setCategories) {
+                  // Chama o App.tsx para limpar activeCategoryId
+                  const event = new CustomEvent('clearCategoryFilter');
+                  window.dispatchEvent(event);
+                }
+              } else {
+                const selectedCat = categories.find(c => c.id === categoryId);
+                if (selectedCat) onSelectCategory(selectedCat);
+              }
             }}
             onCreate={async (parentId) => {
               const name = prompt("Nome da pasta:");
