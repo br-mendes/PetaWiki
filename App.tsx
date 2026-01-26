@@ -29,6 +29,7 @@ type ViewState = 'HOME' | 'DOCUMENT_VIEW' | 'DOCUMENT_EDIT' | 'DOCUMENT_CREATE' 
 
 const SESSION_KEY = 'peta_wiki_session';
 const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutos em milissegundos
+const CATEGORY_STORAGE_KEY = 'PETA_ACTIVE_CATEGORY_ID';
 
 const AUTH_MODE = (import.meta.env.VITE_AUTH_MODE === 'mock' ? 'mock' : 'db') as 'mock' | 'db';
 const isMockUser = (u: any) => !!u && (String(u.id || '').startsWith('mock_') || u.isMock);
@@ -67,9 +68,14 @@ const AppContent = () => {
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Category States
+// Category States
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [defaultCategoryId, setDefaultCategoryId] = useState<string | null>(null);
+
+  // Category persistence
+  useEffect(() => {
+    localStorage.setItem(CATEGORY_STORAGE_KEY, activeCategoryId ?? '');
+  }, [activeCategoryId]);
 
   // New Document State
   const [newDocTemplate, setNewDocTemplate] = useState<{content: string, tags: string[], templateId?: string} | null>(null);
@@ -314,21 +320,60 @@ const [docsRes, cats, usersRes, settingsRes] = await Promise.all([
 
         if (docsRes.error) throw new Error(`Docs: ${docsRes.error.message}`);
         
-        // Set categories from lib/categories
-        setCategories(cats);
-        
-        // Find "geral" category and set as default
-        const geral = cats.find(c => c.slug === "geral" && !c.parent_id) || null;
+// Garantir "Geral" e definir defaults
+        let finalCats = cats.map((c: any) => ({
+          ...c,
+          parentId: c.parent_id ?? null,
+          order: c.sort_order ?? 0,
+          docCount: c.doc_count ?? 0,
+        }));
+
+        let geral = finalCats.find((c: any) => c.slug === "geral" && !c.parent_id) || null;
+
+        if (!geral) {
+          const geralId = (crypto?.randomUUID?.() ?? `c_${Date.now()}`);
+          const newGeral = {
+            id: geralId,
+            name: 'Geral',
+            slug: 'geral',
+            parentId: null,
+            departmentId: null,
+            order: 0,
+            docCount: 0,
+            description: null,
+            icon: null,
+          };
+          // tenta persistir (best-effort)
+          try {
+            await supabase.from('categories').insert({
+              id: newGeral.id,
+              name: newGeral.name,
+              slug: newGeral.slug,
+              parent_id: null,
+              department_id: null,
+              sort_order: 0,
+              doc_count: 0,
+            });
+          } catch (e) {
+            console.warn('Could not create "Geral" category:', e);
+          }
+          finalCats = [newGeral, ...finalCats];
+          geral = newGeral;
+        }
+
+        setCategories(finalCats);
         setDefaultCategoryId(geral?.id ?? null);
-        
-        // Auto-select "geral" if no active category
-        if (!activeCategoryId && geral?.id) setActiveCategoryId(geral.id);
+
+        const fallbackCatId = geral?.id || finalCats[0]?.id || null;
+        const saved = localStorage.getItem(CATEGORY_STORAGE_KEY);
+        const savedOk = saved && finalCats.some((c: any) => c.id === saved);
+        setActiveCategoryId((prev) => prev ?? (savedOk ? saved : fallbackCatId));
 
         const mappedDocs = (docsRes.data || []).map((d: any) => ({
           id: d.id,
           title: d.title,
           content: d.content,
-          categoryId: d.category_id,
+          categoryId: d.category_id || fallbackCatId || '',
           status: d.status,
           authorId: d.author_id,
           createdAt: d.created_at,
@@ -336,7 +381,7 @@ const [docsRes, cats, usersRes, settingsRes] = await Promise.all([
           deletedAt: d.deleted_at, 
           views: d.views,
           tags: d.tags || [],
-          categoryPath: getCategoryPath(d.category_id, cats),
+          categoryPath: getCategoryPath(d.category_id || fallbackCatId, finalCats),
           versions: [] 
         }));
 
@@ -641,11 +686,11 @@ const handleUpdateAvatar = async (base64: string) => {
     }
   };
 
-  const handleSaveCategory = async (data: Partial<Category>) => {
+const handleSaveCategory = async (data: Partial<Category>) => {
     const newCategory: Category = {
-      id: `c${Date.now()}`,
+      id: (crypto?.randomUUID?.() ?? `c_${Date.now()}`),
       name: data.name!,
-      slug: data.slug!,
+      slug: (data.slug || generateSlug(data.name!)),
       parentId: data.parentId || null,
       departmentId: data.departmentId || currentUser?.department,
       order: categories.filter(c => c.parentId === data.parentId).length + 1,
@@ -724,11 +769,23 @@ const handleUpdateAvatar = async (base64: string) => {
   const handleSaveDocument = async (data: Partial<Document>) => {
     if (!currentUser) return;
     
-    const targetCategoryId = data.categoryId || selectedDocument?.categoryId || (categories[0]?.id || 'c1'); 
-    
+const targetCategoryId = 
+      data.categoryId ||
+      activeCategoryId ||
+      selectedDocument?.categoryId ||
+      defaultCategoryId ||
+      categories[0]?.id;
+
+    if (!targetCategoryId) {
+      toast.error('Nenhuma categoria encontrada. Crie uma categoria antes de salvar o documento.');
+      return;
+    }
+
+    const docId = (crypto?.randomUUID?.() ?? `d_${Date.now()}`);
+
     if (currentView === 'DOCUMENT_CREATE') {
       const newDoc: Document = {
-        id: `d${Date.now()}`,
+        id: docId,
         title: data.title || 'Sem Título',
         content: data.content || '',
         categoryId: targetCategoryId, 
