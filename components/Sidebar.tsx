@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { Category, User, SystemSettings, Document } from '../types';
 import { canUserModifyCategory } from '../lib/hierarchy';
+import { createCategory, renameCategory, deleteCategory } from '../lib/categories';
+import { CategoryTree } from './CategoryTree';
 
 // Mapping string keys from DB/Category to Actual Components
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -46,6 +48,9 @@ interface SidebarProps {
   searchQuery?: string;
   // Variant
   variant?: 'SIDEBAR' | 'DRAWER' | 'DROPDOWN';
+  // Category State
+  activeCategoryId?: string | null;
+  setCategories?: (categories: Category[]) => void;
 }
 
 const CategoryItem: React.FC<{ 
@@ -220,6 +225,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isDarkMode,
   onNavigateToAnalytics,
   searchQuery,
+  activeCategoryId,
+  setCategories,
   variant = 'SIDEBAR'
 }) => {
   const isAdminOrEditor = user.role === 'ADMIN' || user.role === 'EDITOR';
@@ -300,27 +307,42 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </button>
           )}
           
-          {/* Always show Category Tree */}
-          <div className="space-y-0.5">
-            {categories.length === 0 && (
-                <div className="text-center py-8 text-gray-400 text-sm italic">
-                Nenhuma categoria.<br/>Crie uma para começar.
-                </div>
-            )}
-            {categories.map(cat => (
-                <CategoryItem 
-                key={cat.id} 
-                category={cat} 
-                categoryDocuments={documents.filter(d => d.categoryId === cat.id)}
-                allDocuments={documents}
-                onSelectCategory={onSelectCategory}
-                onSelectDocument={onSelectDocument}
-                onCreate={onCreateCategory}
-                onDelete={onDeleteCategory}
-                user={user}
-                />
-            ))}
-          </div>
+{/* Always show Category Tree */}
+<CategoryTree
+            categories={categories}
+            selectedId={activeCategoryId}
+            onCategorySelect={(categoryId) => {
+              if (categoryId === null) {
+                // Botão "Todas" - limpa o filtro
+                if (setCategories) {
+                  // Chama o App.tsx para limpar activeCategoryId
+                  const event = new CustomEvent('clearCategoryFilter');
+                  window.dispatchEvent(event);
+                }
+              } else {
+                const selectedCat = categories.find(c => c.id === categoryId);
+                if (selectedCat) onSelectCategory(selectedCat);
+              }
+            }}
+            onCreate={async (parentId) => {
+              const name = prompt("Nome da pasta:");
+              if (!name) return;
+              const created = await createCategory({ name, parent_id: parentId });
+              if (setCategories) setCategories((s) => [...s, created]);
+            }}
+            onRename={async (id) => {
+              const current = categories.find((c) => c.id === id);
+              const name = prompt("Novo nome:", current?.name || "");
+              if (!name) return;
+              const updated = await renameCategory(id, name);
+              if (setCategories) setCategories((s) => s.map((c) => (c.id === id ? updated : c)));
+            }}
+            onDelete={async (id) => {
+              if (!confirm("Excluir pasta?")) return;
+              await deleteCategory(id);
+              if (setCategories) setCategories((s) => s.filter((c) => c.id !== id));
+            }}
+          />
         </div>
       </div>
 

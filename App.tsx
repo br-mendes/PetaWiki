@@ -1,5 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { listCategories, createCategory, renameCategory, deleteCategory, type Category } from "./lib/categories";
+import { CategoryTree } from "./components/CategoryTree";
 import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
 import { Header } from './components/Header';
@@ -11,12 +13,13 @@ import { TemplateSelector } from './components/TemplateSelector';
 import { LoginPage } from './components/LoginPage';
 import { AdminSettings } from './components/AdminSettings';
 import { UserProfile } from './components/UserProfile';
-import { Role, Document, Category, User, DocumentTemplate, SystemSettings, DocumentVersion } from './types';
+import { Role, Document, User, DocumentTemplate, SystemSettings, DocumentVersion } from './types';
 import { MOCK_TEMPLATES, DEFAULT_SYSTEM_SETTINGS, MOCK_USERS } from './constants';
 import { supabase } from './lib/supabase';
 import { 
   buildCategoryTree, 
-  getCategoryPath 
+  getCategoryPath,
+  generateSlug
 } from './lib/hierarchy';
 import { ToastProvider, useToast } from './components/Toast';
 import { Modal } from './components/Modal';
@@ -59,11 +62,15 @@ const AppContent = () => {
   const [searchResultDocs, setSearchResultDocs] = useState<Document[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   
-  // Data State
+// Data State
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]); // Flat list
+const [categories, setCategories] = useState<Category[]>([]); // Flat list
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Category States
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+  const [defaultCategoryId, setDefaultCategoryId] = useState<string | null>(null);
 
   // New Document State
   const [newDocTemplate, setNewDocTemplate] = useState<{content: string, tags: string[], templateId?: string} | null>(null);
@@ -205,9 +212,12 @@ const AppContent = () => {
 
         setIsSearching(true);
         try {
-            const { data, error } = await supabase.rpc('search_documents', {
+const searchParams: any = {
                 query_text: searchQuery
-            });
+            };
+            if (activeCategoryId) searchParams.category_id = activeCategoryId;
+
+            const { data, error } = await supabase.rpc('search_documents', searchParams);
 
             if (error) throw error;
 
@@ -254,7 +264,17 @@ const AppContent = () => {
     const debounceTimer = setTimeout(performSearch, 800);
     return () => clearTimeout(debounceTimer);
 
-  }, [searchQuery, categories, documents, currentUser]); 
+  }, [searchQuery, categories, documents, currentUser]);
+
+  // Listen for clear category filter event
+  useEffect(() => {
+    const handleClearFilter = () => {
+      setActiveCategoryId(null);
+    };
+    
+    window.addEventListener('clearCategoryFilter', handleClearFilter);
+    return () => window.removeEventListener('clearCategoryFilter', handleClearFilter);
+  }, []); 
 
   // --- VISIBLE DOCUMENTS (Sidebar) ---
   const visibleDocuments = useMemo(() => {
@@ -292,33 +312,44 @@ const AppContent = () => {
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
-      try {
-        const [docsRes, catsRes, usersRes, settingsRes] = await Promise.all([
-            supabase.from('documents').select('*'), // Traz TODOS, inclusive deletados
-            supabase.from('categories').select('*'),
+try {
+        let q = supabase.from("documents").select("*"); // mantenha seus selects atuais
+if (activeCategoryId) q = q.eq("category_id", activeCategoryId);
+
+const [docsRes, cats, usersRes, settingsRes] = await Promise.all([
+            q, // Traz TODOS, inclusive deletados
+            listCategories(),
             supabase.from('users').select('*'),
             supabase.from('system_settings').select('settings').single()
         ]);
 
         if (docsRes.error) throw new Error(`Docs: ${docsRes.error.message}`);
         
-        const mappedCats = (catsRes.data || []).map((c: any) => ({
-            id: c.id,
-            name: c.name,
-            slug: c.slug,
-            parentId: c.parent_id,
-            departmentId: c.department_id,
-            order: c.sort_order, // Mapeamento DB sort_order -> App order
-            docCount: c.doc_count,
-            description: c.description,
-            icon: c.icon
+const mappedCats = cats.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          slug: c.slug,
+          parentId: c.parent_id ?? null,
+          departmentId: c.department_id ?? null,
+          order: c.sort_order ?? 0,
+          docCount: c.doc_count ?? 0,
+          description: c.description,
+          icon: c.icon
         }));
+
+        setCategories(mappedCats);
+
+const geral = mappedCats.find(c => c.slug === 'geral' && !c.parentId) || null;
+        const fallbackCatId = geral?.id || mappedCats[0]?.id || null;
+
+        setDefaultCategoryId(fallbackCatId);
+        setActiveCategoryId(prev => prev ?? fallbackCatId);
 
         const mappedDocs = (docsRes.data || []).map((d: any) => ({
           id: d.id,
           title: d.title,
           content: d.content,
-          categoryId: d.category_id,
+          categoryId: d.category_id || fallbackCatId || '',
           status: d.status,
           authorId: d.author_id,
           createdAt: d.created_at,
@@ -326,7 +357,7 @@ const AppContent = () => {
           deletedAt: d.deleted_at, 
           views: d.views,
           tags: d.tags || [],
-          categoryPath: getCategoryPath(d.category_id, mappedCats),
+          categoryPath: getCategoryPath(d.category_id, cats),
           versions: [] 
         }));
 
@@ -341,9 +372,8 @@ const AppContent = () => {
             avatar: u.avatar,
             themePreference: u.theme_preference
         }));
-
+        
         setDocuments(mappedDocs);
-        setCategories(mappedCats); 
         
         if (mappedUsers.length > 0) {
             setUsers(mappedUsers);
@@ -492,7 +522,8 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
       } catch (e) { toast.error("Erro ao salvar configurações."); }
   };
 
-  const handleToggleTheme = async () => {
+const handleToggleTheme = async () => {
+      if (isMockUser(currentUser)) return;
       const newMode = !isDarkMode;
       setIsDarkMode(newMode);
       if (currentUser) {
@@ -509,7 +540,11 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
     toast.success('Permissão atualizada.');
   };
 
-  const handleUpdateUserDetails = async (userId: string, data: Partial<User>) => {
+const handleUpdateUserDetails = async (userId: string, data: Partial<User>) => {
+    if (isMockUser(currentUser)) {
+      toast.info("Modo mock: edição de usuário desativada.");
+      return;
+    }
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...data } : u));
     if (currentUser?.id === userId) setCurrentUser({ ...currentUser, ...data });
     await supabase.from('users').update({
@@ -569,7 +604,11 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
     }
   };
 
-  const handleUpdatePassword = async (oldPass: string, newPass: string): Promise<boolean> => {
+const handleUpdatePassword = async (oldPass: string, newPass: string): Promise<boolean> => {
+    if (isMockUser(currentUser)) {
+      toast.info("Modo mock: alteração de senha desativada.");
+      return false;
+    }
     if (!currentUser) return false;
     if (currentUser.password && currentUser.password !== oldPass) return false;
     
@@ -581,7 +620,11 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
     return true;
   };
 
-  const handleUpdateAvatar = async (base64: string) => {
+const handleUpdateAvatar = async (base64: string) => {
+    if (isMockUser(currentUser)) {
+      toast.info("Modo mock: alteração de avatar desativada.");
+      return;
+    }
     if (!currentUser) return;
     setCurrentUser({ ...currentUser, avatar: base64 });
     setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, avatar: base64 } : u));
@@ -604,7 +647,8 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
     setSearchQuery(tag);
   };
 
-  const handleSelectCategory = (category: Category) => {
+const handleSelectCategory = (category: Category) => {
+    setActiveCategoryId(category.id);
     const docsInCat = visibleDocuments.filter(d => d.categoryId === category.id);
     if (docsInCat.length === 0 && isAdminOrEditor && (!category.children || category.children.length === 0)) {
         setConfirmModal({
@@ -620,10 +664,10 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
   };
 
   const handleSaveCategory = async (data: Partial<Category>) => {
-    const newCategory: Category = {
-      id: `c${Date.now()}`,
+const newCategory: Category = {
+      id: (crypto?.randomUUID?.() ?? `c${Date.now()}`),
       name: data.name!,
-      slug: data.slug!,
+      slug: (data.slug || generateSlug(data.name!)),
       parentId: data.parentId || null,
       departmentId: data.departmentId || currentUser?.department,
       order: categories.filter(c => c.parentId === data.parentId).length + 1,
@@ -702,11 +746,21 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
   const handleSaveDocument = async (data: Partial<Document>) => {
     if (!currentUser) return;
     
-    const targetCategoryId = data.categoryId || selectedDocument?.categoryId || (categories[0]?.id || 'c1'); 
+    const targetCategoryId =
+      data.categoryId ||
+      activeCategoryId ||
+      selectedDocument?.categoryId ||
+      defaultCategoryId ||
+      categories[0]?.id;
+
+    if (!targetCategoryId) {
+      toast.error('Nenhuma categoria encontrada. Crie uma categoria antes de salvar o documento.');
+      return;
+    } 
     
     if (currentView === 'DOCUMENT_CREATE') {
       const newDoc: Document = {
-        id: `d${Date.now()}`,
+        id: (crypto?.randomUUID?.() ?? `d${Date.now()}`),
         title: data.title || 'Sem Título',
         content: data.content || '',
         categoryId: targetCategoryId, 
@@ -721,9 +775,8 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
         versions: []
       };
       
-      // Optimistic
+// Optimistic
       setDocuments(prev => [...prev, newDoc]);
-      setCategories(prev => prev.map(c => c.id === targetCategoryId ? { ...c, docCount: c.docCount + 1 } : c));
 
       const { error } = await supabase.from('documents').insert({ 
             id: newDoc.id,
@@ -741,12 +794,7 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
           toast.error(`Erro ao salvar documento: ${error.message}`);
           // Revert optimistic update
           setDocuments(prev => prev.filter(d => d.id !== newDoc.id));
-      } else {
-          // Atualizar contador no banco
-          const currentCat = categories.find(c => c.id === targetCategoryId);
-          if (currentCat) {
-              await supabase.from('categories').update({ doc_count: currentCat.docCount + 1 }).eq('id', targetCategoryId);
-          }
+} else {
           toast.success('Documento salvo e persistido.');
           setSelectedDocId(newDoc.id);
           setCurrentView('DOCUMENT_VIEW');
@@ -810,15 +858,9 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
                 setSelectedDocId(null);
             }
             
-            const { error } = await supabase.from('documents').update({ deleted_at: now }).eq('id', doc.id);
+const { error } = await supabase.from('documents').update({ deleted_at: now }).eq('id', doc.id);
             if (error) toast.error("Erro ao mover para lixeira no banco.");
             else toast.success('Documento na lixeira.');
-            
-            const cat = categories.find(c => c.id === doc.categoryId);
-            if (cat) {
-               setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, docCount: Math.max(0, c.docCount - 1) } : c));
-               await supabase.from('categories').update({ doc_count: Math.max(0, cat.docCount - 1) }).eq('id', cat.id);
-            }
         }
     });
   };
@@ -827,14 +869,8 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
       setDocuments(prev => prev.map(d => d.id === doc.id ? { ...d, deletedAt: undefined } : d)); 
       const { error } = await supabase.from('documents').update({ deleted_at: null }).eq('id', doc.id);
       
-      if(error) toast.error("Erro ao restaurar.");
+if(error) toast.error("Erro ao restaurar.");
       else toast.success('Documento restaurado.');
-      
-      const cat = categories.find(c => c.id === doc.categoryId);
-      if (cat) {
-         setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, docCount: c.docCount + 1 } : c));
-         await supabase.from('categories').update({ doc_count: cat.docCount + 1 }).eq('id', cat.id);
-      }
   };
 
   const handlePermanentDeleteDocument = async (doc: Document) => {
@@ -864,7 +900,7 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
     return <LoginPage onLogin={handleLogin} onSignUp={handleSignUp} settings={systemSettings} />;
   }
 
-  const commonProps = {
+const commonProps = {
     categories: categoryTree,
     documents: visibleDocuments,
     onSelectCategory: handleSelectCategory,
@@ -879,7 +915,9 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
     onOpenProfile: () => setIsProfileOpen(true),
     toggleTheme: handleToggleTheme,
     isDarkMode,
-    onNavigateToAnalytics: () => setCurrentView('ANALYTICS')
+    onNavigateToAnalytics: () => setCurrentView('ANALYTICS'),
+    activeCategoryId,
+    setCategories
   };
 
   const isNavbarMode = systemSettings.layoutMode === 'NAVBAR';
@@ -974,12 +1012,68 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
               user={currentUser}
               onSave={handleSaveDocument}
               onCancel={() => { selectedDocument ? setCurrentView('DOCUMENT_VIEW') : setCurrentView('HOME'); }}
-              categories={categoryTree}
+categories={categories.map(c => ({ id: c.id, name: c.name, parentId: c.parentId }))}
               allCategories={categories} 
-              initialCategoryId={selectedDocument?.categoryId}
+              initialCategoryId={
+              currentView === 'DOCUMENT_CREATE'
+                ? (activeCategoryId || defaultCategoryId || categories[0]?.id)
+                : selectedDocument?.categoryId
+            }
               initialContent={currentView === 'DOCUMENT_CREATE' ? newDocTemplate?.content : undefined}
               initialTags={currentView === 'DOCUMENT_CREATE' ? newDocTemplate?.tags : undefined}
-              onCreateTemplate={handleCreateTemplate}
+onCreateTemplate={handleCreateTemplate}
+              onChangeCategory={async (categoryId) => {
+                if (!selectedDocument) return;
+
+                // Atualiza no estado local
+                setSelectedDocument((d: any) => d ? ({ ...d, categoryId }) : d);
+
+                // Persiste no Supabase
+                const { error } = await supabase
+                  .from("documents")
+                  .update({ category_id: categoryId })
+                  .eq("id", selectedDocument.id);
+
+                if (error) {
+                  console.error(error);
+                  toast.error("Falha ao mover documento de pasta.");
+                  return;
+                }
+
+                // Se você estiver filtrando por pasta e mover para outra, atualiza lista
+                const fetchData = async () => {
+                  let q = supabase.from("documents").select("*");
+                  if (activeCategoryId) q = q.eq("category_id", activeCategoryId);
+
+                  const [docsRes, cats] = await Promise.all([
+                    q,
+                    listCategories(),
+                  ]);
+
+                  if (docsRes.error) throw new Error(`Docs: ${docsRes.error.message}`);
+                  
+                  const mappedDocs = (docsRes.data || []).map((d: any) => ({
+                    id: d.id,
+                    title: d.title,
+                    content: d.content,
+                    categoryId: d.category_id || activeCategoryId || '',
+                    status: d.status,
+                    authorId: d.author_id,
+                    createdAt: d.created_at,
+                    updatedAt: d.updated_at,
+                    deletedAt: d.deleted_at, 
+                    views: d.views,
+                    tags: d.tags || [],
+                    categoryPath: getCategoryPath(d.category_id, cats),
+                    versions: [] 
+                  }));
+
+                  setDocuments(mappedDocs);
+                  setCategories(cats);
+                };
+
+                await fetchData();
+              }}
             />
           )}
         </main>
