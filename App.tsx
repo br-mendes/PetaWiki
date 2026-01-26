@@ -492,7 +492,8 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
       } catch (e) { toast.error("Erro ao salvar configurações."); }
   };
 
-  const handleToggleTheme = async () => {
+const handleToggleTheme = async () => {
+      if (isMockUser(currentUser)) return;
       const newMode = !isDarkMode;
       setIsDarkMode(newMode);
       if (currentUser) {
@@ -509,7 +510,11 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
     toast.success('Permissão atualizada.');
   };
 
-  const handleUpdateUserDetails = async (userId: string, data: Partial<User>) => {
+const handleUpdateUserDetails = async (userId: string, data: Partial<User>) => {
+    if (isMockUser(currentUser)) {
+      toast.info("Modo mock: edição de usuário desativada.");
+      return;
+    }
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...data } : u));
     if (currentUser?.id === userId) setCurrentUser({ ...currentUser, ...data });
     await supabase.from('users').update({
@@ -569,7 +574,11 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
     }
   };
 
-  const handleUpdatePassword = async (oldPass: string, newPass: string): Promise<boolean> => {
+const handleUpdatePassword = async (oldPass: string, newPass: string): Promise<boolean> => {
+    if (isMockUser(currentUser)) {
+      toast.info("Modo mock: alteração de senha desativada.");
+      return false;
+    }
     if (!currentUser) return false;
     if (currentUser.password && currentUser.password !== oldPass) return false;
     
@@ -581,7 +590,11 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
     return true;
   };
 
-  const handleUpdateAvatar = async (base64: string) => {
+const handleUpdateAvatar = async (base64: string) => {
+    if (isMockUser(currentUser)) {
+      toast.info("Modo mock: alteração de avatar desativada.");
+      return;
+    }
     if (!currentUser) return;
     setCurrentUser({ ...currentUser, avatar: base64 });
     setUsers(prev => prev.map(u => u.id === currentUser.id ? { ...u, avatar: base64 } : u));
