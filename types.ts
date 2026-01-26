@@ -71,18 +71,8 @@ export interface User {
   themePreference?: 'light' | 'dark'; // Preference stored in DB
 }
 
-export interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  parentId: string | null;
-  departmentId?: string; // For permission scope (Rule 3)
-  order: number; // For sorting (Rule 9)
-  children?: Category[];
-  docCount: number;
-  description?: string;
-  icon?: string; // Emoji char or Icon name
-}
+// Category type is now defined in lib/categories.ts to match database schema
+export type Category = import('./lib/categories').Category;
 
 export interface DocumentTemplate {
   id: string;

@@ -1,5 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { listCategories, createCategory, renameCategory, deleteCategory, type Category } from "./lib/categories";
+import { CategoryTree } from "./components/CategoryTree";
 import { Sidebar } from './components/Sidebar';
 import { Navbar } from './components/Navbar';
 import { Header } from './components/Header';
@@ -11,7 +13,7 @@ import { TemplateSelector } from './components/TemplateSelector';
 import { LoginPage } from './components/LoginPage';
 import { AdminSettings } from './components/AdminSettings';
 import { UserProfile } from './components/UserProfile';
-import { Role, Document, Category, User, DocumentTemplate, SystemSettings, DocumentVersion } from './types';
+import { Role, Document, User, DocumentTemplate, SystemSettings, DocumentVersion } from './types';
 import { MOCK_TEMPLATES, DEFAULT_SYSTEM_SETTINGS, MOCK_USERS } from './constants';
 import { supabase } from './lib/supabase';
 import { 
@@ -59,11 +61,15 @@ const AppContent = () => {
   const [searchResultDocs, setSearchResultDocs] = useState<Document[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   
-  // Data State
+// Data State
   const [documents, setDocuments] = useState<Document[]>([]);
   const [categories, setCategories] = useState<Category[]>([]); // Flat list
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Category States
+  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
+  const [defaultCategoryId, setDefaultCategoryId] = useState<string | null>(null);
 
   // New Document State
   const [newDocTemplate, setNewDocTemplate] = useState<{content: string, tags: string[], templateId?: string} | null>(null);
@@ -205,9 +211,12 @@ const AppContent = () => {
 
         setIsSearching(true);
         try {
-            const { data, error } = await supabase.rpc('search_documents', {
+const searchParams: any = {
                 query_text: searchQuery
-            });
+            };
+            if (activeCategoryId) searchParams.category_id = activeCategoryId;
+
+            const { data, error } = await supabase.rpc('search_documents', searchParams);
 
             if (error) throw error;
 
@@ -292,27 +301,28 @@ const AppContent = () => {
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
-      try {
-        const [docsRes, catsRes, usersRes, settingsRes] = await Promise.all([
-            supabase.from('documents').select('*'), // Traz TODOS, inclusive deletados
-            supabase.from('categories').select('*'),
+try {
+        let q = supabase.from("documents").select("*"); // mantenha seus selects atuais
+if (activeCategoryId) q = q.eq("category_id", activeCategoryId);
+
+const [docsRes, cats, usersRes, settingsRes] = await Promise.all([
+            q, // Traz TODOS, inclusive deletados
+            listCategories(),
             supabase.from('users').select('*'),
             supabase.from('system_settings').select('settings').single()
         ]);
 
         if (docsRes.error) throw new Error(`Docs: ${docsRes.error.message}`);
         
-        const mappedCats = (catsRes.data || []).map((c: any) => ({
-            id: c.id,
-            name: c.name,
-            slug: c.slug,
-            parentId: c.parent_id,
-            departmentId: c.department_id,
-            order: c.sort_order, // Mapeamento DB sort_order -> App order
-            docCount: c.doc_count,
-            description: c.description,
-            icon: c.icon
-        }));
+        // Set categories from lib/categories
+        setCategories(cats);
+        
+        // Find "geral" category and set as default
+        const geral = cats.find(c => c.slug === "geral" && !c.parent_id) || null;
+        setDefaultCategoryId(geral?.id ?? null);
+        
+        // Auto-select "geral" if no active category
+        if (!activeCategoryId && geral?.id) setActiveCategoryId(geral.id);
 
         const mappedDocs = (docsRes.data || []).map((d: any) => ({
           id: d.id,
@@ -326,7 +336,7 @@ const AppContent = () => {
           deletedAt: d.deleted_at, 
           views: d.views,
           tags: d.tags || [],
-          categoryPath: getCategoryPath(d.category_id, mappedCats),
+          categoryPath: getCategoryPath(d.category_id, cats),
           versions: [] 
         }));
 
@@ -341,9 +351,8 @@ const AppContent = () => {
             avatar: u.avatar,
             themePreference: u.theme_preference
         }));
-
+        
         setDocuments(mappedDocs);
-        setCategories(mappedCats); 
         
         if (mappedUsers.length > 0) {
             setUsers(mappedUsers);
@@ -877,7 +886,7 @@ const handleUpdateAvatar = async (base64: string) => {
     return <LoginPage onLogin={handleLogin} onSignUp={handleSignUp} settings={systemSettings} />;
   }
 
-  const commonProps = {
+const commonProps = {
     categories: categoryTree,
     documents: visibleDocuments,
     onSelectCategory: handleSelectCategory,
@@ -892,7 +901,9 @@ const handleUpdateAvatar = async (base64: string) => {
     onOpenProfile: () => setIsProfileOpen(true),
     toggleTheme: handleToggleTheme,
     isDarkMode,
-    onNavigateToAnalytics: () => setCurrentView('ANALYTICS')
+    onNavigateToAnalytics: () => setCurrentView('ANALYTICS'),
+    activeCategoryId,
+    setCategories
   };
 
   const isNavbarMode = systemSettings.layoutMode === 'NAVBAR';
