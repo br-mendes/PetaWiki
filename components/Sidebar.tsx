@@ -48,9 +48,10 @@ interface SidebarProps {
   searchQuery?: string;
   // Variant
   variant?: 'SIDEBAR' | 'DRAWER' | 'DROPDOWN';
-  // Category State
+// Category State
   activeCategoryId?: string | null;
   setCategories?: (categories: Category[]) => void;
+  onDropDocument?: (docId: string, categoryId: string) => Promise<void> | void;
 }
 
 const CategoryItem: React.FC<{ 
@@ -186,11 +187,16 @@ const CategoryItem: React.FC<{
           ))}
           
           {/* Render Documents in this Category */}
-          {categoryDocuments.map((doc) => (
+{categoryDocuments.map((doc) => (
             <div 
               key={doc.id}
               onClick={(e) => { e.stopPropagation(); onSelectDocument(doc); }}
-              className="flex items-center px-2 py-1.5 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md text-sm text-gray-600 dark:text-gray-400 select-none group/doc transition-colors ml-1"
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData("application/x-petawiki-doc", doc.id);
+                e.dataTransfer.effectAllowed = "move";
+              }}
+              className="flex items-center px-2 py-1.5 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md text-sm text-gray-600 dark:text-gray-400 select-none group/doc transition-colors ml-1 cursor-move"
               style={{ paddingLeft: `${(depth + 1) * 12 + 24}px` }}
             >
               <FileText size={14} className="mr-2 text-gray-400 group-hover/doc:text-blue-500 shrink-0" />
@@ -225,8 +231,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isDarkMode,
   onNavigateToAnalytics,
   searchQuery,
-  activeCategoryId,
+activeCategoryId,
   setCategories,
+  onDropDocument,
   variant = 'SIDEBAR'
 }) => {
   const isAdminOrEditor = user.role === 'ADMIN' || user.role === 'EDITOR';
@@ -337,11 +344,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
               const updated = await renameCategory(id, name);
               if (setCategories) setCategories((s) => s.map((c) => (c.id === id ? updated : c)));
             }}
-            onDelete={async (id) => {
+onDelete={async (id) => {
               if (!confirm("Excluir pasta?")) return;
               await deleteCategory(id);
               if (setCategories) setCategories((s) => s.filter((c) => c.id !== id));
             }}
+            onDropDocument={onDropDocument}
           />
         </div>
       </div>

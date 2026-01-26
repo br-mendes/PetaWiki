@@ -66,11 +66,16 @@ export const Header: React.FC<HeaderProps> = ({
                         <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-gray-900/50">
                             Documentos Encontrados
                         </div>
-                        {searchResults.map((doc) => (
+{searchResults.map((doc) => (
                             <div 
                                 key={doc.id}
+                                draggable
+                                onDragStart={(e) => {
+                                  e.dataTransfer.setData("application/x-petawiki-doc", doc.id);
+                                  e.dataTransfer.effectAllowed = "move";
+                                }}
                                 onClick={() => handleSelect(doc)}
-                                className="px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-0 transition-colors group"
+                                className="px-4 py-3 hover:bg-blue-50 dark:hover:bg-blue-900/20 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-0 transition-colors group cursor-move"
                             >
                                 <div className="flex items-start gap-3">
                                     <div className="mt-1 p-1.5 bg-blue-100 dark:bg-blue-900/40 rounded text-blue-600 dark:text-blue-400">

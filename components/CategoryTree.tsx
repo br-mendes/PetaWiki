@@ -9,6 +9,7 @@ interface CategoryTreeProps {
   onCategoryEdit?: (category: Category) => void;
   onCategoryDelete?: (categoryId: string) => void;
   showControls?: boolean;
+  onDropDocument?: (docId: string, categoryId: string) => Promise<void> | void;
 }
 
 const TreeNode: React.FC<{
@@ -19,7 +20,8 @@ const TreeNode: React.FC<{
   onCategoryEdit?: (category: Category) => void;
   onCategoryDelete?: (categoryId: string) => void;
   showControls?: boolean;
-}> = ({ category, level, selectedId, onCategorySelect, onCategoryEdit, onCategoryDelete, showControls }) => {
+  onDropDocument?: (docId: string, categoryId: string) => Promise<void> | void;
+}> = ({ category, level, selectedId, onCategorySelect, onCategoryEdit, onCategoryDelete, showControls, onDropDocument }) => {
   const [isExpanded, setIsExpanded] = React.useState(level < 2);
   const hasChildren = category.children && category.children.length > 0;
   const isSelected = category.id === selectedId;
@@ -36,7 +38,7 @@ const TreeNode: React.FC<{
 
   return (
     <div>
-      <div 
+<div 
         className={`flex items-center py-2 px-2 rounded-md cursor-pointer transition-colors group ${
           isSelected 
             ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' 
@@ -44,6 +46,15 @@ const TreeNode: React.FC<{
         }`}
         style={{ paddingLeft: `${level * 20 + 8}px` }}
         onClick={handleSelect}
+        onDragOver={(e) => {
+          e.preventDefault(); // necessário para permitir drop
+        }}
+        onDrop={async (e) => {
+          e.preventDefault();
+          const docId = e.dataTransfer.getData("application/x-petawiki-doc");
+          if (!docId) return;
+          await onDropDocument?.(docId, category.id);
+        }}
       >
         <div 
           className="mr-2 w-4 h-4 flex items-center justify-center text-gray-400"
@@ -127,7 +138,8 @@ export const CategoryTree: React.FC<CategoryTreeProps> = ({
   onCategorySelect,
   onCategoryEdit,
   onCategoryDelete,
-  showControls = false
+  showControls = false,
+  onDropDocument
 }) => {
 return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
@@ -146,7 +158,7 @@ return (
         <span className="flex-1 text-sm font-medium">Todas</span>
       </div>
       {categories.map(category => (
-        <TreeNode
+<TreeNode
           key={category.id}
           category={category}
           level={0}
@@ -155,6 +167,7 @@ return (
           onCategoryEdit={onCategoryEdit}
           onCategoryDelete={onCategoryDelete}
           showControls={showControls}
+          onDropDocument={onDropDocument}
         />
       ))}
     </div>

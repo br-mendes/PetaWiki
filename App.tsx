@@ -274,7 +274,14 @@ const searchParams: any = {
     
     window.addEventListener('clearCategoryFilter', handleClearFilter);
     return () => window.removeEventListener('clearCategoryFilter', handleClearFilter);
-  }, []); 
+}, []); 
+
+  // Save active category to localStorage
+  useEffect(() => {
+    if (activeCategoryId !== undefined) {
+      localStorage.setItem("PETA_ACTIVE_CATEGORY_ID", activeCategoryId ?? "");
+    }
+  }, [activeCategoryId]);
 
   // --- VISIBLE DOCUMENTS (Sidebar) ---
   const visibleDocuments = useMemo(() => {
@@ -343,7 +350,11 @@ const geral = mappedCats.find(c => c.slug === 'geral' && !c.parentId) || null;
         const fallbackCatId = geral?.id || mappedCats[0]?.id || null;
 
         setDefaultCategoryId(fallbackCatId);
-        setActiveCategoryId(prev => prev ?? fallbackCatId);
+
+        const saved = localStorage.getItem("PETA_ACTIVE_CATEGORY_ID");
+        const savedOk = saved && mappedCats.some(c => c.id === saved);
+
+        setActiveCategoryId(prev => prev ?? (savedOk ? saved : fallbackCatId));
 
         const mappedDocs = (docsRes.data || []).map((d: any) => ({
           id: d.id,
@@ -671,7 +682,6 @@ const newCategory: Category = {
       parentId: data.parentId || null,
       departmentId: data.departmentId || currentUser?.department,
       order: categories.filter(c => c.parentId === data.parentId).length + 1,
-      docCount: 0,
       description: data.description,
       icon: data.icon
     };
@@ -679,7 +689,7 @@ const newCategory: Category = {
     // Optimistic Update
     setCategories([...categories, newCategory]);
     
-    const { error } = await supabase.from('categories').insert({
+const { error } = await supabase.from('categories').insert({
         id: newCategory.id,
         name: newCategory.name,
         slug: newCategory.slug,
@@ -687,7 +697,6 @@ const newCategory: Category = {
         department_id: newCategory.departmentId,
         description: newCategory.description,
         icon: newCategory.icon,
-        doc_count: 0,
         sort_order: newCategory.order // Mapeamento App order -> DB sort_order
     });
 
@@ -898,7 +907,36 @@ if(error) toast.error("Erro ao restaurar.");
 
   if (!isAuthenticated || !currentUser) {
     return <LoginPage onLogin={handleLogin} onSignUp={handleSignUp} settings={systemSettings} />;
+}
+
+  const moveDocumentToCategory = async (docId: string, categoryId: string) => {
+  // Atualiza no Supabase
+  const { error } = await supabase
+    .from("documents")
+    .update({ category_id: categoryId })
+    .eq("id", docId);
+
+  if (error) {
+    console.error(error);
+    toast.error("Falha ao mover documento de pasta.");
+    return;
   }
+
+  // Atualiza estado local (evita full reload se você quiser)
+  setDocuments((prev: any[]) =>
+    prev.map((d) => (d.id === docId ? { ...d, categoryId } : d))
+  );
+
+  // Se estiver filtrando por categoria e o doc foi movido para outra, some da lista
+  if (activeCategoryId && activeCategoryId !== categoryId) {
+    setDocuments((prev: any[]) => prev.filter((d) => d.id !== docId));
+  }
+
+  // Se o doc aberto foi movido, atualiza também
+  setSelectedDocument((prev: any) => (prev?.id === docId ? { ...prev, categoryId } : prev));
+
+  toast.success("Documento movido!");
+};
 
 const commonProps = {
     categories: categoryTree,
@@ -916,8 +954,9 @@ const commonProps = {
     toggleTheme: handleToggleTheme,
     isDarkMode,
     onNavigateToAnalytics: () => setCurrentView('ANALYTICS'),
-    activeCategoryId,
-    setCategories
+activeCategoryId,
+    setCategories,
+    onDropDocument: moveDocumentToCategory
   };
 
   const isNavbarMode = systemSettings.layoutMode === 'NAVBAR';
