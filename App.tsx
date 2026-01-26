@@ -18,7 +18,8 @@ import { MOCK_TEMPLATES, DEFAULT_SYSTEM_SETTINGS, MOCK_USERS } from './constants
 import { supabase } from './lib/supabase';
 import { 
   buildCategoryTree, 
-  getCategoryPath 
+  getCategoryPath,
+  generateSlug
 } from './lib/hierarchy';
 import { ToastProvider, useToast } from './components/Toast';
 import { Modal } from './components/Modal';
@@ -63,7 +64,7 @@ const AppContent = () => {
   
 // Data State
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]); // Flat list
+const [categories, setCategories] = useState<Category[]>([]); // Flat list
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -314,15 +315,31 @@ const [docsRes, cats, usersRes, settingsRes] = await Promise.all([
 
         if (docsRes.error) throw new Error(`Docs: ${docsRes.error.message}`);
         
-        // Set categories from lib/categories
+// Set categories from lib/categories
         setCategories(cats);
-        
-        // Find "geral" category and set as default
-        const geral = cats.find(c => c.slug === "geral" && !c.parent_id) || null;
-        setDefaultCategoryId(geral?.id ?? null);
-        
-        // Auto-select "geral" if no active category
-        if (!activeCategoryId && geral?.id) setActiveCategoryId(geral.id);
+
+        const mappedCats = cats.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          slug: c.slug,
+          parentId: c.parent_id ?? null,
+          departmentId: c.department_id ?? null,
+          order: c.sort_order ?? 0,
+          docCount: c.doc_count ?? 0,
+          description: c.description,
+          icon: c.icon
+        }));
+
+        setCategories(mappedCats);
+
+        const defaultCat =
+          mappedCats.find(c => c.slug === 'geral' && !c.parentId) ||
+          mappedCats.find(c => !c.parentId) ||
+          mappedCats[0] ||
+          null;
+
+        setDefaultCategoryId(defaultCat?.id ?? null);
+        setActiveCategoryId(prev => prev ?? (defaultCat?.id ?? null));
 
         const mappedDocs = (docsRes.data || []).map((d: any) => ({
           id: d.id,
@@ -626,7 +643,8 @@ const handleUpdateAvatar = async (base64: string) => {
     setSearchQuery(tag);
   };
 
-  const handleSelectCategory = (category: Category) => {
+const handleSelectCategory = (category: Category) => {
+    setActiveCategoryId(category.id);
     const docsInCat = visibleDocuments.filter(d => d.categoryId === category.id);
     if (docsInCat.length === 0 && isAdminOrEditor && (!category.children || category.children.length === 0)) {
         setConfirmModal({
@@ -642,10 +660,10 @@ const handleUpdateAvatar = async (base64: string) => {
   };
 
   const handleSaveCategory = async (data: Partial<Category>) => {
-    const newCategory: Category = {
-      id: `c${Date.now()}`,
+const newCategory: Category = {
+      id: (crypto?.randomUUID?.() ?? `c${Date.now()}`),
       name: data.name!,
-      slug: data.slug!,
+      slug: (data.slug || generateSlug(data.name!)),
       parentId: data.parentId || null,
       departmentId: data.departmentId || currentUser?.department,
       order: categories.filter(c => c.parentId === data.parentId).length + 1,
@@ -724,7 +742,17 @@ const handleUpdateAvatar = async (base64: string) => {
   const handleSaveDocument = async (data: Partial<Document>) => {
     if (!currentUser) return;
     
-    const targetCategoryId = data.categoryId || selectedDocument?.categoryId || (categories[0]?.id || 'c1'); 
+    const targetCategoryId =
+      data.categoryId ||
+      activeCategoryId ||
+      selectedDocument?.categoryId ||
+      defaultCategoryId ||
+      categories[0]?.id;
+
+    if (!targetCategoryId) {
+      toast.error('Nenhuma categoria encontrada. Crie uma categoria antes de salvar o documento.');
+      return;
+    } 
     
     if (currentView === 'DOCUMENT_CREATE') {
       const newDoc: Document = {
@@ -1000,7 +1028,11 @@ const commonProps = {
               onCancel={() => { selectedDocument ? setCurrentView('DOCUMENT_VIEW') : setCurrentView('HOME'); }}
               categories={categoryTree}
               allCategories={categories} 
-              initialCategoryId={selectedDocument?.categoryId}
+              initialCategoryId={
+              currentView === 'DOCUMENT_CREATE'
+                ? (activeCategoryId || defaultCategoryId || categories[0]?.id)
+                : selectedDocument?.categoryId
+            }
               initialContent={currentView === 'DOCUMENT_CREATE' ? newDocTemplate?.content : undefined}
               initialTags={currentView === 'DOCUMENT_CREATE' ? newDocTemplate?.tags : undefined}
               onCreateTemplate={handleCreateTemplate}
