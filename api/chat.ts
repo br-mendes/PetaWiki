@@ -26,9 +26,9 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: 'Prompt is required and must be a string' });
     }
 
-    // Inicializa o cliente Gemini com a chave de ambiente
-    // Certifique-se de que a variável API_KEY está definida no seu ambiente Vercel (.env)
-    const apiKey = process.env.API_KEY;
+// Inicializa o cliente Gemini com a chave de ambiente
+    // Certifique-se de que a variável GEMINI_API_KEY está definida no seu ambiente Vercel (.env)
+    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
     
     if (!apiKey) {
       console.error("API_KEY não configurada no ambiente.");

@@ -20,6 +20,7 @@ interface DocumentEditorProps {
   initialContent?: string;
   initialTags?: string[];
   onCreateTemplate?: (doc: Partial<Document>) => void; // New prop for admin
+  onChangeCategory?: (categoryId: string) => Promise<void> | void;
 }
 
 export const DocumentEditor: React.FC<DocumentEditorProps> = ({ 
@@ -32,12 +33,15 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   initialCategoryId,
   initialContent = '',
   initialTags = [],
-  onCreateTemplate
+  onCreateTemplate,
+  onChangeCategory
 }) => {
   const toast = useToast();
   const [title, setTitle] = useState(document?.title || '');
   const [content, setContent] = useState(document?.content || initialContent);
-  const [categoryId, setCategoryId] = useState(document?.categoryId || initialCategoryId || '');
+const [categoryId, setCategoryId] = useState(document?.categoryId || initialCategoryId || '');
+  
+  useEffect(() => setCategoryId(document?.categoryId || initialCategoryId || ''), [document?.categoryId, initialCategoryId]);
   
   // Tag State
   const [tags, setTags] = useState<string[]>(document?.tags || initialTags || []);
@@ -318,6 +322,26 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                 />
               </div>
             )}
+</div>
+
+          {/* Seletor de Categoria Simples */}
+          <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
+            <label style={{ fontSize: 12, opacity: 0.7 }}>Pasta</label>
+            <select
+              value={categoryId ?? ""}
+              onChange={async (e) => {
+                const next = e.target.value;
+                setCategoryId(next);
+                await onChangeCategory?.(next);
+              }}
+              style={{ padding: "6px 8px", borderRadius: 8 }}
+            >
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Título */}

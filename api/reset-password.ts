@@ -2,9 +2,11 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Configuração do Supabase com Service Role (Admin)
-const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://zjsewlyxvznwdtgmknpw.supabase.co';
-// Chave de serviço (Service Role) obtida do arquivo api/webhook.ts existente
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpqc2V3bHl4dnpud2R0Z21rbnB3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTE3NDI0MiwiZXhwIjoyMDg0NzUwMjQyfQ.bNUNMv8o3p5EjKa4TImtN8uDNis5vqNHL8n-w9AAH7c';
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl) throw new Error('Missing SUPABASE_URL');
+if (!supabaseKey) throw new Error('Missing SUPABASE_SERVICE_ROLE_KEY');
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
