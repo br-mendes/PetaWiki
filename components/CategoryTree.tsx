@@ -10,6 +10,8 @@ interface CategoryTreeProps {
   onCategoryDelete?: (categoryId: string) => void;
   showControls?: boolean;
   onDropDocument?: (docId: string, categoryId: string) => Promise<void> | void;
+  onDropCategory?: (categoryId: string, newParentId: string | null) => Promise<void> | void;
+  onReorderCategory?: (categoryId: string, direction: "up" | "down") => Promise<void> | void;
 }
 
 const TreeNode: React.FC<{
@@ -21,7 +23,9 @@ const TreeNode: React.FC<{
   onCategoryDelete?: (categoryId: string) => void;
   showControls?: boolean;
   onDropDocument?: (docId: string, categoryId: string) => Promise<void> | void;
-}> = ({ category, level, selectedId, onCategorySelect, onCategoryEdit, onCategoryDelete, showControls, onDropDocument }) => {
+  onDropCategory?: (categoryId: string, newParentId: string | null) => Promise<void> | void;
+  onReorderCategory?: (categoryId: string, direction: "up" | "down") => Promise<void> | void;
+}> = ({ category, level, selectedId, onCategorySelect, onCategoryEdit, onCategoryDelete, showControls, onDropDocument, onDropCategory, onReorderCategory }) => {
   const [isExpanded, setIsExpanded] = React.useState(level < 2);
   const hasChildren = category.children && category.children.length > 0;
   const isSelected = category.id === selectedId;
@@ -45,15 +49,27 @@ const TreeNode: React.FC<{
             : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'
         }`}
         style={{ paddingLeft: `${level * 20 + 8}px` }}
-        onClick={handleSelect}
-        onDragOver={(e) => {
-          e.preventDefault(); // necessário para permitir drop
+        draggable
+        onDragStart={(e) => {
+          e.dataTransfer.setData("application/x-petawiki-cat", category.id);
+          e.dataTransfer.effectAllowed = "move";
         }}
+        onClick={handleSelect}
+        onDragOver={(e) => e.preventDefault()}
         onDrop={async (e) => {
           e.preventDefault();
+
           const docId = e.dataTransfer.getData("application/x-petawiki-doc");
-          if (!docId) return;
-          await onDropDocument?.(docId, category.id);
+          if (docId) {
+            await onDropDocument?.(docId, category.id);
+            return;
+          }
+
+          const catId = e.dataTransfer.getData("application/x-petawiki-cat");
+          if (catId) {
+            await onDropCategory?.(catId, category.id);
+            return;
+          }
         }}
       >
         <div 
@@ -86,7 +102,7 @@ const TreeNode: React.FC<{
           </span>
         )}
         
-        {showControls && (
+{showControls && (
           <div className="ml-2 opacity-0 group-hover:opacity-100 flex gap-1">
             <button
               onClick={(e) => {
@@ -98,6 +114,18 @@ const TreeNode: React.FC<{
             >
               ✏️
             </button>
+            <button 
+              type="button" 
+              onClick={(e) => { e.stopPropagation(); onReorderCategory?.(category.id, "up"); }}
+              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+              title="Mover para cima"
+            >↑</button>
+            <button 
+              type="button" 
+              onClick={(e) => { e.stopPropagation(); onReorderCategory?.(category.id, "down"); }}
+              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+              title="Mover para baixo"
+            >↓</button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -115,7 +143,7 @@ const TreeNode: React.FC<{
       {isExpanded && hasChildren && category.children && (
         <div>
           {category.children.map(child => (
-            <TreeNode
+<TreeNode
               key={child.id}
               category={child}
               level={level + 1}
@@ -124,6 +152,9 @@ const TreeNode: React.FC<{
               onCategoryEdit={onCategoryEdit}
               onCategoryDelete={onCategoryDelete}
               showControls={showControls}
+              onDropDocument={onDropDocument}
+              onDropCategory={onDropCategory}
+              onReorderCategory={onReorderCategory}
             />
           ))}
         </div>
@@ -139,10 +170,30 @@ export const CategoryTree: React.FC<CategoryTreeProps> = ({
   onCategoryEdit,
   onCategoryDelete,
   showControls = false,
-  onDropDocument
+  onDropDocument,
+  onDropCategory,
+  onReorderCategory
 }) => {
 return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+      {/* Drop zone para Raiz */}
+      <button
+        type="button"
+        className="w-full flex items-center py-2 px-2 rounded-md cursor-pointer transition-colors border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={async (e) => {
+          e.preventDefault();
+          const catId = e.dataTransfer.getData("application/x-petawiki-cat");
+          if (!catId) return;
+          await onDropCategory?.(catId, null);
+        }}
+      >
+        <div className="mr-2 w-4 h-4 flex items-center justify-center text-gray-400">
+          🏠
+        </div>
+        <span className="flex-1 text-sm font-medium">Raiz</span>
+      </button>
+
       {/* Botão "Todas" */}
       <div 
         className={`flex items-center py-2 px-2 rounded-md cursor-pointer transition-colors ${

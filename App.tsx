@@ -406,8 +406,174 @@ const geral = mappedCats.find(c => c.slug === 'geral' && !c.parentId) || null;
         setIsLoading(false);
       }
     }
-    fetchData();
+fetchData();
   }, []);
+
+  // --- Category Management Helpers ---
+  const getDescendantIds = (categoryId: string) => {
+    const childrenByParent = new Map<string | null, string[]>();
+    for (const c of categories) {
+      const p = c.parentId ?? null;
+      if (!childrenByParent.has(p)) childrenByParent.set(p, []);
+      childrenByParent.get(p)!.push(c.id);
+    }
+
+    const out = new Set<string>();
+    const stack = [categoryId];
+    while (stack.length) {
+      const cur = stack.pop()!;
+      const kids = childrenByParent.get(cur) || [];
+      for (const k of kids) {
+        if (!out.has(k)) {
+          out.add(k);
+          stack.push(k);
+        }
+      }
+    }
+    return out;
+  };
+
+  const moveCategoryToParent = async (categoryId: string, newParentId: string | null) => {
+    if (categoryId === newParentId) {
+      toast.error("Uma pasta não pode ser filha dela mesma.");
+      return;
+    }
+
+    // anti-ciclo: não pode soltar em um descendente
+    if (newParentId) {
+      const descendants = getDescendantIds(categoryId);
+      if (descendants.has(newParentId)) {
+        toast.error("Movimento inválido: isso criaria um ciclo.");
+        return;
+      }
+    }
+
+    // define sort_order ao final da lista do novo pai
+    const siblings = categories.filter(c => (c.parentId ?? null) === newParentId && c.id !== categoryId);
+    const maxOrder = siblings.reduce((m, c) => Math.max(m, c.order ?? 0), -1);
+    const nextOrder = maxOrder + 1;
+
+    const { error } = await supabase
+      .from("categories")
+      .update({ parent_id: newParentId, sort_order: nextOrder })
+      .eq("id", categoryId);
+
+    if (error) {
+      console.error(error);
+      toast.error("Falha ao mover pasta.");
+      return;
+    }
+
+    toast.success("Pasta movida!");
+    // Reload categories and documents
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const [docsRes, cats] = await Promise.all([
+          supabase.from("documents").select("*"),
+          listCategories(),
+        ]);
+
+        if (docsRes.error) throw new Error(`Docs: ${docsRes.error.message}`);
+        
+        const mappedCats = cats.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          slug: c.slug,
+          parentId: c.parent_id ?? null,
+          departmentId: c.department_id ?? null,
+          order: c.sort_order ?? 0,
+          docCount: c.doc_count ?? 0,
+          description: c.description,
+          icon: c.icon
+        }));
+
+        setCategories(mappedCats);
+
+        const mappedDocs = (docsRes.data || []).map((d: any) => ({
+          id: d.id,
+          title: d.title,
+          content: d.content,
+          categoryId: d.category_id || activeCategoryId || '',
+          status: d.status,
+          authorId: d.author_id,
+          createdAt: d.created_at,
+          updatedAt: d.updated_at,
+          deletedAt: d.deleted_at, 
+          views: d.views,
+          tags: d.tags || [],
+          categoryPath: getCategoryPath(d.category_id, cats),
+          versions: [] 
+        }));
+
+        setDocuments(mappedDocs);
+      } catch (e) {
+        console.error("Erro ao recarregar dados:", e);
+        toast.error("Erro ao recarregar dados.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    await fetchData();
+  };
+
+  const reorderCategory = async (categoryId: string, direction: "up" | "down") => {
+    const cat = categories.find(c => c.id === categoryId);
+    if (!cat) return;
+
+    const parentId = cat.parentId ?? null;
+
+    const siblings = categories
+      .filter(c => (c.parentId ?? null) === parentId)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name));
+
+    const idx = siblings.findIndex(s => s.id === categoryId);
+    const swapWith = direction === "up" ? idx - 1 : idx + 1;
+    if (swapWith < 0 || swapWith >= siblings.length) return;
+
+    const newOrder = [...siblings];
+    const tmp = newOrder[idx];
+    newOrder[idx] = newOrder[swapWith];
+    newOrder[swapWith] = tmp;
+
+    const ids = newOrder.map(x => x.id);
+
+    const { error } = await supabase.rpc("set_category_order", {
+      p_parent_id: parentId,
+      p_ids: ids,
+    });
+
+    if (error) {
+      console.error(error);
+      toast.error("Falha ao reordenar pastas.");
+      return;
+    }
+
+    // Reload categories
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        const cats = await listCategories();
+        const mappedCats = cats.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          slug: c.slug,
+          parentId: c.parent_id ?? null,
+          departmentId: c.department_id ?? null,
+          order: c.sort_order ?? 0,
+          docCount: c.doc_count ?? 0,
+          description: c.description,
+          icon: c.icon
+        }));
+        setCategories(mappedCats);
+      } catch (e) {
+        console.error("Erro ao recarregar categorias:", e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    await fetchData();
+  };
 
 const handleLogin = (usernameInput: string, passwordInput: string) => {
     // Mock authentication mode
@@ -956,7 +1122,9 @@ const commonProps = {
     onNavigateToAnalytics: () => setCurrentView('ANALYTICS'),
 activeCategoryId,
     setCategories,
-    onDropDocument: moveDocumentToCategory
+    onDropDocument: moveDocumentToCategory,
+    onDropCategory: moveCategoryToParent,
+    onReorderCategory: reorderCategory
   };
 
   const isNavbarMode = systemSettings.layoutMode === 'NAVBAR';
@@ -1033,16 +1201,33 @@ activeCategoryId,
             />
           )}
 
-          {currentView === 'DOCUMENT_VIEW' && selectedDocument && (
-            <DocumentView 
-              document={selectedDocument} 
-              user={currentUser}
-              onEdit={() => setCurrentView('DOCUMENT_EDIT')}
-              onDelete={() => handleSoftDeleteDocument(selectedDocument)}
-              systemSettings={systemSettings}
-              onRestoreVersion={handleRestoreVersion}
-              onSearchTag={handleSearchTag}
-            />
+{currentView === 'DOCUMENT_VIEW' && selectedDocument && (
+            <>
+              {/* Breadcrumb */}
+              {(() => {
+                const currentCatId = selectedDocument?.categoryId || activeCategoryId || defaultCategoryId;
+                const path = currentCatId ? getCategoryPath(currentCatId, categoryTree) : [];
+
+                return (
+                  <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: 8, padding: "0 32px" }}>
+                    {path.map((p, i) => (
+                      <span key={p.id} style={{ cursor: "pointer" }} onClick={() => setActiveCategoryId(p.id)}>
+                        {p.name}{i < path.length - 1 ? " / " : ""}
+                      </span>
+                    ))}
+                  </div>
+                );
+              })()}
+              <DocumentView
+                document={selectedDocument} 
+                user={currentUser}
+                onEdit={() => setCurrentView('DOCUMENT_EDIT')}
+                onDelete={() => handleSoftDeleteDocument(selectedDocument)}
+                systemSettings={systemSettings}
+                onRestoreVersion={handleRestoreVersion}
+                onSearchTag={handleSearchTag}
+              />
+            </>
           )}
 
           {(currentView === 'DOCUMENT_EDIT' || currentView === 'DOCUMENT_CREATE') && (isAdminOrEditor) && (
