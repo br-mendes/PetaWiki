@@ -50,8 +50,10 @@ interface SidebarProps {
   variant?: 'SIDEBAR' | 'DRAWER' | 'DROPDOWN';
 // Category State
   activeCategoryId?: string | null;
-  setCategories?: (categories: Category[]) => void;
+  setCategories?: React.Dispatch<React.SetStateAction<Category[]>>;
   onDropDocument?: (docId: string, categoryId: string) => Promise<void> | void;
+  onDropCategory?: (categoryId: string, newParentId: string | null) => Promise<void> | void;
+  onReorderCategory?: (categoryId: string, direction: "up" | "down") => Promise<void> | void;
 }
 
 const CategoryItem: React.FC<{ 
@@ -234,6 +236,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 activeCategoryId,
   setCategories,
   onDropDocument,
+  onDropCategory,
+  onReorderCategory,
   variant = 'SIDEBAR'
 }) => {
   const isAdminOrEditor = user.role === 'ADMIN' || user.role === 'EDITOR';
@@ -320,36 +324,30 @@ activeCategoryId,
             selectedId={activeCategoryId}
             onCategorySelect={(categoryId) => {
               if (categoryId === null) {
-                // Botão "Todas" - limpa o filtro
-                if (setCategories) {
-                  // Chama o App.tsx para limpar activeCategoryId
-                  const event = new CustomEvent('clearCategoryFilter');
-                  window.dispatchEvent(event);
-                }
+                const event = new CustomEvent('clearCategoryFilter');
+                window.dispatchEvent(event);
               } else {
                 const selectedCat = categories.find(c => c.id === categoryId);
                 if (selectedCat) onSelectCategory(selectedCat);
               }
             }}
-            onCreate={async (parentId) => {
-              const name = prompt("Nome da pasta:");
-              if (!name) return;
-              const created = await createCategory({ name, parent_id: parentId });
-              if (setCategories) setCategories((s) => [...s, created]);
-            }}
+            showControls={isAdminOrEditor}
+            onCreate={(parentId) => onCreateCategory(parentId)}
             onRename={async (id) => {
               const current = categories.find((c) => c.id === id);
               const name = prompt("Novo nome:", current?.name || "");
               if (!name) return;
               const updated = await renameCategory(id, name);
-              if (setCategories) setCategories((s) => s.map((c) => (c.id === id ? updated : c)));
+              setCategories?.((s) => s.map((c) => (c.id === id ? updated : c)));
             }}
-onDelete={async (id) => {
+            onDelete={async (id) => {
               if (!confirm("Excluir pasta?")) return;
               await deleteCategory(id);
-              if (setCategories) setCategories((s) => s.filter((c) => c.id !== id));
+              setCategories?.((s) => s.filter((c) => c.id !== id));
             }}
             onDropDocument={onDropDocument}
+            onDropCategory={onDropCategory}
+            onReorderCategory={onReorderCategory}
           />
         </div>
       </div>

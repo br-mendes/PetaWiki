@@ -278,6 +278,7 @@ const searchParams: any = {
 
   // Save active category to localStorage
   useEffect(() => {
+    if (typeof window === "undefined") return;
     if (activeCategoryId !== undefined) {
       localStorage.setItem("PETA_ACTIVE_CATEGORY_ID", activeCategoryId ?? "");
     }
@@ -409,6 +410,28 @@ const geral = mappedCats.find(c => c.slug === 'geral' && !c.parentId) || null;
 fetchData();
   }, []);
 
+  // --- Category Helper Functions ---
+  const mapCatsFromDb = (cats: any[]) => cats.map((c: any) => ({
+    id: c.id,
+    name: c.name,
+    slug: c.slug,
+    parentId: c.parent_id ?? null,
+    departmentId: c.department_id ?? null,
+    order: c.sort_order ?? 0,
+    docCount: c.doc_count ?? 0,
+    description: c.description,
+    icon: c.icon,
+  }));
+
+  const refreshCategories = async () => {
+    try {
+      const cats = await listCategories();
+      setCategories(mapCatsFromDb(cats as any));
+    } catch (e) {
+      console.error("Erro ao recarregar categorias:", e);
+    }
+  };
+
   // --- Category Management Helpers ---
   const getDescendantIds = (categoryId: string) => {
     const childrenByParent = new Map<string | null, string[]>();
@@ -465,56 +488,7 @@ fetchData();
     }
 
     toast.success("Pasta movida!");
-    // Reload categories and documents
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        const [docsRes, cats] = await Promise.all([
-          supabase.from("documents").select("*"),
-          listCategories(),
-        ]);
-
-        if (docsRes.error) throw new Error(`Docs: ${docsRes.error.message}`);
-        
-        const mappedCats = cats.map((c: any) => ({
-          id: c.id,
-          name: c.name,
-          slug: c.slug,
-          parentId: c.parent_id ?? null,
-          departmentId: c.department_id ?? null,
-          order: c.sort_order ?? 0,
-          docCount: c.doc_count ?? 0,
-          description: c.description,
-          icon: c.icon
-        }));
-
-        setCategories(mappedCats);
-
-        const mappedDocs = (docsRes.data || []).map((d: any) => ({
-          id: d.id,
-          title: d.title,
-          content: d.content,
-          categoryId: d.category_id || activeCategoryId || '',
-          status: d.status,
-          authorId: d.author_id,
-          createdAt: d.created_at,
-          updatedAt: d.updated_at,
-          deletedAt: d.deleted_at, 
-          views: d.views,
-          tags: d.tags || [],
-          categoryPath: getCategoryPath(d.category_id, cats),
-          versions: [] 
-        }));
-
-        setDocuments(mappedDocs);
-      } catch (e) {
-        console.error("Erro ao recarregar dados:", e);
-        toast.error("Erro ao recarregar dados.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    await fetchData();
+    await refreshCategories();
   };
 
   const reorderCategory = async (categoryId: string, direction: "up" | "down") => {
@@ -571,11 +545,11 @@ fetchData();
       } finally {
         setIsLoading(false);
       }
-    };
-    await fetchData();
+};
+    await refreshCategories();
   };
 
-const handleLogin = (usernameInput: string, passwordInput: string) => {
+  const handleLogin = (usernameInput: string, passwordInput: string) => {
     // Mock authentication mode
     if (AUTH_MODE === 'mock') {
       if (usernameInput === 'admin' && passwordInput === 'admin') {
@@ -1246,58 +1220,14 @@ categories={categories.map(c => ({ id: c.id, name: c.name, parentId: c.parentId 
               initialContent={currentView === 'DOCUMENT_CREATE' ? newDocTemplate?.content : undefined}
               initialTags={currentView === 'DOCUMENT_CREATE' ? newDocTemplate?.tags : undefined}
 onCreateTemplate={handleCreateTemplate}
-              onChangeCategory={async (categoryId) => {
-                if (!selectedDocument) return;
-
-                // Atualiza no estado local
-                setSelectedDocument((d: any) => d ? ({ ...d, categoryId }) : d);
-
-                // Persiste no Supabase
-                const { error } = await supabase
-                  .from("documents")
-                  .update({ category_id: categoryId })
-                  .eq("id", selectedDocument.id);
-
-                if (error) {
-                  console.error(error);
-                  toast.error("Falha ao mover documento de pasta.");
-                  return;
-                }
-
-                // Se você estiver filtrando por pasta e mover para outra, atualiza lista
-                const fetchData = async () => {
-                  let q = supabase.from("documents").select("*");
-                  if (activeCategoryId) q = q.eq("category_id", activeCategoryId);
-
-                  const [docsRes, cats] = await Promise.all([
-                    q,
-                    listCategories(),
-                  ]);
-
-                  if (docsRes.error) throw new Error(`Docs: ${docsRes.error.message}`);
-                  
-                  const mappedDocs = (docsRes.data || []).map((d: any) => ({
-                    id: d.id,
-                    title: d.title,
-                    content: d.content,
-                    categoryId: d.category_id || activeCategoryId || '',
-                    status: d.status,
-                    authorId: d.author_id,
-                    createdAt: d.created_at,
-                    updatedAt: d.updated_at,
-                    deletedAt: d.deleted_at, 
-                    views: d.views,
-                    tags: d.tags || [],
-                    categoryPath: getCategoryPath(d.category_id, cats),
-                    versions: [] 
-                  }));
-
-                  setDocuments(mappedDocs);
-                  setCategories(cats);
-                };
-
-                await fetchData();
-              }}
+onChangeCategory={
+              currentView === 'DOCUMENT_EDIT'
+                ? async (categoryId) => {
+                    if (!selectedDocId) return;
+                    await moveDocumentToCategory(selectedDocId, categoryId);
+                  }
+                : undefined
+            }
             />
           )}
         </main>
