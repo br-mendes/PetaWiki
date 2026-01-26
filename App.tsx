@@ -21,6 +21,7 @@ import {
   getCategoryPath,
   generateSlug
 } from './lib/hierarchy';
+import { listFavoriteDocIds, addFavorite, removeFavorite } from "./lib/favorites";
 import { ToastProvider, useToast } from './components/Toast';
 import { Modal } from './components/Modal';
 import { Button } from './components/Button';
@@ -71,6 +72,7 @@ const [categories, setCategories] = useState<Category[]>([]); // Flat list
   // Category States
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [defaultCategoryId, setDefaultCategoryId] = useState<string | null>(null);
+  const [favoriteDocIds, setFavoriteDocIds] = useState<string[]>([]);
 
   // New Document State
   const [newDocTemplate, setNewDocTemplate] = useState<{content: string, tags: string[], templateId?: string} | null>(null);
@@ -213,28 +215,33 @@ const [categories, setCategories] = useState<Category[]>([]); // Flat list
         setIsSearching(true);
         try {
 const searchParams: any = {
-                query_text: searchQuery
+              query_text: searchQuery,
+              category_id: activeCategoryId ?? null,
+              include_deleted: false,
+              status_filter: null,
+              limit_count: 50,
+              offset_count: 0,
             };
-            if (activeCategoryId) searchParams.category_id = activeCategoryId;
 
-            const { data, error } = await supabase.rpc('search_documents', searchParams);
+            const { data, error } = await supabase.rpc('search_documents_v2', searchParams);
 
             if (error) throw error;
 
             const mappedResults: Document[] = (data || []).map((d: any) => ({
-                id: d.id,
-                title: d.title,
-                content: d.content,
-                categoryId: d.category_id,
-                status: d.status,
-                authorId: d.author_id,
-                createdAt: d.created_at,
-                updatedAt: d.updated_at,
-                deletedAt: d.deleted_at,
-                views: d.views,
-                tags: d.tags || [],
-                categoryPath: getCategoryPath(d.category_id, categories),
-                versions: [] 
+              id: d.id,
+              title: d.title,
+              content: d.content,
+              snippet: d.snippet,
+              categoryId: d.category_id,
+              status: d.status,
+              authorId: d.author_id,
+              createdAt: d.created_at,
+              updatedAt: d.updated_at,
+              deletedAt: d.deleted_at,
+              views: d.views,
+              tags: d.tags || [],
+              categoryPath: getCategoryPath(d.category_id, categories),
+              versions: [],
             }));
 
             setSearchResultDocs(mappedResults);
@@ -685,10 +692,43 @@ const handleToggleTheme = async () => {
       }
   };
 
-  const handleUpdateUserRole = async (userId: string, newRole: Role) => {
+const handleUpdateUserRole = async (userId: string, newRole: Role) => {
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
     await supabase.from('users').update({ role: newRole }).eq('id', userId);
     toast.success('Permissão atualizada.');
+  };
+
+  // --- Favorites Management ---
+  useEffect(() => {
+    const run = async () => {
+      if (!currentUser) return;
+      if (isMockUser(currentUser)) return; // não grava em DB no mock
+      try {
+        const ids = await listFavoriteDocIds(currentUser.id);
+        setFavoriteDocIds(ids);
+      } catch (e) {
+        console.error("Erro ao carregar favoritos", e);
+      }
+    };
+    run();
+  }, [currentUser]);
+
+  const toggleFavorite = async (docId: string) => {
+    if (!currentUser) return;
+
+    const isFav = favoriteDocIds.includes(docId);
+    setFavoriteDocIds(prev => isFav ? prev.filter(id => id !== docId) : [docId, ...prev]);
+
+    if (isMockUser(currentUser)) return;
+
+    try {
+      if (isFav) await removeFavorite(currentUser.id, docId);
+      else await addFavorite(currentUser.id, docId);
+    } catch (e) {
+      // rollback simples
+      setFavoriteDocIds(prev => isFav ? [docId, ...prev] : prev.filter(id => id !== docId));
+      console.error(e);
+    }
   };
 
 const handleUpdateUserDetails = async (userId: string, data: Partial<User>) => {
@@ -1200,6 +1240,8 @@ activeCategoryId,
                 systemSettings={systemSettings}
                 onRestoreVersion={handleRestoreVersion}
                 onSearchTag={handleSearchTag}
+                isFavorite={favoriteDocIds.includes(selectedDocument.id)}
+                onToggleFavorite={() => toggleFavorite(selectedDocument.id)}
               />
             </>
           )}

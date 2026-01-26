@@ -107,7 +107,8 @@ export interface Document {
   deletedAt?: string | null; // Soft Delete support
   views: number;
   tags: string[];
-  categoryPath?: string; // Breadcrumb cache
+categoryPath?: string; // Breadcrumb cache
+  snippet?: string; // Search result snippet with HTML <mark>
   templateId?: string; // Reference to source template
   versions: DocumentVersion[]; // Version History (Max 3)
 }

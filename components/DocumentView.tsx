@@ -17,6 +17,8 @@ interface DocumentViewProps {
   systemSettings: SystemSettings;
   onRestoreVersion?: (version: DocumentVersion) => void;
   onSearchTag?: (tag: string) => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
 type ReactionType = 'THUMBS_UP' | 'THUMBS_DOWN' | 'HEART';
@@ -28,7 +30,9 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
   onDelete,
   systemSettings,
   onRestoreVersion,
-  onSearchTag
+  onSearchTag,
+  isFavorite,
+  onToggleFavorite
 }) => {
   const toast = useToast();
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
@@ -238,10 +242,19 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
                     <Button variant="secondary" onClick={() => setIsHistoryModalOpen(true)} className="dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700">
                         <History size={16} className="mr-2" /> Histórico
                     </Button>
-                    <Button onClick={onEdit}>
+<Button onClick={onEdit}>
                         <Edit2 size={16} className="mr-2" />
                         Editar
                     </Button>
+                    {onToggleFavorite && (
+                      <button
+                        onClick={onToggleFavorite}
+                        className="px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                        title="Favoritar"
+                      >
+                        {isFavorite ? "❤️" : "🤍"}
+                      </button>
+                    )}
                     </>
                 )}
                 
