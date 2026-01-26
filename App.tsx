@@ -215,12 +215,12 @@ const [categories, setCategories] = useState<Category[]>([]); // Flat list
         setIsSearching(true);
         try {
 const searchParams: any = {
-              query_text: searchQuery,
-              category_id: activeCategoryId ?? null,
-              include_deleted: false,
-              status_filter: null,
-              limit_count: 50,
-              offset_count: 0,
+              p_query_text: searchQuery,
+              p_category_id: activeCategoryId ?? null,
+              p_include_deleted: false,
+              p_status_filter: null,
+              p_limit_count: 50,
+              p_offset_count: 0,
             };
 
             const { data, error } = await supabase.rpc('search_documents_v2', searchParams);
