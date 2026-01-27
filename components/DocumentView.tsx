@@ -155,8 +155,18 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
         });
     }
 
-    setUserReactions(newReactions);
+setUserReactions(newReactions);
     setReactionCounts(newCounts);
+
+    //  NOVO: evento para atualizar favoritos no App.tsx
+    if (type === 'HEART') {
+      const isFavoriteNow = newReactions.includes('HEART');
+      window.dispatchEvent(
+        new CustomEvent('peta:favorite-changed', {
+          detail: { docId: document.id, isFavorite: isFavoriteNow }
+        })
+      );
+    }
   };
 
   const handleExport = async (format: 'PDF' | 'MARKDOWN' | 'DOCX') => {
