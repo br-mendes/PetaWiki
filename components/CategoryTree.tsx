@@ -9,6 +9,18 @@ interface CategoryTreeProps {
   onCategoryEdit?: (category: Category) => void;
   onCategoryDelete?: (categoryId: string) => void;
   showControls?: boolean;
+  onDropDocument?: (docId: string, categoryId: string) => Promise<void> | void;
+  onDropCategory?: (categoryId: string, newParentId: string | null) => Promise<void> | void;
+  onReorderCategory?: (categoryId: string, direction: "up" | "down") => Promise<void> | void;
+}
+
+interface CategoryTreeProps {
+  categories: Category[];
+  selectedId?: string | null;
+  onCategorySelect?: (categoryId: string | null) => void;
+  onCategoryEdit?: (category: Category) => void;
+  onCategoryDelete?: (categoryId: string) => void;
+  showControls?: boolean;
 }
 
 const TreeNode: React.FC<{
