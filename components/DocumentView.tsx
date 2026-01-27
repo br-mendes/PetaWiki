@@ -34,6 +34,8 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [versions, setVersions] = useState<DocumentVersion[]>([]);
+  const [isLoadingVersions, setIsLoadingVersions] = useState(false);
   
   // Real-time View Count State
   const [liveViews, setLiveViews] = useState(document.views);
@@ -50,6 +52,34 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
   const canEdit = user.role === 'ADMIN' || (user.role === 'EDITOR' && document.authorId === user.id);
   const canDelete = user.role === 'ADMIN' || (user.role === 'EDITOR' && document.authorId === user.id);
   const canExport = canExportDocument(user, document);
+
+  const loadVersions = async () => {
+    setIsLoadingVersions(true);
+    try {
+      const { data, error } = await supabase.rpc('get_document_versions', {
+        p_document_id: document.id,
+        p_limit: 3
+      });
+
+      if (error) throw error;
+
+      const mapped: DocumentVersion[] = (data || []).map((v: any) => ({
+        id: v.id,
+        title: v.title,
+        content: v.content ?? '',
+        savedAt: v.saved_at,
+        savedBy: v.saved_by
+      }));
+
+      setVersions(mapped);
+    } catch (e) {
+      console.error(e);
+      setVersions([]);
+      toast.error('Erro ao carregar histórico de versões.');
+    } finally {
+      setIsLoadingVersions(false);
+    }
+  };
 
   // --- View Tracking Logic ---
   useEffect(() => {
@@ -245,7 +275,14 @@ setUserReactions(newReactions);
             <div className="flex items-center gap-2 flex-wrap md:flex-nowrap">
                 {canEdit && (
                     <>
-                    <Button variant="secondary" onClick={() => setIsHistoryModalOpen(true)} className="dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700">
+                    <Button
+                      variant="secondary"
+                      onClick={async () => {
+                        setIsHistoryModalOpen(true);
+                        await loadVersions();
+                      }}
+                      className="dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                    >
                         <History size={16} className="mr-2" /> Histórico
                     </Button>
                     <Button onClick={onEdit}>
@@ -380,44 +417,52 @@ setUserReactions(newReactions);
                 Abaixo estão as últimas 3 versões salvas deste documento. Restaurar uma versão criará um novo registro no histórico com o conteúdo atual.
             </p>
             
-            {(!document.versions || document.versions.length === 0) ? (
-                <div className="text-center py-8 text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    Nenhum histórico de versão disponível.
-                </div>
+            {isLoadingVersions ? (
+              <div className="text-center py-8 text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                Carregando versões...
+              </div>
+            ) : (versions.length === 0) ? (
+              <div className="text-center py-8 text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                Nenhum histórico de versão disponível.
+              </div>
             ) : (
-                <div className="space-y-3">
-                    {document.versions.map((version, index) => (
-                        <div key={version.id} className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                    <span className="font-semibold text-gray-900 dark:text-white text-sm">Versão {document.versions.length - index}</span>
-                                    <span className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">
-                                        {new Date(version.savedAt).toLocaleString()}
-                                    </span>
-                                </div>
-                                <div className="text-xs text-gray-500 mt-1">
-                                    Salvo por: {version.savedBy}
-                                </div>
-                                <div className="text-xs text-gray-400 mt-0.5 truncate max-w-xs">
-                                    Título: {version.title}
-                                </div>
-                            </div>
-                            <Button 
-                                size="sm" 
-                                variant="secondary" 
-                                onClick={() => {
-                                    if(onRestoreVersion) {
-                                        onRestoreVersion(version);
-                                        setIsHistoryModalOpen(false);
-                                    }
-                                }}
-                                title="Definir como padrão atual"
-                            >
-                                <RotateCcw size={14} className="mr-2" /> Restaurar
-                            </Button>
-                        </div>
-                    ))}
-                </div>
+              <div className="space-y-3">
+                {versions.map((version, index) => (
+                  <div
+                    key={version.id}
+                    className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-900 dark:text-white text-sm">
+                          Versão {versions.length - index}
+                        </span>
+                        <span className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">
+                          {new Date(version.savedAt).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Salvo por: {version.savedBy}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-0.5 truncate max-w-xs">
+                        Título: {version.title}
+                      </div>
+                    </div>
+
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => {
+                        onRestoreVersion?.(version);
+                        setIsHistoryModalOpen(false);
+                      }}
+                      title="Definir como padrão atual"
+                    >
+                      <RotateCcw size={14} className="mr-2" /> Restaurar
+                    </Button>
+                  </div>
+                ))}
+              </div>
             )}
         </div>
       </Modal>

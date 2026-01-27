@@ -29,6 +29,10 @@ interface NavbarProps {
   searchQuery: string;
   onSearch: (query: string) => void;
   searchResults?: Document[] | null;
+  //  NOVO: Favoritos (repassa pro Sidebar no dropdown/drawer)
+  docFilter?: 'ALL' | 'FAVORITES';
+  onToggleFavorites?: () => void;
+  favoriteCount?: number;
 }
 
 export const Navbar: React.FC<NavbarProps> = (props) => {

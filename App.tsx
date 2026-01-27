@@ -68,6 +68,11 @@ const AppContent = () => {
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Favorites State
+  type DocFilter = 'ALL' | 'FAVORITES';
+  const [docFilter, setDocFilter] = useState<DocFilter>('ALL');
+  const [favoriteDocIds, setFavoriteDocIds] = useState<string[]>([]);
+
 // Category States
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [defaultCategoryId, setDefaultCategoryId] = useState<string | null>(null);
@@ -75,7 +80,29 @@ const AppContent = () => {
   // Category persistence
   useEffect(() => {
     localStorage.setItem(CATEGORY_STORAGE_KEY, activeCategoryId ?? '');
-  }, [activeCategoryId]);
+}, [activeCategoryId]);
+
+  // Favorites Loading Effect
+  useEffect(() => {
+    if (!currentUser) {
+      setFavoriteDocIds([]);
+      return;
+    }
+
+    const loadFavorites = async () => {
+      const { data, error } = await supabase
+        .from('document_reactions')
+        .select('document_id')
+        .eq('user_id', currentUser.id)
+        .eq('reaction_type', 'HEART');
+
+      if (!error) {
+        setFavoriteDocIds((data || []).map((r: any) => r.document_id));
+      }
+    };
+
+    loadFavorites();
+  }, [currentUser?.id]);
 
   // New Document State
   const [newDocTemplate, setNewDocTemplate] = useState<{content: string, tags: string[], templateId?: string} | null>(null);
@@ -281,7 +308,13 @@ const searchParams: any = {
       if (currentUser.role === 'READER') return doc.status === 'PUBLISHED';
       return false;
     });
-  }, [activeDocuments, currentUser]);
+}, [activeDocuments, currentUser]);
+
+  const visibleDocumentsFiltered = useMemo(() => {
+    if (docFilter !== 'FAVORITES') return visibleDocuments;
+    const favSet = new Set(favoriteDocIds);
+    return visibleDocuments.filter(d => favSet.has(d.id));
+  }, [docFilter, visibleDocuments, favoriteDocIds]);
 
   useEffect(() => {
     if (isDarkMode) {
@@ -291,7 +324,23 @@ const searchParams: any = {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
     }
-  }, [isDarkMode]);
+}, [isDarkMode]);
+
+  // --- Favorites Event Listener ---
+  useEffect(() => {
+    const handler = (e: any) => {
+      const { docId, isFavorite } = e?.detail || {};
+      if (!docId) return;
+
+      setFavoriteDocIds(prev => {
+        if (isFavorite) return Array.from(new Set([...prev, docId]));
+        return prev.filter(id => id !== docId);
+      });
+    };
+
+    window.addEventListener('peta:favorite-changed', handler);
+    return () => window.removeEventListener('peta:favorite-changed', handler);
+  }, []);
 
   // --- Sincronização do Título da Aba (Browser Tab) ---
   useEffect(() => {
@@ -812,7 +861,8 @@ const targetCategoryId =
             status: newDoc.status,
             author_id: newDoc.authorId,
             tags: newDoc.tags,
-            views: 0
+            views: 0,
+            updated_by: currentUser.id
       });
 
       if (error) {
@@ -856,7 +906,8 @@ const targetCategoryId =
             category_id: targetCategoryId,
             tags: data.tags,
             updated_at: new Date().toISOString(),
-            status: data.status || selectedDocument.status
+            status: data.status || selectedDocument.status,
+            updated_by: currentUser.id
       }).eq('id', selectedDocument.id);
 
       if (error) {
@@ -943,9 +994,14 @@ const targetCategoryId =
     return <LoginPage onLogin={handleLogin} onSignUp={handleSignUp} settings={systemSettings} />;
   }
 
+const toggleFavorites = () => {
+  setDocFilter(prev => (prev === 'FAVORITES' ? 'ALL' : 'FAVORITES'));
+  setCurrentView('HOME');
+};
+
 const commonProps = {
     categories: categoryTree,
-    documents: visibleDocuments,
+    documents: visibleDocumentsFiltered,
     onSelectCategory: handleSelectCategory,
     onSelectDocument: handleSelectDocument,
     onNavigateHome: () => setCurrentView('HOME'),
@@ -960,7 +1016,11 @@ const commonProps = {
     isDarkMode,
     onNavigateToAnalytics: () => setCurrentView('ANALYTICS'),
     activeCategoryId,
-    setCategories
+    setCategories,
+    // NOVO
+    docFilter,
+    onToggleFavorites: toggleFavorites,
+    favoriteCount: favoriteDocIds.length,
   };
 
   const isNavbarMode = systemSettings.layoutMode === 'NAVBAR';

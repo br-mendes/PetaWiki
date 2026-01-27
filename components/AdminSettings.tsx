@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { User, SystemSettings, Role, Category, Document, FooterColumn, LandingFeature, HeroTag } from '../types';
@@ -11,6 +11,7 @@ import { compressImage } from '../lib/image';
 import { DEFAULT_SYSTEM_SETTINGS } from '../constants';
 import { RichTextEditor } from './RichTextEditor';
 import { ICON_MAP, IconRenderer } from './IconRenderer';
+import { supabase } from '../lib/supabase';
 
 interface AdminSettingsProps {
   isOpen: boolean;
@@ -63,7 +64,49 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   onPermanentDeleteDocument
 }) => {
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<'BRANDING' | 'FOOTER' | 'SECURITY' | 'USERS' | 'CATEGORIES' | 'TRASH'>('BRANDING');
+  const [activeTab, setActiveTab] = useState<'BRANDING' | 'FOOTER' | 'SECURITY' | 'USERS' | 'APPROVAL' | 'CATEGORIES' | 'TRASH'>('BRANDING');
+
+  const [pendingDocs, setPendingDocs] = useState<any[]>([]);
+  const [isLoadingPending, setIsLoadingPending] = useState(false);
+
+  const loadPending = async () => {
+    setIsLoadingPending(true);
+    try {
+      const { data, error } = await supabase.rpc("list_pending_documents");
+      if (error) throw error;
+      setPendingDocs(data || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoadingPending(false);
+    }
+  };
+
+  const approveDoc = async (id: string) => {
+    const { error } = await supabase.rpc("set_document_status", {
+      p_document_id: id,
+      p_status: "PUBLISHED",
+    });
+    if (error) {
+      console.error(error);
+      alert("Falha ao aprovar.");
+      return;
+    }
+    setPendingDocs(prev => prev.filter(d => d.id !== id));
+  };
+
+  const rejectDoc = async (id: string) => {
+    const { error } = await supabase.rpc("set_document_status", {
+      p_document_id: id,
+      p_status: "REJECTED",
+    });
+    if (error) {
+      console.error(error);
+      alert("Falha ao rejeitar.");
+      return;
+    }
+    setPendingDocs(prev => prev.filter(d => d.id !== id));
+  };
   
   // Branding State
   const [appName, setAppName] = useState(settings.appName);
@@ -132,6 +175,11 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
     traverse(null, 0);
     return result;
   }, [categories]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    loadPending();
+  }, [isOpen]);
 
   // Handlers for Hero Tags
   const handleUpdateHeroTag = (index: number, field: keyof HeroTag, value: string) => {
@@ -323,6 +371,12 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
             className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'USERS' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
           >
             <UserCog size={16} /> Usuários
+          </button>
+          <button
+            onClick={() => setActiveTab('APPROVAL')}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'APPROVAL' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
+          >
+            <ShieldCheck size={16} /> Aprovação
           </button>
           <button
             onClick={() => setActiveTab('CATEGORIES')}
@@ -874,6 +928,59 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                   </table>
                 </div>
                </div>
+            </div>
+          )}
+
+          {activeTab === 'APPROVAL' && (
+            <div className="space-y-6">
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-gray-800 dark:text-gray-200">Fila de Aprovação</h3>
+                  <button
+                    onClick={loadPending}
+                    className="text-xs px-3 py-1 rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  >
+                    Atualizar
+                  </button>
+                </div>
+
+                {isLoadingPending ? (
+                  <p className="text-sm text-gray-500">Carregando pendências...</p>
+                ) : pendingDocs.length === 0 ? (
+                  <p className="text-sm text-gray-500">Nenhum documento pendente.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {pendingDocs.map((d) => (
+                      <div
+                        key={d.id}
+                        className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+                      >
+                        <div className="min-w-0">
+                          <div className="font-medium text-sm truncate">{d.title}</div>
+                          <div className="text-xs text-gray-500">
+                            {new Date(d.created_at).toLocaleString()}
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => rejectDoc(d.id)}
+                            className="text-xs px-3 py-1 rounded bg-red-50 text-red-700 hover:bg-red-100"
+                          >
+                            Rejeitar
+                          </button>
+                          <button
+                            onClick={() => approveDoc(d.id)}
+                            className="text-xs px-3 py-1 rounded bg-green-50 text-green-700 hover:bg-green-100"
+                          >
+                            Aprovar
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

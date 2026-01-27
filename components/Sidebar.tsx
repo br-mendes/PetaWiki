@@ -46,6 +46,10 @@ interface SidebarProps {
   onNavigateToAnalytics: () => void;
   // Search Context
   searchQuery?: string;
+  //  NOVO: Favoritos
+  docFilter?: 'ALL' | 'FAVORITES';
+  onToggleFavorites?: () => void;
+  favoriteCount?: number;
   // Variant
   variant?: 'SIDEBAR' | 'DRAWER' | 'DROPDOWN';
   // Category State
@@ -225,6 +229,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isDarkMode,
   onNavigateToAnalytics,
   searchQuery,
+  // Novo: favoritos
+  docFilter,
+  onToggleFavorites,
+  favoriteCount = 0,
   activeCategoryId,
   setCategories,
   variant = 'SIDEBAR'
@@ -289,6 +297,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
         )}
 
+        {onToggleFavorites && (
+          <div className="mb-4 mt-2 px-1">
+            <button
+              onClick={onToggleFavorites}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all shadow-sm border
+        ${docFilter === 'FAVORITES'
+          ? 'bg-pink-50 dark:bg-pink-900/10 hover:bg-pink-100 dark:hover:bg-pink-900/20 text-pink-700 dark:text-pink-300 border-pink-100 dark:border-pink-800/50'
+          : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-100 dark:border-gray-700'
+        }`}
+            >
+              <Heart size={18} className={`${docFilter === 'FAVORITES' ? 'text-pink-600 dark:text-pink-400' : 'text-gray-500 dark:text-gray-400'}`} />
+              <div className="flex flex-col items-start">
+                <span className="font-bold text-sm leading-none">Favoritos</span>
+                <span className="text-[10px] opacity-70 mt-0.5">Seus documentos marcados</span>
+              </div>
+              <span className="ml-auto text-xs opacity-70">({favoriteCount})</span>
+            </button>
+          </div>
+        )}
         <div className="mb-4">
           <div className="flex items-center justify-between px-2 mb-3">
             <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
