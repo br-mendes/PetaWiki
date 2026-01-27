@@ -2,15 +2,17 @@
 import { createClient } from '@supabase/supabase-js';
 import { Webhook } from 'svix';
 
-// Configuração do Supabase (Service Role necessário para escrita segura no backend)
-const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://zjsewlyxvznwdtgmknpw.supabase.co';
-// Nota: Em produção, use process.env.SUPABASE_SERVICE_ROLE_KEY
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpqc2V3bHl4dnpud2R0Z21rbnB3Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2OTE3NDI0MiwiZXhwIjoyMDg0NzUwMjQyfQ.bNUNMv8o3p5EjKa4TImtN8uDNis5vqNHL8n-w9AAH7c';
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const WEBHOOK_SECRET = process.env.RESEND_WEBHOOK_SECRET;
+
+if (!supabaseUrl || !supabaseKey || !WEBHOOK_SECRET) {
+  throw new Error('Missing env: VITE_SUPABASE_URL/SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, RESEND_WEBHOOK_SECRET');
+}
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Segredo do Webhook fornecido
-const WEBHOOK_SECRET = 'whsec_q0JBRwaqkd4k/FfDI3r4jxRPFCmMBZo8';
+// ... mantenha o resto
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {

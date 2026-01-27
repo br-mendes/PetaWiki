@@ -4,10 +4,12 @@
 
 import { Resend } from 'resend';
 
-// Use a chave da sua conta (fornecida anteriormente ou variável de ambiente)
-const resend = new Resend('re_6fMYtT9F_AHdtPaNyqFRNixYtNCyRwrRv');
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+if (!RESEND_API_KEY) throw new Error('Missing RESEND_API_KEY');
 
-const WEBHOOK_URL = 'https://peta-wiki.vercel.app/api/webhook';
+const resend = new Resend(RESEND_API_KEY);
+
+const WEBHOOK_URL = process.env.WEBHOOK_URL || 'https://peta-wiki.vercel.app/api/webhook';
 
 async function register() {
   console.log(`Registrando Webhook em: ${WEBHOOK_URL}...`);
