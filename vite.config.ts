@@ -12,6 +12,29 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       sourcemap: false,
+      rollupOptions: {
+        output: {
+          // Dividir o bundle em chunks menores para melhor performance
+          manualChunks: {
+            // Core libraries
+            vendor: ['react', 'react-dom', 'lucide-react'],
+            
+            // UI components
+            ui: ['./src/components/Button.tsx', './src/components/Modal.tsx', './src/components/Toast.tsx'],
+            
+            // Heavy components
+            admin: ['./src/components/AdminSettings.tsx'],
+            review: ['./src/components/ReviewCenter.tsx'],
+            drafts: ['./src/components/DraftManager.tsx'],
+            analytics: ['./src/components/AnalyticsDashboard.tsx'],
+            templates: ['./src/components/TemplateSelector.tsx'],
+            profile: ['./src/components/UserProfile.tsx'],
+            
+            // Utils
+            utils: ['./src/lib/supabase.ts', './src/lib/export.ts'],
+          }
+        }
+      }
     },
     server: {
       port: 3000,

@@ -1,15 +1,17 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { 
+import {
   Search, Settings, Shield, LogOut, Moon, Sun, UserCircle, Menu, X, ChevronDown, Book, FileText
 } from 'lucide-react';
 import { Category, User, SystemSettings, Document } from '../types';
 import { Button } from './Button';
 import { Sidebar } from './Sidebar'; // Re-use Sidebar content for the drawer
+import { NotificationsBell } from "./NotificationsBell";
 
 interface NavbarProps {
   categories: Category[];
   documents: Document[];
+  favoriteDocuments?: Document[];
   onSelectCategory: (category: Category) => void;
   onSelectDocument: (document: Document) => void;
   onNavigateHome: () => void;
@@ -25,10 +27,12 @@ interface NavbarProps {
   isDarkMode: boolean;
   // Navigation
   onNavigateToAnalytics: () => void;
+  onNavigateToReviewCenter?: () => void;
   // Search
   searchQuery: string;
   onSearch: (query: string) => void;
   searchResults?: Document[] | null;
+  onOpenDocumentById: (docId: string) => void | Promise<void>;
   //  NOVO: Favoritos (repassa pro Sidebar no dropdown/drawer)
   docFilter?: 'ALL' | 'FAVORITES';
   onToggleFavorites?: () => void;
@@ -226,6 +230,11 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
           >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
           </button>
+
+          <NotificationsBell
+            userId={user.id}
+            onOpenDocumentById={props.onOpenDocumentById}
+          />
 
           {user.role === 'ADMIN' && (
             <>

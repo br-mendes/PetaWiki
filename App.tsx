@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback, memo } from 'react';
 import { listCategories, createCategory, renameCategory, deleteCategory, type Category } from "./lib/categories";
 import { CategoryTree } from "./components/CategoryTree";
 import { Sidebar } from './components/Sidebar';
@@ -7,12 +7,9 @@ import { Navbar } from './components/Navbar';
 import { Header } from './components/Header';
 import { DocumentView } from './components/DocumentView';
 import { DocumentEditor } from './components/DocumentEditor';
-import { AnalyticsDashboard } from './components/AnalyticsDashboard';
-import { CategoryModal } from './components/CategoryModal';
-import { TemplateSelector } from './components/TemplateSelector';
+import { LazyWrapper } from './components/LazyWrapper';
+import { LazyComponents } from './components/LazyComponents';
 import { LoginPage } from './components/LoginPage';
-import { AdminSettings } from './components/AdminSettings';
-import { UserProfile } from './components/UserProfile';
 import { Role, Document, User, DocumentTemplate, SystemSettings, DocumentVersion } from './types';
 import { MOCK_TEMPLATES, DEFAULT_SYSTEM_SETTINGS, MOCK_USERS } from './constants';
 import { supabase } from './lib/supabase';
@@ -25,7 +22,14 @@ import { Modal } from './components/Modal';
 import { Button } from './components/Button';
 import { AlertTriangle } from 'lucide-react';
 
-type ViewState = 'HOME' | 'DOCUMENT_VIEW' | 'DOCUMENT_EDIT' | 'DOCUMENT_CREATE' | 'TEMPLATE_SELECTION' | 'ANALYTICS';
+type ViewState =
+  | 'HOME'
+  | 'DOCUMENT_VIEW'
+  | 'DOCUMENT_EDIT'
+  | 'DOCUMENT_CREATE'
+  | 'TEMPLATE_SELECTION'
+  | 'ANALYTICS'
+  | 'REVIEW_CENTER';
 
 const SESSION_KEY = 'peta_wiki_session';
 const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutos em milissegundos
@@ -82,27 +86,31 @@ const AppContent = () => {
     localStorage.setItem(CATEGORY_STORAGE_KEY, activeCategoryId ?? '');
 }, [activeCategoryId]);
 
-  // Favorites Loading Effect
   useEffect(() => {
-    if (!currentUser) {
-      setFavoriteDocIds([]);
-      return;
-    }
-
     const loadFavorites = async () => {
-      const { data, error } = await supabase
-        .from('document_reactions')
-        .select('document_id')
-        .eq('user_id', currentUser.id)
-        .eq('reaction_type', 'HEART');
+      if (!isAuthenticated || !currentUser) return;
 
-      if (!error) {
-        setFavoriteDocIds((data || []).map((r: any) => r.document_id));
+      if (isMockUser(currentUser)) {
+        setFavoriteDocIds([]);
+        return;
       }
+
+      const { data, error } = await supabase
+        .from("document_favorites")
+        .select("document_id")
+        .eq("user_id", currentUser.id);
+
+      if (error) {
+        console.error("Erro ao carregar favoritos:", error);
+        setFavoriteDocIds([]);
+        return;
+      }
+
+      setFavoriteDocIds((data || []).map((r: any) => r.document_id));
     };
 
     loadFavorites();
-  }, [currentUser?.id]);
+  }, [isAuthenticated, currentUser?.id]);
 
   // New Document State
   const [newDocTemplate, setNewDocTemplate] = useState<{content: string, tags: string[], templateId?: string} | null>(null);
@@ -341,6 +349,212 @@ const searchParams: any = {
     window.addEventListener('peta:favorite-changed', handler);
     return () => window.removeEventListener('peta:favorite-changed', handler);
   }, []);
+
+  const getDescendantIds = (categoryId: string) => {
+    const childrenByParent = new Map<string | null, string[]>();
+    for (const c of categories) {
+      const p = c.parentId ?? null;
+      if (!childrenByParent.has(p)) childrenByParent.set(p, []);
+      childrenByParent.get(p)!.push(c.id);
+    }
+
+    const out = new Set<string>();
+    const stack = [categoryId];
+    while (stack.length) {
+      const cur = stack.pop()!;
+      const kids = childrenByParent.get(cur) || [];
+      for (const k of kids) {
+        if (!out.has(k)) {
+          out.add(k);
+          stack.push(k);
+        }
+      }
+    }
+    return out;
+  };
+
+  const moveCategoryToParent = async (categoryId: string, newParentId: string | null) => {
+    if (categoryId === newParentId) {
+      toast.error("Uma pasta nao pode ser filha dela mesma.");
+      return;
+    }
+
+    if (newParentId) {
+      const descendants = getDescendantIds(categoryId);
+      if (descendants.has(newParentId)) {
+        toast.error("Movimento invalido: isso criaria um ciclo.");
+        return;
+      }
+    }
+
+    const siblings = categories.filter(c => (c.parentId ?? null) === newParentId && c.id !== categoryId);
+    const maxOrder = siblings.reduce((m, c) => Math.max(m, c.order ?? 0), -1);
+    const nextOrder = maxOrder + 1;
+
+    const { error } = await supabase
+      .from("categories")
+      .update({ parent_id: newParentId, sort_order: nextOrder })
+      .eq("id", categoryId);
+
+    if (error) {
+      console.error(error);
+      toast.error("Falha ao mover pasta.");
+      return;
+    }
+
+    setCategories(prev =>
+      prev.map(c => c.id === categoryId ? { ...c, parentId: newParentId, order: nextOrder } : c)
+    );
+
+    toast.success("Pasta movida!");
+  };
+
+  const reorderCategory = async (categoryId: string, direction: "up" | "down") => {
+    const cat = categories.find(c => c.id === categoryId);
+    if (!cat) return;
+
+    const parentId = cat.parentId ?? null;
+
+    const siblings = categories
+      .filter(c => (c.parentId ?? null) === parentId)
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name));
+
+    const idx = siblings.findIndex(s => s.id === categoryId);
+    const swapWith = direction === "up" ? idx - 1 : idx + 1;
+    if (swapWith < 0 || swapWith >= siblings.length) return;
+
+    const newOrder = [...siblings];
+    [newOrder[idx], newOrder[swapWith]] = [newOrder[swapWith], newOrder[idx]];
+
+    const ids = newOrder.map(x => x.id);
+
+    const { error } = await supabase.rpc("set_category_order", {
+      p_parent_id: parentId,
+      p_ids: ids,
+    });
+
+    if (error) {
+      console.error(error);
+      toast.error("Falha ao reordenar pastas.");
+      return;
+    }
+
+    const orderMap = new Map(ids.map((id, i) => [id, i]));
+    setCategories(prev =>
+      prev.map(c => ((c.parentId ?? null) === parentId && orderMap.has(c.id))
+        ? { ...c, order: orderMap.get(c.id)! }
+        : c
+      )
+    );
+
+    toast.success("Ordem atualizada!");
+  };
+
+  const moveDocumentToCategory = async (docId: string, categoryId: string) => {
+    const { error } = await supabase
+      .from("documents")
+      .update({ category_id: categoryId })
+      .eq("id", docId);
+
+    if (error) {
+      console.error(error);
+      toast.error("Falha ao mover documento de pasta.");
+      return;
+    }
+
+    setDocuments(prev =>
+      prev.map(d => d.id === docId ? { ...d, categoryId } : d)
+    );
+
+    if (activeCategoryId && activeCategoryId !== categoryId) {
+      setDocuments(prev => prev.filter(d => d.id !== docId));
+    }
+
+    toast.success("Documento movido!");
+  };
+
+  const handleToggleFavorite = async (docId: string) => {
+    if (!currentUser) return;
+
+    const isFav = favoriteDocIds.includes(docId);
+
+    setFavoriteDocIds(prev => (isFav ? prev.filter(id => id !== docId) : [...prev, docId]));
+
+    if (isMockUser(currentUser)) {
+      toast.info(isFav ? "Removido dos favoritos (mock)." : "Adicionado aos favoritos (mock).");
+      return;
+    }
+
+    try {
+      if (isFav) {
+        const { error } = await supabase
+          .from("document_favorites")
+          .delete()
+          .eq("user_id", currentUser.id)
+          .eq("document_id", docId);
+
+        if (error) throw error;
+        toast.success("Removido dos favoritos.");
+      } else {
+        const { error } = await supabase
+          .from("document_favorites")
+          .insert({ user_id: currentUser.id, document_id: docId });
+
+        if (error && error.code !== "23505") throw error;
+
+        toast.success("Adicionado aos favoritos.");
+      }
+    } catch (e: any) {
+      console.error(e);
+
+      setFavoriteDocIds(prev => (isFav ? [...prev, docId] : prev.filter(id => id !== docId)));
+
+      toast.error(`Falha ao atualizar favorito: ${e.message || "erro"}`);
+    }
+  };
+
+  const openDocumentById = async (docId: string) => {
+    const local = documents.find((d) => d.id === docId);
+    if (local) {
+      setActiveCategoryId(local.categoryId || null);
+      handleSelectDocument(local);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("documents")
+        .select("*")
+        .eq("id", docId)
+        .single();
+
+      if (error) throw error;
+
+      const fallbackCatId = defaultCategoryId || categories[0]?.id || null;
+      const mapped = {
+        id: data.id,
+        title: data.title,
+        content: data.content,
+        categoryId: data.category_id || fallbackCatId || "",
+        status: data.status,
+        authorId: data.author_id,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+        deletedAt: data.deleted_at,
+        views: data.views,
+        tags: data.tags || [],
+        categoryPath: getCategoryPath(data.category_id, categories),
+        versions: [],
+      };
+
+      setDocuments((prev) => (prev.some((d) => d.id === mapped.id) ? prev : [...prev, mapped]));
+      setActiveCategoryId(mapped.categoryId || null);
+      handleSelectDocument(mapped);
+    } catch (e: any) {
+      console.error(e);
+      toast.error("Nao foi possivel abrir o documento da notificacao.");
+    }
+  };
 
   // --- Sincronização do Título da Aba (Browser Tab) ---
   useEffect(() => {
@@ -877,6 +1091,20 @@ const targetCategoryId =
               await supabase.from('categories').update({ doc_count: currentCat.docCount + 1 }).eq('id', targetCategoryId);
           }
           toast.success('Documento salvo e persistido.');
+          if (!isMockUser(currentUser) && newDoc.status === "PENDING_REVIEW") {
+            const admins = users.filter(u => u.role === "ADMIN" && !String(u.id).startsWith("mock_"));
+            await Promise.all(
+              admins.map(a =>
+                supabase.rpc("create_notification", {
+                  p_to_user_id: a.id,
+                  p_title: "Documento pendente de aprovacao",
+                  p_body: `"${newDoc.title}" aguarda revisao.`,
+                  p_type: "REVIEW",
+                  p_document_id: newDoc.id
+                })
+              )
+            );
+          }
           setSelectedDocId(newDoc.id);
           setCurrentView('DOCUMENT_VIEW');
       }
@@ -999,7 +1227,7 @@ const toggleFavorites = () => {
   setCurrentView('HOME');
 };
 
-const commonProps = {
+  const commonProps = {
     categories: categoryTree,
     documents: visibleDocumentsFiltered,
     onSelectCategory: handleSelectCategory,
@@ -1015,12 +1243,18 @@ const commonProps = {
     toggleTheme: handleToggleTheme,
     isDarkMode,
     onNavigateToAnalytics: () => setCurrentView('ANALYTICS'),
+    onNavigateToReviewCenter: () => setCurrentView('REVIEW_CENTER'),
     activeCategoryId,
     setCategories,
+    onDropDocument: moveDocumentToCategory,
+    onDropCategory: moveCategoryToParent,
+    onReorderCategory: reorderCategory,
+    favoriteDocuments: visibleDocuments.filter(d => favoriteDocIds.includes(d.id)),
+    onOpenDocumentById: openDocumentById,
     // NOVO
-    docFilter,
-    onToggleFavorites: toggleFavorites,
-    favoriteCount: favoriteDocIds.length,
+     docFilter,
+     onToggleFavorites: toggleFavorites,
+     favoriteCount: favoriteDocIds.length,
   };
 
   const isNavbarMode = systemSettings.layoutMode === 'NAVBAR';
@@ -1046,6 +1280,8 @@ const commonProps = {
                 onSearch={setSearchQuery}
                 searchResults={searchResultDocs}
                 onSelectDocument={handleSelectDocument}
+                userId={currentUser.id}
+                onOpenDocumentById={openDocumentById}
             />
         )}
 
@@ -1088,6 +1324,9 @@ const commonProps = {
           {currentView === 'ANALYTICS' && currentUser.role === 'ADMIN' && (
             <AnalyticsDashboard />
           )}
+          {currentView === 'REVIEW_CENTER' && currentUser.role === 'ADMIN' && (
+            <ReviewCenter actorUserId={currentUser.id} onOpenDocumentById={openDocumentById} />
+          )}
 
           {currentView === 'TEMPLATE_SELECTION' && (
             <TemplateSelector 
@@ -1106,6 +1345,8 @@ const commonProps = {
               systemSettings={systemSettings}
               onRestoreVersion={handleRestoreVersion}
               onSearchTag={handleSearchTag}
+              isFavorite={!!selectedDocument && favoriteDocIds.includes(selectedDocument.id)}
+              onToggleFavorite={handleToggleFavorite}
             />
           )}
 

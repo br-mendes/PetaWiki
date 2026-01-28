@@ -2,19 +2,25 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Search, FileText } from 'lucide-react';
 import { Document } from '../types';
+import { NotificationsBell } from "./NotificationsBell";
 
 interface HeaderProps {
   searchQuery: string;
   onSearch: (query: string) => void;
   searchResults?: Document[] | null;
   onSelectDocument?: (doc: Document) => void;
+
+  userId: string;
+  onOpenDocumentById: (docId: string) => void | Promise<void>;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
   searchQuery, 
   onSearch, 
   searchResults,
-  onSelectDocument 
+  onSelectDocument,
+  userId,
+  onOpenDocumentById
 }) => {
   const [showResults, setShowResults] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -103,6 +109,9 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           )}
         </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <NotificationsBell userId={userId} onOpenDocumentById={onOpenDocumentById} />
       </div>
     </header>
   );

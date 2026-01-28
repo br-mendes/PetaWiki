@@ -86,6 +86,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
     const { error } = await supabase.rpc("set_document_status", {
       p_document_id: id,
       p_status: "PUBLISHED",
+      p_actor_user_id: currentUser?.id,
     });
     if (error) {
       console.error(error);
@@ -99,6 +100,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
     const { error } = await supabase.rpc("set_document_status", {
       p_document_id: id,
       p_status: "REJECTED",
+      p_actor_user_id: currentUser?.id,
     });
     if (error) {
       console.error(error);

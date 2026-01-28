@@ -5,7 +5,7 @@ import {
   Book, Folder, FolderOpen, FileText, 
   LifeBuoy, Server, MessageCircle, Mail, Monitor, 
   Users, UserPlus, Heart, Library, Settings, LogOut, Sun, Moon, UserCircle, PlusCircle,
-  Activity
+  Activity, Bookmark
 } from 'lucide-react';
 import { Category, User, SystemSettings, Document } from '../types';
 import { canUserModifyCategory } from '../lib/hierarchy';
@@ -30,6 +30,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
 interface SidebarProps {
   categories: Category[]; // Expects a Tree structure passed from App
   documents: Document[]; // All documents to be filtered by category
+  favoriteDocuments?: Document[];
   onSelectCategory: (category: Category) => void;
   onSelectDocument: (document: Document) => void;
   onNavigateHome: () => void;
@@ -44,6 +45,8 @@ interface SidebarProps {
   toggleTheme: () => void;
   isDarkMode: boolean;
   onNavigateToAnalytics: () => void;
+  onNavigateToReviewCenter?: () => void;
+  onNavigateToReviewCenter?: () => void;
   // Search Context
   searchQuery?: string;
   //  NOVO: Favoritos
@@ -55,6 +58,10 @@ interface SidebarProps {
   // Category State
   activeCategoryId?: string | null;
   setCategories?: (categories: Category[]) => void;
+  // Drag and Drop / Reorder
+  onDropDocument?: (docId: string, categoryId: string) => Promise<void> | void;
+  onDropCategory?: (categoryId: string, newParentId: string | null) => Promise<void> | void;
+  onReorderCategory?: (categoryId: string, direction: 'up' | 'down') => Promise<void> | void;
 }
 
 const CategoryItem: React.FC<{ 
@@ -193,8 +200,13 @@ const CategoryItem: React.FC<{
           {categoryDocuments.map((doc) => (
             <div 
               key={doc.id}
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData("application/x-petawiki-doc", doc.id);
+                e.dataTransfer.effectAllowed = "move";
+              }}
               onClick={(e) => { e.stopPropagation(); onSelectDocument(doc); }}
-              className="flex items-center px-2 py-1.5 cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md text-sm text-gray-600 dark:text-gray-400 select-none group/doc transition-colors ml-1"
+              className="flex items-center px-2 py-1.5 cursor-pointer cursor-move hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md text-sm text-gray-600 dark:text-gray-400 select-none group/doc transition-colors ml-1"
               style={{ paddingLeft: `${(depth + 1) * 12 + 24}px` }}
             >
               <FileText size={14} className="mr-2 text-gray-400 group-hover/doc:text-blue-500 shrink-0" />
@@ -215,6 +227,7 @@ const CategoryItem: React.FC<{
 export const Sidebar: React.FC<SidebarProps> = ({ 
   categories, 
   documents,
+  favoriteDocuments,
   onSelectCategory, 
   onSelectDocument,
   onNavigateHome, 
@@ -235,6 +248,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   favoriteCount = 0,
   activeCategoryId,
   setCategories,
+  onDropDocument,
+  onDropCategory,
+  onReorderCategory,
   variant = 'SIDEBAR'
 }) => {
   const isAdminOrEditor = user.role === 'ADMIN' || user.role === 'EDITOR';
@@ -284,17 +300,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* Admin Analytics Link - Always visible here if Admin */}
         {user.role === 'ADMIN' && (
             <div className="mb-4 mt-2 px-1">
-               <button 
-                 onClick={onNavigateToAnalytics}
-                 className="w-full flex items-center gap-3 px-3 py-2.5 bg-purple-50 dark:bg-purple-900/10 hover:bg-purple-100 dark:hover:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-lg transition-all shadow-sm group border border-purple-100 dark:border-purple-800/50"
-               >
-                 <Activity size={18} className="text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform" />
-                 <div className="flex flex-col items-start">
+                <button 
+                  onClick={onNavigateToAnalytics}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 bg-purple-50 dark:bg-purple-900/10 hover:bg-purple-100 dark:hover:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-lg transition-all shadow-sm group border border-purple-100 dark:border-purple-800/50"
+                >
+                  <Activity size={18} className="text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform" />
+                  <div className="flex flex-col items-start">
                     <span className="font-bold text-sm leading-none">Analytics</span>
                     <span className="text-[10px] opacity-70 mt-0.5">Dashboard de Gestão</span>
-                 </div>
-               </button>
+                  </div>
+                </button>
             </div>
+        )}
+
+        {user.role === 'ADMIN' && (typeof onNavigateToReviewCenter === 'function') && (
+          <div className="mb-3 px-1">
+            <button
+              onClick={onNavigateToReviewCenter}
+              className="w-full flex items-center gap-3 px-3 py-2.5 bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg transition-all shadow-sm group border border-blue-100 dark:border-blue-800/50"
+            >
+              <span className="text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform"></span>
+              <div className="flex flex-col items-start">
+                <span className="font-bold text-sm leading-none">Revisões</span>
+                <span className="text-[10px] opacity-70 mt-0.5">Pendências para aprovar</span>
+              </div>
+            </button>
+          </div>
         )}
 
         {onToggleFavorites && (
@@ -314,6 +345,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
               <span className="ml-auto text-xs opacity-70">({favoriteCount})</span>
             </button>
+          </div>
+        )}
+
+        {favoriteDocuments && favoriteDocuments.length > 0 && (
+          <div className="mb-4 px-1">
+            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+              Favoritos
+            </h3>
+
+            <div className="space-y-1">
+              {favoriteDocuments.map((doc) => (
+                <button
+                  key={doc.id}
+                  onClick={() => onSelectDocument(doc)}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-yellow-50 dark:hover:bg-yellow-900/10 text-left transition-colors"
+                  title={doc.title}
+                >
+                  <Bookmark size={14} className="text-yellow-500" />
+                  <span className="text-sm text-gray-800 dark:text-gray-200 truncate">
+                    {doc.title}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
         <div className="mb-4">
@@ -338,16 +393,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <CategoryTree
             categories={categories}
             selectedId={activeCategoryId}
-            onSelect={(categoryId) => {
+            onCategorySelect={(categoryId) => {
+              if (categoryId === null) {
+                window.dispatchEvent(new CustomEvent("clearCategoryFilter"));
+                return;
+              }
               const selectedCat = categories.find(c => c.id === categoryId);
               if (selectedCat) onSelectCategory(selectedCat);
             }}
-            onCreate={async (parentId) => {
-              const name = prompt("Nome da pasta:");
-              if (!name) return;
-              const created = await createCategory({ name, parent_id: parentId });
-              if (setCategories) setCategories((s) => [...s, created]);
-            }}
+            showControls={isAdminOrEditor}
+            onDropDocument={onDropDocument}
+            onDropCategory={onDropCategory}
+            onReorderCategory={onReorderCategory}
+            onCreate={(parentId) => onCreateCategory(parentId)}
             onRename={async (id) => {
               const current = categories.find((c) => c.id === id);
               const name = prompt("Novo nome:", current?.name || "");

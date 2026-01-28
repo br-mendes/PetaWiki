@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Edit2, Eye, Download, ThumbsUp, ThumbsDown, Heart, FileText, FileType, History, RotateCcw, Trash2, File } from 'lucide-react';
+import { Edit2, Eye, Download, ThumbsUp, ThumbsDown, Heart, FileText, FileType, History, RotateCcw, Trash2, File, Bookmark } from 'lucide-react';
 import { Document, User, SystemSettings, DocumentVersion } from '../types';
 import { Button } from './Button';
 import { StatusBadge } from './Badge';
@@ -17,6 +17,8 @@ interface DocumentViewProps {
   systemSettings: SystemSettings;
   onRestoreVersion?: (version: DocumentVersion) => void;
   onSearchTag?: (tag: string) => void;
+  isFavorite?: boolean;
+  onToggleFavorite?: (docId: string) => void;
 }
 
 type ReactionType = 'THUMBS_UP' | 'THUMBS_DOWN' | 'HEART';
@@ -28,7 +30,9 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
   onDelete,
   systemSettings,
   onRestoreVersion,
-  onSearchTag
+  onSearchTag,
+  isFavorite,
+  onToggleFavorite
 }) => {
   const toast = useToast();
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
@@ -196,6 +200,7 @@ setUserReactions(newReactions);
           detail: { docId: document.id, isFavorite: isFavoriteNow }
         })
       );
+      onToggleFavorite?.(document.id);
     }
   };
 
@@ -291,6 +296,19 @@ setUserReactions(newReactions);
                     </Button>
                     </>
                 )}
+
+                <Button
+                  variant="ghost"
+                  onClick={() => onToggleFavorite?.(document.id)}
+                  className={`px-3 ${
+                    isFavorite
+                      ? "text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
+                      : "text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  }`}
+                  title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                >
+                  <Bookmark size={20} className={isFavorite ? "fill-current" : ""} />
+                </Button>
                 
                 <div className="relative">
                     <Button 

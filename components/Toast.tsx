@@ -23,10 +23,10 @@ export const useToast = () => {
     throw new Error('useToast must be used within a ToastProvider');
   }
   return {
-    success: (msg: string) => context.addToast('success', msg),
-    error: (msg: string) => context.addToast('error', msg),
-    info: (msg: string) => context.addToast('info', msg),
-    warning: (msg: string) => context.addToast('warning', msg),
+    success: (msg: string) => context.addToastLimited('success', msg),
+    error: (msg: string) => context.addToastLimited('error', msg),
+    info: (msg: string) => context.addToastLimited('info', msg),
+    warning: (msg: string) => context.addToastLimited('warning', msg),
   };
 };
 
@@ -40,6 +40,20 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const addToast = useCallback((type: ToastType, message: string) => {
     const id = Math.random().toString(36).substring(2, 9);
     setToasts((prev) => [...prev, { id, type, message }]);
+
+    // Auto dismiss
+    setTimeout(() => {
+      removeToast(id);
+    }, 4000);
+  }, [removeToast]);
+
+  // Limite máximo de toasts simultâneas
+  const addToastLimited = useCallback((type: ToastType, message: string) => {
+    setToasts(prev => {
+      const filtered = prev.slice(-4); // Mantém apenas últimos 4
+      const id = Math.random().toString(36).substring(2, 9);
+      return [...filtered, { id, type, message }];
+    });
 
     // Auto dismiss
     setTimeout(() => {
