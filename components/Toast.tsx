@@ -12,6 +12,7 @@ interface ToastMessage {
 
 interface ToastContextType {
   addToast: (type: ToastType, message: string) => void;
+  addToastLimited: (type: ToastType, message: string) => void;
   removeToast: (id: string) => void;
 }
 
@@ -49,20 +50,20 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Limite máximo de toasts simultâneas
   const addToastLimited = useCallback((type: ToastType, message: string) => {
-    setToasts(prev => {
+    const id = Math.random().toString(36).substring(2, 9);
+
+    setToasts((prev) => {
       const filtered = prev.slice(-4); // Mantém apenas últimos 4
-      const id = Math.random().toString(36).substring(2, 9);
       return [...filtered, { id, type, message }];
     });
 
-    // Auto dismiss
     setTimeout(() => {
       removeToast(id);
     }, 4000);
   }, [removeToast]);
 
   return (
-    <ToastContext.Provider value={{ addToast, removeToast }}>
+    <ToastContext.Provider value={{ addToast, addToastLimited, removeToast }}>
       {children}
       <div className="fixed bottom-4 right-4 z-[60] flex flex-col gap-2">
         {toasts.map((toast) => (

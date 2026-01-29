@@ -1,7 +1,9 @@
 import { supabase } from "./supabase";
 
-export type Category = {
-  id: string;                 // text
+// NOTE: This type mirrors DB columns (snake_case) but also carries
+// camelCase aliases used across the UI.
+export interface Category {
+  id: string; // text
   name: string;
   slug: string;
   parent_id: string | null;
@@ -11,7 +13,24 @@ export type Category = {
   description: string | null;
   icon: string | null;
   created_at: string | null;
-};
+
+  // UI aliases / computed fields
+  parentId?: string | null;
+  departmentId?: string | null;
+  order?: number;
+  docCount?: number;
+  children?: Category[];
+}
+
+function withUiAliases(row: Category): Category {
+  return {
+    ...row,
+    parentId: row.parent_id,
+    departmentId: row.department_id,
+    order: row.sort_order ?? 0,
+    docCount: row.doc_count ?? 0,
+  };
+}
 
 export function slugify(input: string) {
   return input
@@ -30,7 +49,7 @@ export async function listCategories(): Promise<Category[]> {
     .order("name", { ascending: true });
 
   if (error) throw error;
-  return (data ?? []) as Category[];
+  return ((data ?? []) as Category[]).map(withUiAliases);
 }
 
 export async function createCategory(input: { name: string; parent_id?: string | null; sort_order?: number }) {
@@ -49,7 +68,7 @@ export async function createCategory(input: { name: string; parent_id?: string |
     .single();
 
   if (error) throw error;
-  return data as Category;
+  return withUiAliases(data as Category);
 }
 
 export async function renameCategory(id: string, name: string) {
@@ -61,7 +80,7 @@ export async function renameCategory(id: string, name: string) {
     .single();
 
   if (error) throw error;
-  return data as Category;
+  return withUiAliases(data as Category);
 }
 
 export async function deleteCategory(id: string) {

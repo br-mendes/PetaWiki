@@ -12,6 +12,7 @@ export const Button: React.FC<ButtonProps> = ({
   size = 'md', 
   className = '', 
   children, 
+  loading = false,
   ...props 
 }) => {
   const baseStyles = "inline-flex items-center justify-center font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";

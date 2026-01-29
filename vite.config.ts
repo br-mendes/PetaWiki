@@ -20,18 +20,18 @@ export default defineConfig(({ mode }) => {
             vendor: ['react', 'react-dom', 'lucide-react'],
             
             // UI components
-            ui: ['./src/components/Button.tsx', './src/components/Modal.tsx', './src/components/Toast.tsx'],
+            ui: ['./components/Button.tsx', './components/Modal.tsx', './components/Toast.tsx'],
             
             // Heavy components
-            admin: ['./src/components/AdminSettings.tsx'],
-            review: ['./src/components/ReviewCenter.tsx'],
-            drafts: ['./src/components/DraftManager.tsx'],
-            analytics: ['./src/components/AnalyticsDashboard.tsx'],
-            templates: ['./src/components/TemplateSelector.tsx'],
-            profile: ['./src/components/UserProfile.tsx'],
+            admin: ['./components/AdminSettings.tsx'],
+            review: ['./components/ReviewCenter.tsx'],
+            drafts: ['./components/DraftManager.tsx'],
+            analytics: ['./components/AnalyticsDashboard.tsx'],
+            templates: ['./components/TemplateSelector.tsx'],
+            profile: ['./components/UserProfile.tsx'],
             
             // Utils
-            utils: ['./src/lib/supabase.ts', './src/lib/export.ts'],
+            utils: ['./lib/supabase.ts', './lib/export.ts'],
           }
         }
       }

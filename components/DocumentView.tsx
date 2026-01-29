@@ -8,6 +8,7 @@ import { canExportDocument, generateMarkdown, generatePDF, generateDOCX } from '
 import { Modal } from './Modal';
 import { useToast } from './Toast';
 import { supabase } from '../lib/supabase';
+import { sanitizeHtml } from '../lib/sanitize';
 
 interface DocumentViewProps {
   document: Document;
@@ -56,6 +57,9 @@ export const DocumentView: React.FC<DocumentViewProps> = ({
   const canEdit = user.role === 'ADMIN' || (user.role === 'EDITOR' && document.authorId === user.id);
   const canDelete = user.role === 'ADMIN' || (user.role === 'EDITOR' && document.authorId === user.id);
   const canExport = canExportDocument(user, document);
+  const canSeeReviewNote = user.role === 'ADMIN' || document.authorId === user.id;
+
+  const safeContent = React.useMemo(() => sanitizeHtml(document.content || ''), [document.content]);
 
   const loadVersions = async () => {
     setIsLoadingVersions(true);
@@ -261,6 +265,26 @@ setUserReactions(newReactions);
             </span>
         </div>
 
+        {canSeeReviewNote && document.reviewNote && (document.status === 'REJECTED' || document.status === 'PENDING_REVIEW') && (
+          <div
+            className={`rounded-xl border p-4 text-sm whitespace-pre-wrap ${
+              document.status === 'REJECTED'
+                ? 'border-red-200 bg-red-50 text-red-900 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-100'
+                : 'border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-900/40 dark:bg-blue-900/20 dark:text-blue-100'
+            }`}
+          >
+            <div className="font-semibold mb-1">Comentário de revisão</div>
+            <div>{document.reviewNote}</div>
+            {document.status === 'REJECTED' && canEdit && (
+              <div className="mt-3">
+                <Button onClick={onEdit}>
+                  Editar e reenviar
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Tags e Toolbar de Ações */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-2">
@@ -376,7 +400,7 @@ setUserReactions(newReactions);
       <div className="w-full">
         <div 
           className="prose prose-blue dark:prose-invert max-w-none text-gray-800 dark:text-gray-300 leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: document.content }}
+          dangerouslySetInnerHTML={{ __html: safeContent }}
         />
         
         <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">

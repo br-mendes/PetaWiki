@@ -4,13 +4,16 @@ import { supabase } from "../lib/supabase";
 import { Button } from "./Button";
 import { useToast } from "./Toast";
 import { Document } from "../types";
+import { sanitizeHtml } from "../lib/sanitize";
 
 type DbDoc = any;
 
 export const ReviewCenter: React.FC<{
   actorUserId: string;
   onOpenDocumentById: (docId: string) => void | Promise<void>;
-}> = ({ actorUserId, onOpenDocumentById }) => {
+  initialDocId?: string | null;
+  onStatusChanged?: (docId: string, status: "PUBLISHED" | "REJECTED", reviewNote: string | null) => void;
+}> = ({ actorUserId, onOpenDocumentById, initialDocId = null, onStatusChanged }) => {
   const toast = useToast();
   const [loading, setLoading] = React.useState(true);
   const [docs, setDocs] = React.useState<Document[]>([]);
@@ -19,6 +22,10 @@ export const ReviewCenter: React.FC<{
   const [reviewNote, setReviewNote] = React.useState("");
 
   const selected = docs.find(d => d.id === selectedId) || null;
+  const safeSelectedContent = React.useMemo(
+    () => sanitizeHtml(selected?.content || "<p>(vazio)</p>"),
+    [selected?.content]
+  );
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -43,7 +50,7 @@ export const ReviewCenter: React.FC<{
         deletedAt: d.deleted_at,
         views: d.views,
         tags: d.tags || [],
-        categoryPath: [],
+        categoryPath: "",
         versions: [],
         // @ts-ignore
         reviewNote: d.review_note ?? null,
@@ -51,7 +58,14 @@ export const ReviewCenter: React.FC<{
 
       setDocs(mapped);
 
-      if (!selectedId && mapped.length > 0) {
+      const preferred = initialDocId && mapped.some((d) => d.id === initialDocId) ? initialDocId : null;
+
+      if (preferred) {
+        setSelectedId(preferred);
+        const doc = mapped.find((d: any) => d.id === preferred);
+        // @ts-ignore
+        setReviewNote(doc?.reviewNote || "");
+      } else if (!selectedId && mapped.length > 0) {
         setSelectedId(mapped[0].id);
         // @ts-ignore
         setReviewNote(mapped[0].reviewNote || "");
@@ -62,7 +76,7 @@ export const ReviewCenter: React.FC<{
     } finally {
       setLoading(false);
     }
-  }, [selectedId]);
+  }, [selectedId, initialDocId]);
 
   React.useEffect(() => {
     load();
@@ -100,6 +114,11 @@ export const ReviewCenter: React.FC<{
 
   const decide = async (docId: string, status: "PUBLISHED" | "REJECTED") => {
     try {
+      if (status === "REJECTED" && !reviewNote.trim()) {
+        toast.error("Inclua um comentario antes de rejeitar.");
+        return;
+      }
+
       await persistReviewNote(docId, reviewNote);
 
       const { error } = await supabase.rpc("set_document_status", {
@@ -109,14 +128,35 @@ export const ReviewCenter: React.FC<{
       });
       if (error) throw error;
 
+      // Notify author (best-effort)
+      try {
+        const doc = docs.find((d) => d.id === docId) as any;
+        const authorId = doc?.authorId;
+        const title = doc?.title || "Documento";
+
+        if (authorId) {
+          await supabase.rpc("create_notification", {
+            p_to_user_id: authorId,
+            p_title: status === "PUBLISHED" ? "Documento aprovado" : "Documento rejeitado",
+            p_body:
+              status === "PUBLISHED"
+                ? `"${title}" foi aprovado e publicado.`
+                : `"${title}" foi rejeitado. Comentario: ${reviewNote.trim()}`,
+            p_type: "STATUS",
+            p_document_id: docId,
+          });
+        }
+      } catch {
+        // ignore
+      }
+
+      onStatusChanged?.(docId, status, reviewNote || null);
+
       toast.success(status === "PUBLISHED" ? "Aprovado e publicado." : "Rejeitado.");
 
-      setDocs(prev => prev.filter(d => d.id !== docId));
-      setSelectedId(prev => {
-        if (prev !== docId) return prev;
-        const remaining = docs.filter(d => d.id !== docId);
-        return remaining[0]?.id ?? null;
-      });
+      const remaining = docs.filter((d) => d.id !== docId);
+      setDocs(remaining);
+      setSelectedId((prev) => (prev === docId ? remaining[0]?.id ?? null : prev));
 
     } catch (e: any) {
       console.error(e);
@@ -267,7 +307,7 @@ export const ReviewCenter: React.FC<{
 
                 <div
                   className="prose prose-blue dark:prose-invert max-w-none"
-                  dangerouslySetInnerHTML={{ __html: selected.content || "<p>(vazio)</p>" }}
+                  dangerouslySetInnerHTML={{ __html: safeSelectedContent }}
                 />
               </div>
             </>

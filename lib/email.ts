@@ -35,11 +35,12 @@ async function sendEmail(to: string, subject: string, htmlContent: string): Prom
       };
     }
 
-    console.log('E-mail enviado com sucesso. ID:', data.data?.id);
+    const emailId = data?.result?.data?.id;
+    console.log('E-mail enviado com sucesso. ID:', emailId);
     return { 
         success: true, 
         message: 'E-mail enviado com sucesso!',
-        id: data.data?.id // Retorna o ID real (UUID) para validação
+        id: emailId // Retorna o ID real (UUID) para validação
     };
 
   } catch (error: any) {
@@ -89,43 +90,47 @@ const getBaseHtml = (content: string, settings: SystemSettings) => `
 export const sendWelcomeEmail = async (user: Partial<User>, settings: SystemSettings): Promise<EmailResult> => {
   if (!user.email || !user.name) return { success: false, message: 'Dados de usuário incompletos.' };
 
-  const setupLink = `${window.location.origin}?action=setup-password&email=${encodeURIComponent(user.email)}`;
-  
-  const content = `
-    <h3>Bem-vindo(a), ${user.name}!</h3>
-    <p>Sua conta na <strong>${settings.appName || 'Peta Wiki'}</strong> foi criada com sucesso.</p>
-    <p>Você agora tem acesso à nossa base de conhecimento corporativa. Para começar, por favor, defina sua senha segura clicando no botão abaixo:</p>
-    <div style="text-align: center;">
-      <a href="${setupLink}" class="button">Definir Minha Senha</a>
-    </div>
-    <p>Se o botão não funcionar, copie e cole o link abaixo no seu navegador:</p>
-    <p style="font-size: 12px; color: #666; word-break: break-all;">${setupLink}</p>
-    <p>Seus dados de acesso:</p>
-    <ul>
-      <li><strong>Login:</strong> ${user.email}</li>
-      <li><strong>Departamento:</strong> ${user.department || 'Geral'}</li>
-      <li><strong>Função:</strong> ${user.role}</li>
-    </ul>
-  `;
+  try {
+    const response = await fetch('/api/password-link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: user.email,
+        action: 'setup',
+        name: user.name,
+        department: user.department,
+        role: user.role,
+      })
+    });
 
-  return sendEmail(user.email, `Bem-vindo ao ${settings.appName || 'Peta Wiki'} - Defina sua senha`, getBaseHtml(content, settings));
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { success: false, message: data.error || 'Falha ao enviar e-mail.' };
+    }
+    return { success: true, message: 'E-mail enviado com sucesso!', id: data.id };
+  } catch (e: any) {
+    return { success: false, message: e?.message || 'Erro de conexão com o servidor de e-mail.' };
+  }
 };
 
 /**
  * Envia e-mail de recuperação de senha
  */
 export const sendPasswordResetEmail = async (email: string, settings: SystemSettings): Promise<EmailResult> => {
-  const resetLink = `${window.location.origin}?action=reset-password&email=${encodeURIComponent(email)}&token=${Date.now()}`;
+  try {
+    const response = await fetch('/api/password-link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, action: 'reset' })
+    });
 
-  const content = `
-    <h3>Solicitação de Redefinição de Senha</h3>
-    <p>Recebemos uma solicitação para redefinir a senha associada ao e-mail <strong>${email}</strong>.</p>
-    <p>Se foi você quem solicitou, clique no botão abaixo para criar uma nova senha:</p>
-    <div style="text-align: center;">
-      <a href="${resetLink}" class="button">Redefinir Senha</a>
-    </div>
-    <p style="margin-top: 20px;">Se você não solicitou esta alteração, pode ignorar este e-mail com segurança. Sua senha atual permanecerá inalterada.</p>
-  `;
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { success: false, message: data.error || 'Falha ao enviar e-mail.' };
+    }
 
-  return sendEmail(email, `Redefinição de Senha - ${settings.appName || 'Peta Wiki'}`, getBaseHtml(content, settings));
+    return { success: true, message: 'Se este e-mail estiver cadastrado, você receberá um link de redefinição.', id: data.id };
+  } catch (e: any) {
+    return { success: false, message: e?.message || 'Erro de conexão com o servidor de e-mail.' };
+  }
 };

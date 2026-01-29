@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, X, Calendar, User, Tag } from 'lucide-react';
+import { Search, Filter, X, Calendar, User as UserIcon, Tag } from 'lucide-react';
 import { Document, Category, User } from '../types';
 
 interface SearchFilters {

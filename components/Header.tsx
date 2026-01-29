@@ -12,6 +12,7 @@ interface HeaderProps {
 
   userId: string;
   onOpenDocumentById: (docId: string) => void | Promise<void>;
+  onOpenReviewCenterByDocId?: (docId: string) => void | Promise<void>;
 }
 
 export const Header: React.FC<HeaderProps> = ({ 
@@ -20,7 +21,8 @@ export const Header: React.FC<HeaderProps> = ({
   searchResults,
   onSelectDocument,
   userId,
-  onOpenDocumentById
+  onOpenDocumentById,
+  onOpenReviewCenterByDocId
 }) => {
   const [showResults, setShowResults] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -111,7 +113,11 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <NotificationsBell userId={userId} onOpenDocumentById={onOpenDocumentById} />
+        <NotificationsBell
+          userId={userId}
+          onOpenDocumentById={onOpenDocumentById}
+          onOpenReviewCenterByDocId={onOpenReviewCenterByDocId}
+        />
       </div>
     </header>
   );

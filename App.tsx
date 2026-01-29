@@ -15,12 +15,14 @@ import { MOCK_TEMPLATES, DEFAULT_SYSTEM_SETTINGS, MOCK_USERS } from './constants
 import { supabase } from './lib/supabase';
 import { 
   buildCategoryTree, 
-  getCategoryPath 
+  getCategoryPath,
+  generateSlug
 } from './lib/hierarchy';
 import { ToastProvider, useToast } from './components/Toast';
 import { Modal } from './components/Modal';
 import { Button } from './components/Button';
 import { AlertTriangle } from 'lucide-react';
+import { sanitizeHtml } from './lib/sanitize';
 
 type ViewState =
   | 'HOME'
@@ -41,6 +43,20 @@ const isMockUser = (u: any) => !!u && (String(u.id || '').startsWith('mock_') ||
 const AppContent = () => {
   const toast = useToast();
 
+  const {
+    AnalyticsDashboard,
+    ReviewCenter,
+    TemplateSelector,
+    CategoryModal,
+    AdminSettings,
+    UserProfile,
+  } = LazyComponents;
+
+  const openReviewCenter = useCallback((docId?: string | null) => {
+    setReviewCenterDocId(docId ?? null);
+    setCurrentView('REVIEW_CENTER');
+  }, []);
+
   // Auth & System State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -60,6 +76,7 @@ const AppContent = () => {
   // App View State
   const [currentView, setCurrentView] = useState<ViewState>('HOME');
   const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+  const [reviewCenterDocId, setReviewCenterDocId] = useState<string | null>(null);
   
   // Search State
   const [searchQuery, setSearchQuery] = useState('');
@@ -237,6 +254,11 @@ const AppContent = () => {
   }, [isAuthenticated]);
 
   const categoryTree = useMemo(() => buildCategoryTree(categories), [categories]);
+
+  const safeHomeContent = useMemo(
+    () => sanitizeHtml(systemSettings.homeContent || ''),
+    [systemSettings.homeContent]
+  );
   
   // FILTROS: Docs Ativos vs Lixeira
   const activeDocuments = useMemo(() => documents.filter(d => !d.deletedAt), [documents]);
@@ -280,10 +302,16 @@ const searchParams: any = {
             setSearchResultDocs(mappedResults);
 
             if (currentUser && mappedResults.length > 0) {
-               supabase.rpc('log_search_event', {
-                  p_query: searchQuery,
-                  p_user_id: currentUser.id
-               }).catch(err => console.error("Tracking error", err));
+               void (async () => {
+                 try {
+                   await supabase.rpc('log_search_event', {
+                     p_query: searchQuery,
+                     p_user_id: currentUser.id
+                   });
+                 } catch (err) {
+                   console.error("Tracking error", err);
+                 }
+               })();
             }
 
         } catch (error) {
@@ -312,11 +340,15 @@ const searchParams: any = {
     
     return activeDocuments.filter(doc => {
       if (currentUser.role === 'ADMIN') return true;
-      if (currentUser.role === 'EDITOR') return true;
+      if (currentUser.role === 'EDITOR') {
+        // Editors can see all published docs, plus their own drafts/review/rejected.
+        if (doc.status === 'PUBLISHED') return true;
+        return doc.authorId === currentUser.id;
+      }
       if (currentUser.role === 'READER') return doc.status === 'PUBLISHED';
       return false;
     });
-}, [activeDocuments, currentUser]);
+ }, [activeDocuments, currentUser]);
 
   const visibleDocumentsFiltered = useMemo(() => {
     if (docFilter !== 'FAVORITES') return visibleDocuments;
@@ -545,6 +577,7 @@ const searchParams: any = {
         tags: data.tags || [],
         categoryPath: getCategoryPath(data.category_id, categories),
         versions: [],
+        reviewNote: data.review_note ?? null,
       };
 
       setDocuments((prev) => (prev.some((d) => d.id === mapped.id) ? prev : [...prev, mapped]));
@@ -645,7 +678,8 @@ const [docsRes, cats, usersRes, settingsRes] = await Promise.all([
           views: d.views,
           tags: d.tags || [],
           categoryPath: getCategoryPath(d.category_id || fallbackCatId, finalCats),
-          versions: [] 
+          versions: [],
+          reviewNote: d.review_note ?? null,
         }));
 
         const mappedUsers = (usersRes.data || []).map((u: any) => ({
@@ -949,17 +983,27 @@ const handleUpdateAvatar = async (base64: string) => {
     }
   };
 
-const handleSaveCategory = async (data: Partial<Category>) => {
+ const handleSaveCategory = async (data: Partial<Category>) => {
+    const parentId = data.parentId ?? null;
+    const departmentId = data.departmentId ?? (currentUser?.department ?? null);
+    const order = categories.filter(c => c.parentId === parentId).length + 1;
+
     const newCategory: Category = {
       id: (crypto?.randomUUID?.() ?? `c_${Date.now()}`),
       name: data.name!,
       slug: (data.slug || generateSlug(data.name!)),
-      parentId: data.parentId || null,
-      departmentId: data.departmentId || currentUser?.department,
-      order: categories.filter(c => c.parentId === data.parentId).length + 1,
+      parent_id: parentId,
+      department_id: departmentId,
+      sort_order: order,
+      doc_count: 0,
+      description: data.description ?? null,
+      icon: data.icon ?? null,
+      created_at: new Date().toISOString(),
+
+      parentId,
+      departmentId,
+      order,
       docCount: 0,
-      description: data.description,
-      icon: data.icon
     };
     
     // Optimistic Update
@@ -1047,12 +1091,14 @@ const targetCategoryId =
     const docId = (crypto?.randomUUID?.() ?? `d_${Date.now()}`);
 
     if (currentView === 'DOCUMENT_CREATE') {
+      const desiredStatus = (data.status || (currentUser.role === 'ADMIN' ? 'PUBLISHED' : 'PENDING_REVIEW')) as any;
+
       const newDoc: Document = {
         id: docId,
         title: data.title || 'Sem Título',
         content: data.content || '',
         categoryId: targetCategoryId, 
-        status: currentUser.role === 'ADMIN' ? 'PUBLISHED' : 'PENDING_REVIEW',
+        status: desiredStatus,
         authorId: currentUser.id,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -1060,7 +1106,8 @@ const targetCategoryId =
         tags: data.tags || [],
         categoryPath: getCategoryPath(targetCategoryId, categories),
         templateId: newDocTemplate?.templateId,
-        versions: []
+        versions: [],
+        reviewNote: null,
       };
       
       // Optimistic
@@ -1076,7 +1123,8 @@ const targetCategoryId =
             author_id: newDoc.authorId,
             tags: newDoc.tags,
             views: 0,
-            updated_by: currentUser.id
+            updated_by: currentUser.id,
+            review_note: null,
       });
 
       if (error) {
@@ -1121,27 +1169,54 @@ const targetCategoryId =
       const updatedVersions = [newVersion, ...(oldDoc.versions || [])].slice(0, 3);
       
       setDocuments(prev => prev.map(d => d.id === selectedDocument.id ? { 
-          ...d, ...data, 
+          ...d, ...data,
           categoryId: targetCategoryId, 
           updatedAt: new Date().toISOString(), 
           categoryPath: getCategoryPath(targetCategoryId, categories),
           versions: updatedVersions
       } : d));
 
-      const { error } = await supabase.from('documents').update({ 
-            title: data.title,
-            content: data.content,
-            category_id: targetCategoryId,
-            tags: data.tags,
-            updated_at: new Date().toISOString(),
-            status: data.status || selectedDocument.status,
-            updated_by: currentUser.id
-      }).eq('id', selectedDocument.id);
+      const nextStatus = (data.status || selectedDocument.status) as any;
+
+      const updatePayload: any = {
+        title: data.title,
+        content: data.content,
+        category_id: targetCategoryId,
+        tags: data.tags,
+        updated_at: new Date().toISOString(),
+        status: nextStatus,
+        updated_by: currentUser.id,
+      };
+
+      // When resubmitting, clear old reviewer note.
+      if (nextStatus === 'PENDING_REVIEW') {
+        updatePayload.review_note = null;
+      }
+
+      const { error } = await supabase
+        .from('documents')
+        .update(updatePayload)
+        .eq('id', selectedDocument.id);
 
       if (error) {
           toast.error(`Erro ao atualizar: ${error.message}`);
       } else {
           toast.success('Documento atualizado.');
+
+          if (!isMockUser(currentUser) && nextStatus === 'PENDING_REVIEW') {
+            const admins = users.filter(u => u.role === "ADMIN" && !String(u.id).startsWith("mock_"));
+            await Promise.all(
+              admins.map(a =>
+                supabase.rpc("create_notification", {
+                  p_to_user_id: a.id,
+                  p_title: "Documento pendente de aprovacao",
+                  p_body: `"${data.title || selectedDocument.title}" aguarda revisao.`,
+                  p_type: "REVIEW",
+                  p_document_id: selectedDocument.id
+                })
+              )
+            );
+          }
       }
       
       setCurrentView('DOCUMENT_VIEW');
@@ -1243,7 +1318,7 @@ const toggleFavorites = () => {
     toggleTheme: handleToggleTheme,
     isDarkMode,
     onNavigateToAnalytics: () => setCurrentView('ANALYTICS'),
-    onNavigateToReviewCenter: () => setCurrentView('REVIEW_CENTER'),
+    onNavigateToReviewCenter: () => openReviewCenter(null),
     activeCategoryId,
     setCategories,
     onDropDocument: moveDocumentToCategory,
@@ -1264,25 +1339,27 @@ const toggleFavorites = () => {
       
       {isNavbarMode ? (
          <Navbar 
-            {...commonProps} 
-            searchQuery={searchQuery}
-            onSearch={setSearchQuery}
-            searchResults={searchResultDocs} 
-         />
+             {...commonProps} 
+             searchQuery={searchQuery}
+             onSearch={setSearchQuery}
+             searchResults={searchResultDocs} 
+             onOpenReviewCenterByDocId={(docId) => openReviewCenter(docId)}
+          />
       ) : (
          <Sidebar {...commonProps} searchQuery={searchQuery} />
       )}
 
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         {!isNavbarMode && (
-            <Header 
-                searchQuery={searchQuery}
-                onSearch={setSearchQuery}
-                searchResults={searchResultDocs}
-                onSelectDocument={handleSelectDocument}
-                userId={currentUser.id}
-                onOpenDocumentById={openDocumentById}
-            />
+             <Header 
+                 searchQuery={searchQuery}
+                 onSearch={setSearchQuery}
+                 searchResults={searchResultDocs}
+                 onSelectDocument={handleSelectDocument}
+                 userId={currentUser.id}
+                 onOpenDocumentById={openDocumentById}
+                 onOpenReviewCenterByDocId={(docId) => openReviewCenter(docId)}
+             />
         )}
 
         <main className="flex-1 overflow-y-auto">
@@ -1315,25 +1392,42 @@ const toggleFavorites = () => {
               {/* Home Content Personalizado */}
               {systemSettings.homeContent && (
                 <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                   <div className="prose prose-blue dark:prose-invert max-w-none text-gray-800 dark:text-gray-300" dangerouslySetInnerHTML={{ __html: systemSettings.homeContent }} />
+                   <div className="prose prose-blue dark:prose-invert max-w-none text-gray-800 dark:text-gray-300" dangerouslySetInnerHTML={{ __html: safeHomeContent }} />
                 </div>
               )}
             </div>
           )}
 
           {currentView === 'ANALYTICS' && currentUser.role === 'ADMIN' && (
-            <AnalyticsDashboard />
+            <LazyWrapper>
+              <AnalyticsDashboard />
+            </LazyWrapper>
           )}
           {currentView === 'REVIEW_CENTER' && currentUser.role === 'ADMIN' && (
-            <ReviewCenter actorUserId={currentUser.id} onOpenDocumentById={openDocumentById} />
+            <LazyWrapper>
+              <ReviewCenter
+                actorUserId={currentUser.id}
+                onOpenDocumentById={openDocumentById}
+                initialDocId={reviewCenterDocId}
+                onStatusChanged={(docId, status, note) => {
+                  setDocuments((prev) =>
+                    prev.map((d) =>
+                      d.id === docId ? { ...d, status: status as any, reviewNote: note ?? null } : d
+                    )
+                  );
+                }}
+              />
+            </LazyWrapper>
           )}
 
           {currentView === 'TEMPLATE_SELECTION' && (
-            <TemplateSelector 
-              templates={templates}
-              onSelect={handleTemplateSelect}
-              onCancel={() => setCurrentView('HOME')}
-            />
+            <LazyWrapper>
+              <TemplateSelector 
+                templates={templates}
+                onSelect={handleTemplateSelect}
+                onCancel={() => setCurrentView('HOME')}
+              />
+            </LazyWrapper>
           )}
 
           {currentView === 'DOCUMENT_VIEW' && selectedDocument && (
@@ -1367,43 +1461,51 @@ const toggleFavorites = () => {
         </main>
       </div>
 
-      <CategoryModal 
-        isOpen={isCategoryModalOpen}
-        onClose={() => setIsCategoryModalOpen(false)}
-        parentId={categoryModalParentId}
-        categories={categories}
-        user={currentUser}
-        onSave={handleSaveCategory}
-      />
+      <LazyWrapper>
+        <CategoryModal 
+          isOpen={isCategoryModalOpen}
+          onClose={() => setIsCategoryModalOpen(false)}
+          parentId={categoryModalParentId}
+          categories={categories}
+          user={currentUser}
+          onSave={handleSaveCategory}
+        />
+      </LazyWrapper>
 
-      <AdminSettings 
-        isOpen={isAdminSettingsOpen}
-        onClose={() => setIsAdminSettingsOpen(false)}
-        settings={systemSettings}
-        onSaveSettings={handleSaveSettingsGlobal}
-        users={users}
-        onUpdateUserRole={handleUpdateUserRole}
-        onUpdateUserDetails={handleUpdateUserDetails}
-        onDeleteUser={handleDeleteUser}
-        onAddUser={handleAddUser}
-        categories={categories}
-        onUpdateCategory={handleUpdateCategory}
-        onDeleteCategory={handleDeleteCategory}
-        onAddCategory={handleSaveCategory}
-        trashDocuments={trashDocuments}
-        onRestoreDocument={handleRestoreDocument}
-        onPermanentDeleteDocument={handlePermanentDeleteDocument}
-      />
+      <LazyWrapper>
+        <AdminSettings 
+          isOpen={isAdminSettingsOpen}
+          onClose={() => setIsAdminSettingsOpen(false)}
+          settings={systemSettings}
+          onSaveSettings={handleSaveSettingsGlobal}
+          users={users}
+          onUpdateUserRole={handleUpdateUserRole}
+          onUpdateUserDetails={handleUpdateUserDetails}
+          onDeleteUser={handleDeleteUser}
+          onAddUser={handleAddUser}
+          categories={categories}
+          onUpdateCategory={handleUpdateCategory}
+          onDeleteCategory={handleDeleteCategory}
+          onAddCategory={handleSaveCategory}
+          trashDocuments={trashDocuments}
+          onRestoreDocument={handleRestoreDocument}
+          onPermanentDeleteDocument={handlePermanentDeleteDocument}
+          actorUserId={currentUser.id}
+          onOpenReviewCenter={(docId) => openReviewCenter(docId)}
+        />
+      </LazyWrapper>
 
       {currentUser && (
-        <UserProfile 
-          isOpen={isProfileOpen}
-          onClose={() => setIsProfileOpen(false)}
-          user={currentUser}
-          onUpdatePassword={handleUpdatePassword}
-          onUpdateAvatar={handleUpdateAvatar}
-          onUpdateUser={(data) => handleUpdateUserDetails(currentUser.id, data)}
-        />
+        <LazyWrapper>
+          <UserProfile 
+            isOpen={isProfileOpen}
+            onClose={() => setIsProfileOpen(false)}
+            user={currentUser}
+            onUpdatePassword={handleUpdatePassword}
+            onUpdateAvatar={handleUpdateAvatar}
+            onUpdateUser={(data) => handleUpdateUserDetails(currentUser.id, data)}
+          />
+        </LazyWrapper>
       )}
 
       <Modal 

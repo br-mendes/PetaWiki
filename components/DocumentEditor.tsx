@@ -39,7 +39,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   const toast = useToast();
   const [title, setTitle] = useState(document?.title || '');
   const [content, setContent] = useState(document?.content || initialContent);
-const [categoryId, setCategoryId] = useState(document?.categoryId || initialCategoryId || '');
+ const [categoryId, setCategoryId] = useState(document?.categoryId || initialCategoryId || '');
   
   useEffect(() => setCategoryId(document?.categoryId || initialCategoryId || ''), [document?.categoryId, initialCategoryId]);
   
@@ -163,6 +163,15 @@ const [categoryId, setCategoryId] = useState(document?.categoryId || initialCate
 
   const categoryPath = categoryId ? getCategoryPath(categoryId, allCategories) : null;
 
+  const isNew = !document;
+  const isAdmin = user.role === 'ADMIN';
+
+  const submit = (status?: Document['status']) => {
+    const payload: Partial<Document> = { title, content, categoryId, tags };
+    if (status) payload.status = status;
+    onSave(payload);
+  };
+
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-8">
       {/* Header with Improved Button Layout */}
@@ -203,13 +212,62 @@ const [categoryId, setCategoryId] = useState(document?.categoryId || initialCate
             </Button>
           )}
           
-          <Button 
-            onClick={() => onSave({ title, content, categoryId, tags })} 
-            className="flex-1 md:flex-none justify-center shadow-lg shadow-blue-500/20"
-          >
-            <Save size={16} className="mr-2" />
-            Salvar & {user.role === 'ADMIN' ? 'Publicar' : 'Enviar'}
-          </Button>
+          {isNew ? (
+            <>
+              {!isAdmin && (
+                <Button
+                  variant="secondary"
+                  onClick={() => submit('DRAFT')}
+                  className="flex-1 md:flex-none justify-center dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                  title="Salvar como rascunho"
+                >
+                  <Save size={16} className="mr-2" />
+                  Salvar rascunho
+                </Button>
+              )}
+
+              <Button
+                onClick={() => submit(isAdmin ? 'PUBLISHED' : 'PENDING_REVIEW')}
+                className="flex-1 md:flex-none justify-center shadow-lg shadow-blue-500/20"
+                title={isAdmin ? 'Publicar documento' : 'Enviar para revisao/aprovacao'}
+              >
+                <Save size={16} className="mr-2" />
+                {isAdmin ? 'Publicar' : 'Enviar para revisao'}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                variant="secondary"
+                onClick={() => submit()}
+                className="flex-1 md:flex-none justify-center dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                title="Salvar alteracoes"
+              >
+                <Save size={16} className="mr-2" />
+                Salvar
+              </Button>
+
+              {isAdmin ? (
+                <Button
+                  onClick={() => submit('PUBLISHED')}
+                  className="flex-1 md:flex-none justify-center shadow-lg shadow-blue-500/20"
+                  title="Publicar (ou republicar)"
+                >
+                  <Save size={16} className="mr-2" />
+                  Publicar
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => submit('PENDING_REVIEW')}
+                  className="flex-1 md:flex-none justify-center shadow-lg shadow-blue-500/20"
+                  title="Enviar alteracoes para revisao/aprovacao"
+                >
+                  <Save size={16} className="mr-2" />
+                  Enviar para revisao
+                </Button>
+              )}
+            </>
+          )}
         </div>
       </div>
 

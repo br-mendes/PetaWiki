@@ -98,7 +98,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLogin, onSignUp, setting
               body: JSON.stringify({
                   email: callbackParams.email.trim(),
                   password: newCallbackPassword,
-                  token: callbackParams.token
+                  token: callbackParams.token,
+                  action: callbackParams.action
               })
           });
 

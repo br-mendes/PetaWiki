@@ -33,6 +33,7 @@ interface NavbarProps {
   onSearch: (query: string) => void;
   searchResults?: Document[] | null;
   onOpenDocumentById: (docId: string) => void | Promise<void>;
+  onOpenReviewCenterByDocId?: (docId: string) => void | Promise<void>;
   //  NOVO: Favoritos (repassa pro Sidebar no dropdown/drawer)
   docFilter?: 'ALL' | 'FAVORITES';
   onToggleFavorites?: () => void;
@@ -234,6 +235,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
           <NotificationsBell
             userId={user.id}
             onOpenDocumentById={props.onOpenDocumentById}
+            onOpenReviewCenterByDocId={props.onOpenReviewCenterByDocId}
           />
 
           {user.role === 'ADMIN' && (

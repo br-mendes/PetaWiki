@@ -1,7 +1,7 @@
 
 export type Role = 'ADMIN' | 'EDITOR' | 'READER';
 
-export type DocStatus = 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED';
+export type DocStatus = 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'REJECTED';
 
 export type TemplateCategory = 'POLICY' | 'SOP' | 'FAQ' | 'MEETING_MINUTES' | 'KB_ARTICLE' | 'ONBOARDING' | 'OTHER';
 
@@ -110,6 +110,7 @@ export interface Document {
   categoryPath?: string; // Breadcrumb cache
   templateId?: string; // Reference to source template
   versions: DocumentVersion[]; // Version History (Max 3)
+  reviewNote?: string | null; // Reviewer feedback (stored in DB as review_note)
 }
 
 export interface DocumentTranslation {

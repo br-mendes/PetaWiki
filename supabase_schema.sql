@@ -15,7 +15,29 @@ CREATE TABLE IF NOT EXISTS public.categories (
   created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Password reset / setup tokens (server-generated, single-use)
+CREATE TABLE IF NOT EXISTS public.password_resets (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  email text NOT NULL,
+  action text NOT NULL CHECK (action IN ('reset', 'setup')),
+  token_hash text NOT NULL,
+  expires_at timestamp with time zone NOT NULL,
+  used_at timestamp with time zone,
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+  created_ip text,
+  created_user_agent text
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_resets_email ON public.password_resets(email);
+CREATE INDEX IF NOT EXISTS idx_password_resets_token_hash ON public.password_resets(token_hash);
+CREATE INDEX IF NOT EXISTS idx_password_resets_lookup ON public.password_resets(email, action, token_hash);
+
 -- ... (Restante das tabelas e functions mantidas, apenas verifique se não há referências a "order" nas functions antigas, mas as fornecidas anteriormente não usavam essa coluna explicitamente em lógica SQL complexa) ...
+
+-- Workflow de revisao (comentario do revisor)
+-- NOTE: Se sua coluna `status` tiver CHECK constraint, garanta que ela permite o valor 'REJECTED'.
+ALTER TABLE IF EXISTS public.documents
+  ADD COLUMN IF NOT EXISTS review_note text;
 
 -- Nova tabela de Activity Logs
 CREATE TABLE IF NOT EXISTS public.activity_logs (

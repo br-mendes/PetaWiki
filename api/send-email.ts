@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
+import { applyCors } from './_cors';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -17,7 +18,12 @@ const sb = createClient(supabaseUrl, serviceKey);
 const resend = new Resend(resendKey);
 
 export default async function handler(req: any, res: any) {
+  if (applyCors(req, res, { methods: ['POST', 'OPTIONS'] })) return;
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method Not Allowed' });
+
+  if (process.env.ENABLE_SEND_EMAIL_ENDPOINT !== 'true') {
+    return res.status(404).json({ error: 'Not Found' });
+  }
 
   const { to, subject, html } = req.body || {};
   if (!to || !subject || !html) {

@@ -46,7 +46,6 @@ interface SidebarProps {
   isDarkMode: boolean;
   onNavigateToAnalytics: () => void;
   onNavigateToReviewCenter?: () => void;
-  onNavigateToReviewCenter?: () => void;
   // Search Context
   searchQuery?: string;
   //  NOVO: Favoritos
@@ -57,7 +56,7 @@ interface SidebarProps {
   variant?: 'SIDEBAR' | 'DRAWER' | 'DROPDOWN';
   // Category State
   activeCategoryId?: string | null;
-  setCategories?: (categories: Category[]) => void;
+  setCategories?: React.Dispatch<React.SetStateAction<Category[]>>;
   // Drag and Drop / Reorder
   onDropDocument?: (docId: string, categoryId: string) => Promise<void> | void;
   onDropCategory?: (categoryId: string, newParentId: string | null) => Promise<void> | void;
@@ -241,6 +240,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   toggleTheme,
   isDarkMode,
   onNavigateToAnalytics,
+  onNavigateToReviewCenter,
   searchQuery,
   // Novo: favoritos
   docFilter,

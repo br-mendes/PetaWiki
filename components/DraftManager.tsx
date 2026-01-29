@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Save, FileText, Trash2, Clock } from 'lucide-react';
 import { Draft, localStorageDraftStorage } from '../lib/drafts';
 import { Button } from './Button';
@@ -71,7 +71,7 @@ export const DraftManager: React.FC<DraftManagerProps> = ({
   if (!isOpen) return null;
 
   return (
-    <Modal onClose={onClose} title="Rascunhos Salvos" maxWidth="max-w-4xl">
+    <Modal isOpen={isOpen} onClose={onClose} title="Rascunhos Salvos" size="lg">
       <div className="space-y-4">
         {/* Search and Actions */}
         <div className="flex items-center gap-3">

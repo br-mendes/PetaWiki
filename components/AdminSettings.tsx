@@ -16,6 +16,8 @@ import { supabase } from '../lib/supabase';
 interface AdminSettingsProps {
   isOpen: boolean;
   onClose: () => void;
+  actorUserId: string;
+  onOpenReviewCenter?: (docId: string) => void;
   settings: SystemSettings;
   onSaveSettings: (settings: SystemSettings) => void;
   users: User[];
@@ -48,6 +50,8 @@ const AVAILABLE_ICONS = Object.keys(ICON_MAP).sort();
 export const AdminSettings: React.FC<AdminSettingsProps> = ({
   isOpen,
   onClose,
+  actorUserId,
+  onOpenReviewCenter,
   settings,
   onSaveSettings,
   users,
@@ -86,7 +90,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
     const { error } = await supabase.rpc("set_document_status", {
       p_document_id: id,
       p_status: "PUBLISHED",
-      p_actor_user_id: currentUser?.id,
+      p_actor_user_id: actorUserId,
     });
     if (error) {
       console.error(error);
@@ -100,7 +104,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
     const { error } = await supabase.rpc("set_document_status", {
       p_document_id: id,
       p_status: "REJECTED",
-      p_actor_user_id: currentUser?.id,
+      p_actor_user_id: actorUserId,
     });
     if (error) {
       console.error(error);
@@ -966,16 +970,14 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
 
                         <div className="flex gap-2">
                           <button
-                            onClick={() => rejectDoc(d.id)}
-                            className="text-xs px-3 py-1 rounded bg-red-50 text-red-700 hover:bg-red-100"
+                            onClick={() => {
+                              onClose();
+                              onOpenReviewCenter?.(d.id);
+                            }}
+                            className="text-xs px-3 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100"
+                            title="Abrir tela de revisao com comentario e decisao"
                           >
-                            Rejeitar
-                          </button>
-                          <button
-                            onClick={() => approveDoc(d.id)}
-                            className="text-xs px-3 py-1 rounded bg-green-50 text-green-700 hover:bg-green-100"
-                          >
-                            Aprovar
+                            Revisar
                           </button>
                         </div>
                       </div>

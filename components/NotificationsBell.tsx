@@ -16,8 +16,9 @@ type NotificationItem = {
 export const NotificationsBell: React.FC<{
   userId: string;
   onOpenDocumentById?: (docId: string) => void | Promise<void>;
+  onOpenReviewCenterByDocId?: (docId: string) => void | Promise<void>;
   limit?: number;
-}> = ({ userId, onOpenDocumentById, limit = 30 }) => {
+}> = ({ userId, onOpenDocumentById, onOpenReviewCenterByDocId, limit = 30 }) => {
   const toast = useToast();
   const [open, setOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
@@ -140,7 +141,14 @@ export const NotificationsBell: React.FC<{
 
     setOpen(false);
 
-    if (n.document_id && onOpenDocumentById) {
+    if (!n.document_id) return;
+
+    if (n.type === "REVIEW" && onOpenReviewCenterByDocId) {
+      await onOpenReviewCenterByDocId(n.document_id);
+      return;
+    }
+
+    if (onOpenDocumentById) {
       await onOpenDocumentById(n.document_id);
     }
   };

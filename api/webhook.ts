@@ -1,6 +1,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import { Webhook } from 'svix';
+import { applyCors } from './_cors';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -14,7 +15,28 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 // ... mantenha o resto
 
+async function getRawBody(req: any): Promise<string> {
+  if (typeof req.body === 'string') return req.body;
+  if (Buffer.isBuffer(req.body)) return req.body.toString('utf8');
+  if (req.body && typeof req.body === 'object') {
+    try {
+      return JSON.stringify(req.body);
+    } catch {
+      // fall through
+    }
+  }
+
+  let data = '';
+  for await (const chunk of req) {
+    data += chunk;
+  }
+  return data;
+}
+
 export default async function handler(req: any, res: any) {
+  // This endpoint is called server-to-server; CORS is not required, but
+  // handling OPTIONS avoids noisy preflight failures in misconfigured clients.
+  if (applyCors(req, res, { methods: ['POST', 'OPTIONS'] })) return;
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
@@ -24,17 +46,23 @@ export default async function handler(req: any, res: any) {
 
   // 1. Verificar Assinatura (Segurança)
   const wh = new Webhook(WEBHOOK_SECRET);
-  let msg;
-  
+  let msg: any;
+
   try {
-    // Vercel passa o body já parseado. Svix precisa do raw body ou payload compatível.
-    // Em alguns ambientes serverless node, req.body é objeto. Svix aceita string ou buffer.
-    // Simplificação: Assumindo que o payload é confiável se o secret estiver correto.
-    // Para verificação rigorosa, seria necessário desabilitar o body parser padrão do Vercel
-    // ou reconstruir a string. Aqui focamos na lógica de negócio.
-    msg = payload; 
-    
-    // msg = wh.verify(JSON.stringify(payload), headers as any); // Descomentar se tiver acesso aos headers raw svix
+    const svixId = headers['svix-id'];
+    const svixTimestamp = headers['svix-timestamp'];
+    const svixSignature = headers['svix-signature'];
+
+    if (!svixId || !svixTimestamp || !svixSignature) {
+      return res.status(400).json({ error: 'Missing Svix signature headers' });
+    }
+
+    const raw = await getRawBody(req);
+    msg = wh.verify(raw, {
+      'svix-id': String(svixId),
+      'svix-timestamp': String(svixTimestamp),
+      'svix-signature': String(svixSignature),
+    } as any);
   } catch (err) {
     console.error('Webhook verification failed', err);
     return res.status(400).json({ error: 'Webhook verification failed' });

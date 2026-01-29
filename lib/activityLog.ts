@@ -31,8 +31,9 @@ export interface ActivityFilters {
 
 export interface ActivityStats {
   totalActions: number;
-  actionsByType: Record<ActivityLog['action'], number>;
+  actionsByType: Partial<Record<ActivityLog['action'], number>>;
   actionsByUser: Array<{ userId: string; userName: string; count: number }>;
   actionsByDay: Array<{ date: string; count: number }>;
   topDocuments: Array<{ docId: string; title: string; actionCount: number }>;
+  topUsers: Array<{ userId: string; userName: string; actionCount: number }>;
 }
