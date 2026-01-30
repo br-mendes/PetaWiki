@@ -1116,33 +1116,6 @@ const handleUpdateAvatar = async (base64: string) => {
     setCurrentView('DOCUMENT_CREATE');
   };
   
-  const handleCreateTemplate = async (doc: Partial<Document> & { templateName?: string }) => {
-    if (!currentUser) return;
-    if (currentUser.role !== 'ADMIN') return;
-    if (isMockUser(currentUser)) {
-      toast.info('Modo mock: salvamento de modelo desativado.');
-      return;
-    }
-
-    const name = (doc.templateName || doc.title || '').trim() || 'Novo Modelo';
-    try {
-      await dbCreateTemplate({
-        name,
-        content: doc.content || '',
-        tags: doc.tags || [],
-        category: 'OTHER',
-        isGlobal: true,
-        createdBy: currentUser.id,
-      });
-
-      await refreshTemplates();
-      toast.success('Modelo salvo e disponível para editores.');
-    } catch (e: any) {
-      console.error(e);
-      toast.error(`Falha ao salvar modelo: ${e?.message || 'erro'}`);
-    }
-  };
-
   const handleSaveDocument = async (data: Partial<Document> & { saveAsTemplate?: boolean; templateName?: string }) => {
     if (!currentUser) return;
     
@@ -1636,7 +1609,7 @@ const toggleFavorites = () => {
               initialCategoryId={currentView === 'DOCUMENT_CREATE' ? (activeCategoryId ?? selectedDocument?.categoryId) : selectedDocument?.categoryId}
               initialContent={currentView === 'DOCUMENT_CREATE' ? newDocTemplate?.content : undefined}
               initialTags={currentView === 'DOCUMENT_CREATE' ? newDocTemplate?.tags : undefined}
-              onCreateTemplate={handleCreateTemplate}
+              onChangeCategory={(id) => setActiveCategoryId(id)}
             />
           )}
         </main>

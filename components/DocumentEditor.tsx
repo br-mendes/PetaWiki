@@ -19,7 +19,6 @@ interface DocumentEditorProps {
   initialCategoryId?: string;
   initialContent?: string;
   initialTags?: string[];
-  onCreateTemplate?: (doc: Partial<Document>) => void; // New prop for admin
   onChangeCategory?: (categoryId: string) => Promise<void> | void;
 }
 
@@ -33,7 +32,6 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   initialCategoryId,
   initialContent = '',
   initialTags = [],
-  onCreateTemplate,
   onChangeCategory
 }) => {
   const toast = useToast();
@@ -192,7 +190,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   return (
     <div className="max-w-6xl mx-auto p-4 md:p-8">
       {/* Header with Improved Button Layout */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm sticky top-20 z-20">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm">
         <div className="flex items-center gap-3">
           <button 
             onClick={onCancel}
@@ -211,26 +209,18 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
         </div>
 
         <div className="flex items-center gap-3 w-full md:w-auto">
-          <Button variant="ghost" onClick={onCancel} className="hidden md:flex text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+          <Button
+            variant="secondary"
+            onClick={onCancel}
+            className="hidden md:flex dark:bg-gray-700/60 dark:border-gray-600 dark:text-gray-100"
+          >
             Cancelar
           </Button>
           
           <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 hidden md:block"></div>
 
-          {user.role === 'ADMIN' && onCreateTemplate && (
-            <Button 
-              variant="secondary" 
-              onClick={() => onCreateTemplate({ title, content, tags })} 
-              className="flex-1 md:flex-none justify-center dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
-              title="Salvar estrutura como modelo reutilizável"
-            >
-              <Copy size={16} className="mr-2" />
-              Salvar Template
-            </Button>
-          )}
-
           {isAdmin && isNew && (
-            <div className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
               <label className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -375,11 +365,9 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
 
         <div className="p-6 space-y-8">
            
-           {/* Seletor de Categoria Visual */}
-           <div className="relative" ref={selectRef}>
-            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-                Localização (Categoria)
-            </label>
+            {/* Seletor de Pasta */}
+            <div className="relative" ref={selectRef}>
+             <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">Pasta</label>
             <button 
               className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all duration-200 text-left group ${showCategorySelect ? 'ring-2 ring-blue-500 border-blue-500 bg-white dark:bg-gray-800' : 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 hover:bg-white dark:hover:bg-gray-800 hover:border-gray-300'}`}
               onClick={() => setShowCategorySelect(!showCategorySelect)}
@@ -414,31 +402,12 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                   onSelect={(id) => {
                     setCategoryId(id);
                     setShowCategorySelect(false);
+                    void onChangeCategory?.(id);
                   }} 
                 />
               </div>
             )}
-</div>
-
-          {/* Seletor de Categoria Simples */}
-          <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
-            <label style={{ fontSize: 12, opacity: 0.7 }}>Pasta</label>
-            <select
-              value={categoryId ?? ""}
-              onChange={async (e) => {
-                const next = e.target.value;
-                setCategoryId(next);
-                await onChangeCategory?.(next);
-              }}
-              style={{ padding: "6px 8px", borderRadius: 8 }}
-            >
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </div>
+ </div>
 
           {/* Título */}
           <div>

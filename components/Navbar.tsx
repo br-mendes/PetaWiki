@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Search, Settings, Shield, LogOut, Moon, Sun, UserCircle, Menu, X, ChevronDown, Book, FileText
+  Search, Settings, Shield, LogOut, Moon, Sun, UserCircle, Menu, X, ChevronDown, Book, FileText, Activity
 } from 'lucide-react';
 import { Category, User, SystemSettings, Document } from '../types';
 import { Button } from './Button';
@@ -240,9 +240,15 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
 
           {user.role === 'ADMIN' && (
             <>
-              <Button variant="ghost" size="sm" onClick={onNavigateToAnalytics} className="hidden lg:flex dark:text-gray-300 dark:hover:bg-gray-700">
-                Analytics
-              </Button>
+              <button
+                type="button"
+                onClick={onNavigateToAnalytics}
+                title="Analytics"
+                aria-label="Analytics"
+                className="hidden lg:flex items-center justify-center p-2 rounded-lg text-gray-500 hover:text-purple-700 dark:text-gray-400 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
+              >
+                <Activity size={18} />
+              </button>
               <button 
                 onClick={onOpenSettings}
                 className="p-2 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
