@@ -100,7 +100,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
 
   return (
     <>
-      <header className="h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6 sticky top-0 z-30 transition-colors shadow-sm">
+      <header className="h-16 bg-gradient-to-r from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6 sticky top-0 z-30 transition-all duration-300 shadow-lg shadow-blue-100/50 dark:shadow-gray-900/50 backdrop-blur-md">
         
         {/* Left: Logo & Menu Trigger */}
         <div className="flex items-center gap-4">
@@ -131,14 +131,14 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
           {isNavbarMode ? (
              /* NAVBAR MODE: Dropdown Menu Trigger */
              <div className="relative" ref={navDropdownRef}>
-                <button 
-                  onClick={() => setIsNavDropdownOpen(!isNavDropdownOpen)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${isNavDropdownOpen ? 'bg-blue-50 text-blue-700 dark:bg-gray-800 dark:text-blue-400' : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'}`}
-                >
-                  <Menu size={18} />
-                  <span className="hidden sm:inline">Navegar</span>
-                  <ChevronDown size={14} className={`transition-transform ${isNavDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
+                 <button 
+                   onClick={() => setIsNavDropdownOpen(!isNavDropdownOpen)}
+                   className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${isNavDropdownOpen ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 hover:from-gray-200 hover:to-gray-300 dark:hover:from-gray-700 dark:hover:to-gray-600 text-gray-700 dark:text-gray-300 hover:shadow-md'}`}
+                 >
+                   <Menu size={18} />
+                   <span className="hidden sm:inline">Navegar</span>
+                   <ChevronDown size={14} className={`transition-transform duration-200 ${isNavDropdownOpen ? 'rotate-180' : ''}`} />
+                 </button>
 
                 {isNavDropdownOpen && (
                   <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
@@ -152,13 +152,13 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
              </div>
           ) : (
              /* SIDEBAR MODE: Drawer Trigger */
-             <button 
-                onClick={() => setIsMenuOpen(true)}
-                className="flex items-center gap-2 px-3 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors"
-             >
-                <Menu size={18} />
-                <span className="hidden sm:inline">Biblioteca</span>
-             </button>
+              <button 
+                 onClick={() => setIsMenuOpen(true)}
+                 className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg text-sm font-semibold transition-all duration-200 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:-translate-y-0.5"
+              >
+                 <Menu size={18} />
+                 <span className="hidden sm:inline">Biblioteca</span>
+              </button>
           )}
         </div>
 
@@ -172,7 +172,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
               onChange={(e) => onSearch(e.target.value)}
               onFocus={() => { if (searchQuery) setShowSearchResults(true); }}
               placeholder="Buscar documentos..." 
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-gray-800 dark:text-white transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-gradient-to-r from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 dark:text-white transition-all duration-200 shadow-sm hover:shadow-md"
             />
 
             {/* Dropdown de Resultados */}
@@ -226,7 +226,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
         <div className="flex items-center gap-3">
           <button 
             onClick={toggleTheme}
-            className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="p-2.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-110"
             title={isDarkMode ? "Modo Claro" : "Modo Escuro"}
           >
             {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
@@ -265,7 +265,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
           <div className="relative" ref={profileMenuRef}>
             <button 
               onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-              className="flex items-center gap-3 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-transparent focus:outline-none"
+              className="flex items-center gap-3 p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <div className="text-right hidden md:block">
                 <div className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-none">{user.name}</div>
@@ -275,15 +275,15 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                   <span className="capitalize">{user.department || user.role.toLowerCase()}</span>
                 </div>
               </div>
-              <div className="w-9 h-9 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center text-blue-700 dark:text-blue-200 font-bold border-2 border-white dark:border-gray-600 shadow-sm overflow-hidden shrink-0">
-                 {user.avatar ? <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" /> : user.name.charAt(0)}
-              </div>
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-full flex items-center justify-center text-white font-bold border-2 border-white dark:border-gray-600 shadow-lg shadow-blue-500/30 overflow-hidden shrink-0">
+                  {user.avatar ? <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" /> : user.name.charAt(0).toUpperCase()}
+               </div>
               <ChevronDown size={16} className={`text-gray-400 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
             </button>
             
             {/* Dropdown Menu */}
             {isProfileMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-2 z-50 animate-in fade-in zoom-in-95 duration-100 origin-top-right">
+              <div className="absolute right-0 top-full mt-2 w-72 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-3 z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
                  {/* Mobile Info (visible mostly on small screens inside dropdown) */}
                  <div className="md:hidden px-4 py-3 border-b border-gray-100 dark:border-gray-700 mb-2">
                     <p className="text-sm font-bold text-gray-900 dark:text-white">{user.name}</p>
@@ -291,33 +291,33 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                  </div>
 
                  <div className="space-y-1">
-                   <button 
-                     onClick={() => {
-                        onOpenProfile();
-                        setIsProfileMenuOpen(false);
-                     }}
-                     className="flex items-center w-full px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-gray-700/50 hover:text-blue-700 dark:hover:text-blue-400 rounded-lg transition-colors group"
-                   >
-                     <div className="p-1.5 bg-gray-100 dark:bg-gray-700 rounded-md mr-3 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
-                        <UserCircle size={18} className="text-gray-500 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
-                     </div>
-                     Editar Perfil
-                   </button>
+                    <button 
+                      onClick={() => {
+                         onOpenProfile();
+                         setIsProfileMenuOpen(false);
+                      }}
+                      className="flex items-center w-full px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 dark:hover:from-gray-700 dark:hover:to-gray-600 hover:text-blue-700 dark:hover:text-blue-400 rounded-xl transition-all duration-200 group hover:shadow-md"
+                    >
+                      <div className="p-2 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-xl mr-3 group-hover:from-blue-100 group-hover:to-blue-200 dark:group-hover:from-blue-900/30 dark:group-hover:to-blue-900/40 transition-all duration-200">
+                         <UserCircle size={18} className="text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                      </div>
+                      Editar Perfil
+                    </button>
                    
                    <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2"></div>
 
-                   <button 
-                     onClick={() => {
-                        onLogout();
-                        setIsProfileMenuOpen(false);
-                     }}
-                     className="flex items-center w-full px-4 py-2.5 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors group"
-                   >
-                     <div className="p-1.5 bg-red-50 dark:bg-red-900/10 rounded-md mr-3 group-hover:bg-red-100 dark:group-hover:bg-red-900/30 transition-colors">
-                        <LogOut size={18} className="text-red-500 dark:text-red-400" />
-                     </div>
-                     Sair do Sistema
-                   </button>
+                    <button 
+                      onClick={() => {
+                         onLogout();
+                         setIsProfileMenuOpen(false);
+                      }}
+                      className="flex items-center w-full px-4 py-3 text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 dark:hover:from-red-900/20 dark:hover:to-red-900/30 rounded-xl transition-all duration-200 group hover:shadow-md"
+                    >
+                      <div className="p-2 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/10 dark:to-red-900/20 rounded-xl mr-3 group-hover:from-red-100 group-hover:to-red-200 dark:group-hover:from-red-900/30 dark:group-hover:to-red-900/40 transition-all duration-200">
+                         <LogOut size={18} className="text-red-500 dark:text-red-400" />
+                      </div>
+                      Sair do Sistema
+                    </button>
                  </div>
               </div>
             )}
