@@ -12,11 +12,7 @@
     }
   },
   "build": {
-    "env": {
-      "VITE_SUPABASE_URL": "@supabase_url",
-      "VITE_SUPABASE_ANON_KEY": "@supabase_anon_key",
-      "VITE_AUTH_MODE": "@auth_mode"
-    }
+    "env": {}
   },
   "headers": [
     {

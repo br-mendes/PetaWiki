@@ -8,8 +8,8 @@ on:
 env:
   VERCEL_ENV: production
   VERCEL_URL: https://petawiki.vercel.app
-  VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}$
-  VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}$
+  VITE_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  VITE_SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
   VITE_AUTH_MODE: db
 
 jobs:
