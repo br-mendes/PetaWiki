@@ -100,28 +100,28 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
 
   return (
     <>
-      <header className="h-16 bg-gradient-to-r from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-6 sticky top-0 z-30 transition-all duration-300 shadow-lg shadow-blue-100/50 dark:shadow-gray-900/50 backdrop-blur-md">
+      <header className="h-14 sm:h-16 bg-gradient-to-r from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between px-3 sm:px-6 sticky top-0 z-30 transition-all duration-300 shadow-lg shadow-blue-100/50 dark:shadow-gray-900/50 backdrop-blur-md">
         
         {/* Left: Logo & Menu Trigger */}
-        <div className="flex items-center gap-4">
-          <div 
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div
             onClick={onNavigateHome}
-            className="flex items-center gap-3 cursor-pointer mr-4"
+            className="flex items-center gap-2 sm:gap-3 cursor-pointer mr-0 sm:mr-4"
           >
             {showExpandedLogo ? (
-              <img 
-                src={systemSettings.logoExpandedUrl} 
-                alt="Logo" 
-                className="h-10 w-auto object-contain rounded" 
+              <img
+                src={systemSettings.logoExpandedUrl}
+                alt="Logo"
+                className="h-8 sm:h-10 w-auto object-contain rounded"
               />
             ) : (
               <>
-                <img 
-                  src={systemSettings.logoCollapsedUrl} 
-                  alt="Logo" 
-                  className="w-8 h-8 object-contain rounded shrink-0" 
+                <img
+                  src={systemSettings.logoCollapsedUrl}
+                  alt="Logo"
+                  className="w-6 h-6 sm:w-8 sm:h-8 object-contain rounded shrink-0"
                 />
-                <span className="font-bold text-lg text-blue-900 dark:text-blue-400 hidden md:block leading-tight">
+                <span className="font-bold text-base sm:text-lg text-blue-900 dark:text-blue-400 hidden sm:block leading-tight">
                   {systemSettings.appName}
                 </span>
               </>
@@ -131,14 +131,14 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
           {isNavbarMode ? (
              /* NAVBAR MODE: Dropdown Menu Trigger */
              <div className="relative" ref={navDropdownRef}>
-                 <button 
-                   onClick={() => setIsNavDropdownOpen(!isNavDropdownOpen)}
-                   className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${isNavDropdownOpen ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 hover:from-gray-200 hover:to-gray-300 dark:hover:from-gray-700 dark:hover:to-gray-600 text-gray-700 dark:text-gray-300 hover:shadow-md'}`}
-                 >
-                   <Menu size={18} />
-                   <span className="hidden sm:inline">Navegar</span>
-                   <ChevronDown size={14} className={`transition-transform duration-200 ${isNavDropdownOpen ? 'rotate-180' : ''}`} />
-                 </button>
+                <button
+                  onClick={() => setIsNavDropdownOpen(!isNavDropdownOpen)}
+                  className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 ${isNavDropdownOpen ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg shadow-blue-500/30' : 'bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 hover:from-gray-200 hover:to-gray-300 dark:hover:from-gray-700 dark:hover:to-gray-600 text-gray-700 dark:text-gray-300 hover:shadow-md'}`}
+                >
+                  <Menu size={16} />
+                  <span className="hidden sm:inline">Navegar</span>
+                  <ChevronDown size={12} className={`transition-transform duration-200 ${isNavDropdownOpen ? 'rotate-180' : ''}`} />
+                </button>
 
                 {isNavDropdownOpen && (
                   <div className="absolute top-full left-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-100">
@@ -152,27 +152,27 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
              </div>
           ) : (
              /* SIDEBAR MODE: Drawer Trigger */
-              <button 
-                 onClick={() => setIsMenuOpen(true)}
-                 className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg text-sm font-semibold transition-all duration-200 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:-translate-y-0.5"
-              >
-                 <Menu size={18} />
-                 <span className="hidden sm:inline">Biblioteca</span>
-              </button>
+             <button
+                onClick={() => setIsMenuOpen(true)}
+                className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg text-xs sm:text-sm font-semibold transition-all duration-200 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:-translate-y-0.5"
+             >
+                <Menu size={16} />
+                <span className="hidden sm:inline">Biblioteca</span>
+             </button>
           )}
         </div>
 
         {/* Center: Search Bar (Resized to max-w-sm) */}
-        <div className="flex-1 max-w-md px-4 hidden md:block" ref={searchContainerRef}>
+        <div className="flex-1 max-w-md px-2 sm:px-4 block" ref={searchContainerRef}>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={searchQuery}
               onChange={(e) => onSearch(e.target.value)}
               onFocus={() => { if (searchQuery) setShowSearchResults(true); }}
-              placeholder="Buscar documentos..." 
-              className="w-full pl-10 pr-4 py-2.5 bg-gradient-to-r from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 dark:text-white transition-all duration-200 shadow-sm hover:shadow-md"
+              placeholder={window.innerWidth < 640 ? "Buscar..." : "Buscar documentos..."}
+              className="w-full pl-10 pr-3 py-2 sm:pr-4 sm:py-2.5 bg-gradient-to-r from-gray-50 to-white dark:from-gray-900 dark:to-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-400 dark:text-white transition-all duration-200 shadow-sm hover:shadow-md"
             />
 
             {/* Dropdown de Resultados */}
@@ -223,13 +223,13 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
         </div>
 
         {/* Right: User Controls */}
-        <div className="flex items-center gap-3">
-          <button 
+        <div className="flex items-center gap-1.5 sm:gap-3">
+          <button
             onClick={toggleTheme}
-            className="p-2.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-110"
+            className="p-1.5 sm:p-2.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg sm:rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 transition-all duration-200 hover:scale-110"
             title={isDarkMode ? "Modo Claro" : "Modo Escuro"}
           >
-            {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
           </button>
 
           <NotificationsBell
@@ -267,23 +267,23 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
               onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
               className="flex items-center gap-3 p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <div className="text-right hidden md:block">
-                <div className="text-sm font-medium text-gray-800 dark:text-gray-200 leading-none">{user.name}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center justify-end gap-1">
-                  <Shield size={10} />
+              <div className="text-right hidden sm:block">
+                <div className="text-xs sm:text-sm font-medium text-gray-800 dark:text-gray-200 leading-none">{user.name}</div>
+                <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-0.5 sm:mt-1 flex items-center justify-end gap-1">
+                  <Shield size={8} />
                   {/* CHANGED: Show Department instead of Role */}
                   <span className="capitalize">{user.department || user.role.toLowerCase()}</span>
                 </div>
               </div>
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-full flex items-center justify-center text-white font-bold border-2 border-white dark:border-gray-600 shadow-lg shadow-blue-500/30 overflow-hidden shrink-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-full flex items-center justify-center text-white font-bold border-2 border-white dark:border-gray-600 shadow-lg shadow-blue-500/30 overflow-hidden shrink-0">
                   {user.avatar ? <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" /> : user.name.charAt(0).toUpperCase()}
                </div>
-              <ChevronDown size={16} className={`text-gray-400 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
+               <ChevronDown size={14} className={`text-gray-400 transition-transform duration-200 ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
             </button>
             
             {/* Dropdown Menu */}
             {isProfileMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-72 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-3 z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+              <div className="absolute right-0 top-full mt-2 w-64 sm:w-72 bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 p-2 sm:p-3 z-50 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
                  {/* Mobile Info (visible mostly on small screens inside dropdown) */}
                  <div className="md:hidden px-4 py-3 border-b border-gray-100 dark:border-gray-700 mb-2">
                     <p className="text-sm font-bold text-gray-900 dark:text-white">{user.name}</p>
@@ -291,30 +291,30 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
                  </div>
 
                  <div className="space-y-1">
-                    <button 
+                    <button
                       onClick={() => {
                          onOpenProfile();
                          setIsProfileMenuOpen(false);
                       }}
-                      className="flex items-center w-full px-4 py-3 text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 dark:hover:from-gray-700 dark:hover:to-gray-600 hover:text-blue-700 dark:hover:text-blue-400 rounded-xl transition-all duration-200 group hover:shadow-md"
+                      className="flex items-center w-full px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-blue-100 dark:hover:from-gray-700 dark:hover:to-gray-600 hover:text-blue-700 dark:hover:text-blue-400 rounded-xl transition-all duration-200 group hover:shadow-md"
                     >
-                      <div className="p-2 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-xl mr-3 group-hover:from-blue-100 group-hover:to-blue-200 dark:group-hover:from-blue-900/30 dark:group-hover:to-blue-900/40 transition-all duration-200">
-                         <UserCircle size={18} className="text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+                      <div className="p-1.5 sm:p-2 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 rounded-xl mr-2 sm:mr-3 group-hover:from-blue-100 group-hover:to-blue-200 dark:group-hover:from-blue-900/30 dark:group-hover:to-blue-900/40 transition-all duration-200">
+                         <UserCircle size={16} className="text-gray-600 dark:text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
                       </div>
                       Editar Perfil
                     </button>
                    
                    <div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-2"></div>
 
-                    <button 
+                    <button
                       onClick={() => {
                          onLogout();
                          setIsProfileMenuOpen(false);
                       }}
-                      className="flex items-center w-full px-4 py-3 text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 dark:hover:from-red-900/20 dark:hover:to-red-900/30 rounded-xl transition-all duration-200 group hover:shadow-md"
+                      className="flex items-center w-full px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-semibold text-red-600 dark:text-red-400 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 dark:hover:from-red-900/20 dark:hover:to-red-900/30 rounded-xl transition-all duration-200 group hover:shadow-md"
                     >
-                      <div className="p-2 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/10 dark:to-red-900/20 rounded-xl mr-3 group-hover:from-red-100 group-hover:to-red-200 dark:group-hover:from-red-900/30 dark:group-hover:to-red-900/40 transition-all duration-200">
-                         <LogOut size={18} className="text-red-500 dark:text-red-400" />
+                      <div className="p-1.5 sm:p-2 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/10 dark:to-red-900/20 rounded-xl mr-2 sm:mr-3 group-hover:from-red-100 group-hover:to-red-200 dark:group-hover:from-red-900/30 dark:group-hover:to-red-900/40 transition-all duration-200">
+                         <LogOut size={16} className="text-red-500 dark:text-red-400" />
                       </div>
                       Sair do Sistema
                     </button>
@@ -332,12 +332,12 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
           <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setIsMenuOpen(false)}></div>
           
           {/* Drawer Panel */}
-          <div className="relative w-80 bg-white dark:bg-gray-900 h-full shadow-2xl animate-in slide-in-from-left duration-200">
-             <div className="absolute top-2 right-2 z-50">
-                <button onClick={() => setIsMenuOpen(false)} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-300">
-                   <X size={20} />
-                </button>
-             </div>
+          <div className="relative w-72 sm:w-80 bg-white dark:bg-gray-900 h-full shadow-2xl animate-in slide-in-from-left duration-200">
+              <div className="absolute top-3 right-3 z-50">
+                 <button onClick={() => setIsMenuOpen(false)} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    <X size={20} />
+                 </button>
+              </div>
              
              <div className="h-full flex flex-col">
                 <Sidebar 
