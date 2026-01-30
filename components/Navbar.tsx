@@ -28,6 +28,7 @@ interface NavbarProps {
   // Navigation
   onNavigateToAnalytics: () => void;
   onNavigateToReviewCenter?: () => void;
+  onNavigateToNotifications?: () => void;
   // Search
   searchQuery: string;
   onSearch: (query: string) => void;
@@ -236,6 +237,7 @@ export const Navbar: React.FC<NavbarProps> = (props) => {
             userId={user.id}
             onOpenDocumentById={props.onOpenDocumentById}
             onOpenReviewCenterByDocId={props.onOpenReviewCenterByDocId}
+            onNavigateToNotifications={props.onNavigateToNotifications}
           />
 
           {user.role === 'ADMIN' && (

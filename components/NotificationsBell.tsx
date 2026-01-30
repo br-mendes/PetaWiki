@@ -17,9 +17,10 @@ export const NotificationsBell: React.FC<{
   userId: string;
   onOpenDocumentById?: (docId: string) => void | Promise<void>;
   onOpenReviewCenterByDocId?: (docId: string) => void | Promise<void>;
+  onNavigateToNotifications?: () => void;
   limit?: number;
   placement?: 'top' | 'bottom';
-}> = ({ userId, onOpenDocumentById, onOpenReviewCenterByDocId, limit = 30, placement = 'bottom' }) => {
+}> = ({ userId, onOpenDocumentById, onOpenReviewCenterByDocId, onNavigateToNotifications, limit = 30, placement = 'bottom' }) => {
   const toast = useToast();
   const [open, setOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
@@ -154,19 +155,23 @@ export const NotificationsBell: React.FC<{
     }
   };
 
-  return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        onClick={async () => {
-          const next = !open;
-          setOpen(next);
-          if (next) await load({ silent: true });
-        }}
-        className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300"
-        title="Notificacoes"
-        aria-label="Notificacoes"
-      >
+   return (
+     <div ref={ref} className="relative">
+       <button
+         type="button"
+         onClick={() => {
+           if (onNavigateToNotifications) {
+             onNavigateToNotifications();
+           } else {
+             const next = !open;
+             setOpen(next);
+             if (next) load({ silent: true });
+           }
+         }}
+         className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300"
+         title="Notificacoes"
+         aria-label="Notificacoes"
+       >
         <Bell size={20} />
         {unreadCount > 0 && (
           <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-[11px] flex items-center justify-center">

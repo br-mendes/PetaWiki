@@ -13,6 +13,7 @@ interface HeaderProps {
   userId: string;
   onOpenDocumentById: (docId: string) => void | Promise<void>;
   onOpenReviewCenterByDocId?: (docId: string) => void | Promise<void>;
+  onNavigateToNotifications?: () => void;
 
   showNotifications?: boolean;
 }
@@ -121,6 +122,7 @@ export const Header: React.FC<HeaderProps> = ({
             userId={userId}
             onOpenDocumentById={onOpenDocumentById}
             onOpenReviewCenterByDocId={onOpenReviewCenterByDocId}
+            onNavigateToNotifications={onNavigateToNotifications}
           />
         </div>
       )}

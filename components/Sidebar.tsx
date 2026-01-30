@@ -47,6 +47,7 @@ interface SidebarProps {
   isDarkMode: boolean;
   onNavigateToAnalytics: () => void;
   onNavigateToReviewCenter?: () => void;
+  onNavigateToNotifications?: () => void;
   onOpenDocumentById?: (docId: string) => void | Promise<void>;
   onOpenReviewCenterByDocId?: (docId: string) => void | Promise<void>;
   // Search Context
@@ -475,6 +476,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   userId={user.id}
                   onOpenDocumentById={onOpenDocumentById}
                   onOpenReviewCenterByDocId={onOpenReviewCenterByDocId}
+                  onNavigateToNotifications={onNavigateToNotifications}
                   placement="top"
                 />
               </div>

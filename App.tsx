@@ -11,11 +11,12 @@ import { DocumentEditor } from './components/DocumentEditor';
 import { LazyWrapper } from './components/LazyWrapper';
 import { LazyComponents } from './components/LazyComponents';
 import { LoginPage } from './components/LoginPage';
+import { NotificationsPage } from './components/NotificationsPage';
 import { Role, Document, User, DocumentTemplate, SystemSettings, DocumentVersion } from './types';
 import { MOCK_TEMPLATES, DEFAULT_SYSTEM_SETTINGS, MOCK_USERS } from './constants';
 import { supabase } from './lib/supabase';
-import { 
-  buildCategoryTree, 
+import {
+  buildCategoryTree,
   getCategoryPath,
   generateSlug
 } from './lib/hierarchy';
@@ -35,7 +36,8 @@ type ViewState =
   | 'TEMPLATE_SELECTION'
   | 'ANALYTICS'
   | 'REVIEW_CENTER'
-  | 'ADMIN_SETTINGS';
+  | 'ADMIN_SETTINGS'
+  | 'NOTIFICATIONS';
 
 const SESSION_KEY = 'peta_wiki_session';
 const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutos em milissegundos
@@ -172,6 +174,11 @@ const AppContent = () => {
         const m = path.match(/^\/revisoes\/([^/?#]+)$/);
         if (m) setReviewCenterDocId(m[1]);
         setCurrentView('REVIEW_CENTER');
+        return;
+      }
+
+      if (path === '/notificacoes' || path.startsWith('/notificacoes')) {
+        setCurrentView('NOTIFICATIONS');
         return;
       }
 
@@ -389,6 +396,9 @@ const AppContent = () => {
       case 'REVIEW_CENTER':
         if (reviewCenterDocId) newPath = `/revisoes/${reviewCenterDocId}`;
         else newPath = '/revisoes';
+        break;
+      case 'NOTIFICATIONS':
+        newPath = '/notificacoes';
         break;
     }
 
@@ -1634,6 +1644,10 @@ const toggleFavorites = () => {
   setCurrentView('HOME');
 };
 
+  const navigateToNotifications = useCallback(() => {
+    navigate('/notificacoes');
+  }, [navigate]);
+
   const commonProps = {
     categories: categoryTree,
     documents: visibleDocumentsFiltered,
@@ -1653,6 +1667,7 @@ const toggleFavorites = () => {
     isDarkMode,
     onNavigateToAnalytics: navigateToAnalytics,
     onNavigateToReviewCenter: () => openReviewCenter(null),
+    onNavigateToNotifications,
     activeCategoryId,
     setCategories,
     onDropDocument: moveDocumentToCategory,
@@ -1692,6 +1707,7 @@ const toggleFavorites = () => {
                   userId={currentUser.id}
                   onOpenDocumentById={openDocumentById}
                   onOpenReviewCenterByDocId={openReviewCenter}
+                  onNavigateToNotifications={navigateToNotifications}
                   showNotifications={false}
               />
           )}
@@ -1865,11 +1881,11 @@ const toggleFavorites = () => {
           )}
 
           {(currentView === 'DOCUMENT_EDIT' || currentView === 'DOCUMENT_CREATE') && (isAdminOrEditor) && (
-            <DocumentEditor 
+            <DocumentEditor
               document={currentView === 'DOCUMENT_EDIT' ? selectedDocument : null}
               user={currentUser}
               onSave={handleSaveDocument}
-              onCancel={() => { 
+              onCancel={() => {
                 if (selectedDocument) {
                   navigateToDocument(selectedDocument.id);
                 } else {
@@ -1877,11 +1893,20 @@ const toggleFavorites = () => {
                 }
               }}
               categories={categoryTree}
-              allCategories={categories} 
+              allCategories={categories}
               initialCategoryId={currentView === 'DOCUMENT_CREATE' ? (activeCategoryId ?? selectedDocument?.categoryId) : selectedDocument?.categoryId}
               initialContent={currentView === 'DOCUMENT_CREATE' ? newDocTemplate?.content : undefined}
               initialTags={currentView === 'DOCUMENT_CREATE' ? newDocTemplate?.tags : undefined}
               onChangeCategory={(id) => setActiveCategoryId(id)}
+            />
+          )}
+
+          {currentView === 'NOTIFICATIONS' && currentUser && (
+            <NotificationsPage
+              userId={currentUser.id}
+              onOpenDocumentById={openDocumentById}
+              onOpenReviewCenterByDocId={openReviewCenter}
+              onBack={() => setCurrentView('HOME')}
             />
           )}
         </main>
@@ -1947,6 +1972,7 @@ const App = () => {
           <Route path="/novo" element={<AppContent />} />
           <Route path="/analytics" element={<AppContent />} />
           <Route path="/admin" element={<AppContent />} />
+          <Route path="/notificacoes" element={<AppContent />} />
           <Route path="/revisoes" element={<AppContent />} />
           <Route path="/revisoes/:docId" element={<AppContent />} />
           <Route path="*" element={<AppContent />} />
