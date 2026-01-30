@@ -853,10 +853,6 @@ const searchParams: any = {
 
   // --- Sincronização do Título da Aba (Browser Tab) ---
   useEffect(() => {
-    const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-    if (link) {
-      link.href = systemSettings.logoCollapsedUrl;
-    }
     // Sincroniza o título da aba: AppName > LandingTitle (H1) > Default
     document.title = systemSettings.appName || systemSettings.landingTitle || 'Peta Wiki';
   }, [systemSettings]);
