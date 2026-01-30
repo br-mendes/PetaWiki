@@ -31,7 +31,8 @@ type ViewState =
   | 'DOCUMENT_CREATE'
   | 'TEMPLATE_SELECTION'
   | 'ANALYTICS'
-  | 'REVIEW_CENTER';
+  | 'REVIEW_CENTER'
+  | 'ADMIN_SETTINGS';
 
 const SESSION_KEY = 'peta_wiki_session';
 const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutos em milissegundos
@@ -51,11 +52,6 @@ const AppContent = () => {
     AdminSettings,
     UserProfile,
   } = LazyComponents;
-
-  const openReviewCenter = useCallback((docId?: string | null) => {
-    setReviewCenterDocId(docId ?? null);
-    setCurrentView('REVIEW_CENTER');
-  }, []);
 
   // Auth & System State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -135,8 +131,18 @@ const AppContent = () => {
   // Modal State
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [categoryModalParentId, setCategoryModalParentId] = useState<string | null>(null);
-  const [isAdminSettingsOpen, setIsAdminSettingsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [settingsReturnView, setSettingsReturnView] = useState<ViewState>('HOME');
+
+  const openReviewCenter = useCallback((docId?: string | null) => {
+    setReviewCenterDocId(docId ?? null);
+    setCurrentView('REVIEW_CENTER');
+  }, []);
+
+  const openAdminSettings = useCallback(() => {
+    setSettingsReturnView(currentView);
+    setCurrentView('ADMIN_SETTINGS');
+  }, [currentView]);
   
   // Confirmation Modal
   const [confirmModal, setConfirmModal] = useState<{
@@ -1312,7 +1318,7 @@ const toggleFavorites = () => {
     onCreateCategory: (pid: string | null) => { setCategoryModalParentId(pid); setIsCategoryModalOpen(true); },
     onDeleteCategory: handleDeleteCategory,
     systemSettings,
-    onOpenSettings: () => setIsAdminSettingsOpen(true),
+    onOpenSettings: openAdminSettings,
     onLogout: () => handleLogout(false),
     onOpenProfile: () => setIsProfileOpen(true),
     toggleTheme: handleToggleTheme,
@@ -1420,6 +1426,32 @@ const toggleFavorites = () => {
             </LazyWrapper>
           )}
 
+          {currentView === 'ADMIN_SETTINGS' && currentUser.role === 'ADMIN' && (
+            <LazyWrapper>
+              <AdminSettings
+                mode="page"
+                isOpen={true}
+                onClose={() => setCurrentView(settingsReturnView)}
+                settings={systemSettings}
+                onSaveSettings={handleSaveSettingsGlobal}
+                users={users}
+                onUpdateUserRole={handleUpdateUserRole}
+                onUpdateUserDetails={handleUpdateUserDetails}
+                onDeleteUser={handleDeleteUser}
+                onAddUser={handleAddUser}
+                categories={categories}
+                onUpdateCategory={handleUpdateCategory}
+                onDeleteCategory={handleDeleteCategory}
+                onAddCategory={handleSaveCategory}
+                trashDocuments={trashDocuments}
+                onRestoreDocument={handleRestoreDocument}
+                onPermanentDeleteDocument={handlePermanentDeleteDocument}
+                actorUserId={currentUser.id}
+                onOpenReviewCenter={(docId) => openReviewCenter(docId)}
+              />
+            </LazyWrapper>
+          )}
+
           {currentView === 'TEMPLATE_SELECTION' && (
             <LazyWrapper>
               <TemplateSelector 
@@ -1469,29 +1501,6 @@ const toggleFavorites = () => {
           categories={categories}
           user={currentUser}
           onSave={handleSaveCategory}
-        />
-      </LazyWrapper>
-
-      <LazyWrapper>
-        <AdminSettings 
-          isOpen={isAdminSettingsOpen}
-          onClose={() => setIsAdminSettingsOpen(false)}
-          settings={systemSettings}
-          onSaveSettings={handleSaveSettingsGlobal}
-          users={users}
-          onUpdateUserRole={handleUpdateUserRole}
-          onUpdateUserDetails={handleUpdateUserDetails}
-          onDeleteUser={handleDeleteUser}
-          onAddUser={handleAddUser}
-          categories={categories}
-          onUpdateCategory={handleUpdateCategory}
-          onDeleteCategory={handleDeleteCategory}
-          onAddCategory={handleSaveCategory}
-          trashDocuments={trashDocuments}
-          onRestoreDocument={handleRestoreDocument}
-          onPermanentDeleteDocument={handlePermanentDeleteDocument}
-          actorUserId={currentUser.id}
-          onOpenReviewCenter={(docId) => openReviewCenter(docId)}
         />
       </LazyWrapper>
 
