@@ -867,11 +867,11 @@ const searchParams: any = {
     }
   }, []);
 
-   // Initial Fetch
-   useEffect(() => {
-     async function fetchData() {
-       console.log('Starting fetch data...');
-       setIsLoading(true);
+  // Initial Fetch
+  useEffect(() => {
+    console.log('Starting fetch data...');
+    async function fetchData() {
+      setIsLoading(true);
  try {
         const [docsRes, cats, usersRes, settingsRes] = await Promise.all([
             supabase.from("documents").select("*"), // Traz TODOS, inclusive deletados

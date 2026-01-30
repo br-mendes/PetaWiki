@@ -245,6 +245,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isDarkMode,
   onNavigateToAnalytics,
   onNavigateToReviewCenter,
+  onNavigateToNotifications,
   onOpenDocumentById,
   onOpenReviewCenterByDocId,
   searchQuery,

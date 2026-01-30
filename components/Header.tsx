@@ -26,6 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
   userId,
   onOpenDocumentById,
   onOpenReviewCenterByDocId,
+  onNavigateToNotifications,
   showNotifications = true
 }) => {
   const [showResults, setShowResults] = useState(false);
