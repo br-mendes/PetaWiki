@@ -266,6 +266,15 @@ const AppContent = () => {
     return () => clearTimeout(timeoutId);
   }, [params, isAuthenticated, categories.length, documents.length]); // Include documents.length to refetch if needed
 
+  // Force document view update when document is found
+  useEffect(() => {
+    const doc = documents.find(d => d.id === selectedDocId) || null;
+    if (params.docId && selectedDocId && doc) {
+      console.log('Document found and selectedDocument is available, updating view');
+      setCurrentView(params.action === 'editar' ? 'DOCUMENT_EDIT' : 'DOCUMENT_VIEW');
+    }
+  }, [params.docId, params.action, selectedDocId, documents]);
+
   // Helper functions for navigation
   const navigateToCategory = useCallback((categoryId: string | null) => {
     if (categoryId) {
@@ -1229,7 +1238,18 @@ const handleUpdateAvatar = async (base64: string) => {
 
   // --- Document & Category Handlers ---
 
+  // Enhanced selectedDocument calculation
   const selectedDocument = documents.find(d => d.id === selectedDocId) || null;
+
+  // Add logging to debug selectedDocument
+  React.useEffect(() => {
+    console.log('State update:', {
+      selectedDocId,
+      documentsCount: documents.length,
+      selectedDocument: selectedDocument ? {id: selectedDocument.id, title: selectedDocument.title} : null,
+      currentView
+    });
+  }, [selectedDocId, selectedDocument, currentView]);
   const isAdminOrEditor = currentUser?.role === 'ADMIN' || currentUser?.role === 'EDITOR';
 
   const handleSelectDocument = (document: Document) => {
