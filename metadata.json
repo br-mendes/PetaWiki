@@ -1,0 +1,5 @@
+{
+  "name": "Peta Wiki",
+  "description": "Um sistema wiki interno robusto e de código aberto, com organização hierárquica de documentos, controle de acesso baseado em funções (RBAC), análises e sugestões impulsionadas por IA.",
+  "requestFramePermissions": []
+}
