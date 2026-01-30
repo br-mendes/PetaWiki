@@ -177,18 +177,10 @@ export const NotificationsBell: React.FC<{
 
         {open && (
           <div
-            className={`fixed w-96 max-w-[90vw] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl overflow-hidden z-[100] ${
-              placement === 'top' ? 'bottom-full mb-2' : 'mt-2'
-            }`}
-            style={{
-              left: '50%',
-              transform: 'translateX(-50%)',
-              bottom: placement === 'top' ? 'auto' : 'unset',
-              top: placement === 'top' ? 'unset' : '100%',
-              marginLeft: '-128px'
-            }}
+            className={`absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-80 md:w-96 max-w-[90vw] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl overflow-hidden z-[100]`}
           >
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-3 h-3 border-l border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transform rotate-45 mb-[-6px]"></div>
+           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
             <div className="font-semibold text-gray-900 dark:text-gray-100">
               Notificacoes
             </div>
