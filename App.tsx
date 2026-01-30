@@ -11,6 +11,7 @@ import { DocumentEditor } from './components/DocumentEditor';
 import { LazyWrapper } from './components/LazyWrapper';
 import { LazyComponents } from './components/LazyComponents';
 import { LoginPage } from './components/LoginPage';
+import { NotificationsPage } from './components/NotificationsPage';
 import { Role, Document, User, DocumentTemplate, SystemSettings, DocumentVersion } from './types';
 import { MOCK_TEMPLATES, DEFAULT_SYSTEM_SETTINGS, MOCK_USERS } from './constants';
 import { supabase } from './lib/supabase';
@@ -55,7 +56,6 @@ const AppContent = () => {
     CategoryModal,
     AdminSettings,
     UserProfile,
-    NotificationsPage,
   } = LazyComponents;
 
   // Auth & System State
@@ -871,10 +871,11 @@ const searchParams: any = {
     }
   }, []);
 
-  // Initial Fetch
-  useEffect(() => {
-    async function fetchData() {
-      setIsLoading(true);
+   // Initial Fetch
+   useEffect(() => {
+     async function fetchData() {
+       console.log('Starting fetch data...');
+       setIsLoading(true);
  try {
         const [docsRes, cats, usersRes, settingsRes] = await Promise.all([
             supabase.from("documents").select("*"), // Traz TODOS, inclusive deletados
@@ -981,9 +982,10 @@ const searchParams: any = {
         console.error("Erro ao carregar dados:", e);
         if (users.length === 0) setUsers(MOCK_USERS);
         toast.error("Erro ao conectar ao banco de dados.");
-      } finally {
-        setIsLoading(false);
-      }
+       } finally {
+         console.log('Fetch data completed');
+         setIsLoading(false);
+       }
     }
     fetchData();
   }, [refreshTemplates]);
@@ -998,10 +1000,12 @@ const searchParams: any = {
   }, [navigateToHome]);
 
 const handleLogin = (usernameInput: string, passwordInput: string) => {
+    console.log('handleLogin called with:', usernameInput);
     // Mock authentication mode
     if (AUTH_MODE === 'mock') {
       if (usernameInput === 'admin' && passwordInput === 'admin') {
         const admin = { ...MOCK_USERS[0], isMock: true, themePreference: 'light' as const };
+        console.log('Mock login successful, setting user:', admin);
         setCurrentUser(admin);
         setIsAuthenticated(true);
         setIsDarkMode(false);
@@ -1015,6 +1019,7 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
 
     // Database authentication mode
     const foundUser = users.find(u => u.username === usernameInput || u.email === usernameInput);
+    console.log('Database auth - foundUser:', foundUser);
     if (foundUser && foundUser.password === passwordInput) {
       
       // Determina preferência, default para light se nulo
@@ -1610,14 +1615,14 @@ const targetCategoryId =
       });
   };
 
-  if (isLoading) {
-    return (
-        <div className="flex flex-col h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 text-blue-600 gap-4">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            <p className="animate-pulse">Sincronizando sistema...</p>
-        </div>
-    );
-  }
+   if (isLoading) {
+     return (
+         <div className="flex flex-col h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 text-blue-600 gap-4">
+             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+             <p className="animate-pulse">Carregando dados...</p>
+         </div>
+     );
+   }
 
   if (!isAuthenticated || !currentUser) {
     return <LoginPage onLogin={handleLogin} onSignUp={handleSignUp} settings={systemSettings} />;
@@ -1886,14 +1891,12 @@ const toggleFavorites = () => {
           )}
 
           {currentView === 'NOTIFICATIONS' && currentUser && (
-            <LazyWrapper>
-              <NotificationsPage
-                userId={currentUser.id}
-                onOpenDocumentById={openDocumentById}
-                onOpenReviewCenterByDocId={openReviewCenter}
-                onBack={() => setCurrentView('HOME')}
-              />
-            </LazyWrapper>
+            <NotificationsPage
+              userId={currentUser.id}
+              onOpenDocumentById={openDocumentById}
+              onOpenReviewCenterByDocId={openReviewCenter}
+              onBack={() => setCurrentView('HOME')}
+            />
           )}
         </main>
       </div>
