@@ -218,15 +218,15 @@ export const NotificationsBell: React.FC<{
                 {items.map((n) => (
                   <div
                     key={n.id}
-                    className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors ${
-                      n.is_read ? "" : "bg-blue-50/40 dark:bg-blue-900/10"
+                    className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-all ${
+                      n.is_read ? "" : "bg-blue-50/40 dark:bg-blue-900/10 border-l-2 border-blue-500"
                     }`}
                   >
                     <div className="flex items-start gap-3">
                       <span
                         className={`mt-1 w-2.5 h-2.5 rounded-full ${typeDotClass(
                           n.type
-                        )}`}
+                        )} shrink-0`}
                       />
                       <button
                         type="button"
@@ -235,18 +235,42 @@ export const NotificationsBell: React.FC<{
                         title={n.document_id ? "Abrir documento" : "Abrir"}
                       >
                         <div className="flex items-center gap-2">
-                          <FileText size={16} className="text-gray-400 shrink-0" />
-                          <div className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
-                            {n.title}
-                          </div>
+                          {n.document_id ? (
+                            <>
+                              <div className="p-1.5 bg-blue-100 dark:bg-blue-900/40 rounded-lg">
+                                <FileText size={16} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                              </div>
+                              <div className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate flex items-center gap-1">
+                                {n.title}
+                                <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full shrink-0">
+                                  Documento
+                                </span>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <FileText size={16} className="text-gray-400 shrink-0" />
+                              <div className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
+                                {n.title}
+                              </div>
+                            </>
+                          )}
                         </div>
                         {n.body && (
-                          <div className="text-xs text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
+                          <div className="text-xs text-gray-600 dark:text-gray-300 mt-1.5 line-clamp-2 ml-9">
                             {n.body}
                           </div>
                         )}
-                        <div className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
-                          {formatDate(n.created_at)}
+                        <div className="flex items-center gap-2 mt-1.5 ml-9">
+                          <div className="text-[11px] text-gray-400 dark:text-gray-500">
+                            {formatDate(n.created_at)}
+                          </div>
+                          {n.document_id && (
+                            <span className="text-[10px] text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                              <FileText size={10} />
+                              Clique para abrir
+                            </span>
+                          )}
                         </div>
                       </button>
 
@@ -254,7 +278,7 @@ export const NotificationsBell: React.FC<{
                         <button
                           type="button"
                           onClick={() => markRead(n.id)}
-                          className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300"
+                          className="p-1.5 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 shrink-0"
                           title="Marcar como lida"
                         >
                           <Check size={16} />
