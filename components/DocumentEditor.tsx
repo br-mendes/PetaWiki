@@ -12,7 +12,7 @@ import { getCategoryPath } from '../lib/hierarchy';
 interface DocumentEditorProps {
   document?: Document | null; // Null means new doc
   user: User;
-  onSave: (doc: Partial<Document>) => void;
+  onSave: (doc: Partial<Document> & { saveAsTemplate?: boolean; templateName?: string }) => void;
   onCancel: () => void;
   categories: Category[]; // Tree structure for selection
   allCategories: Category[]; // Flat list for path lookup
@@ -40,6 +40,9 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   const [title, setTitle] = useState(document?.title || '');
   const [content, setContent] = useState(document?.content || initialContent);
  const [categoryId, setCategoryId] = useState(document?.categoryId || initialCategoryId || '');
+
+  const [saveAsTemplate, setSaveAsTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState('');
   
   useEffect(() => setCategoryId(document?.categoryId || initialCategoryId || ''), [document?.categoryId, initialCategoryId]);
   
@@ -166,9 +169,23 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   const isNew = !document;
   const isAdmin = user.role === 'ADMIN';
 
+  useEffect(() => {
+    if (!isAdmin || !isNew) return;
+    if (!saveAsTemplate) return;
+    if (!templateName.trim()) {
+      setTemplateName((title || '').trim());
+    }
+  }, [isAdmin, isNew, saveAsTemplate, title]);
+
   const submit = (status?: Document['status']) => {
-    const payload: Partial<Document> = { title, content, categoryId, tags };
+    const payload: Partial<Document> & { saveAsTemplate?: boolean; templateName?: string } = { title, content, categoryId, tags };
     if (status) payload.status = status;
+
+    if (isAdmin && isNew && saveAsTemplate) {
+      payload.saveAsTemplate = true;
+      payload.templateName = templateName.trim() || title.trim();
+    }
+
     onSave(payload);
   };
 
@@ -210,6 +227,27 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
               <Copy size={16} className="mr-2" />
               Salvar Template
             </Button>
+          )}
+
+          {isAdmin && isNew && (
+            <div className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
+              <label className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={saveAsTemplate}
+                  onChange={(e) => setSaveAsTemplate(e.target.checked)}
+                />
+                Salvar como modelo
+              </label>
+              {saveAsTemplate && (
+                <input
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                  placeholder="Nome do modelo"
+                  className="ml-2 w-56 px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                />
+              )}
+            </div>
           )}
           
           {isNew ? (

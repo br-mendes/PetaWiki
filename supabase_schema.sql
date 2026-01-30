@@ -39,6 +39,39 @@ CREATE INDEX IF NOT EXISTS idx_password_resets_lookup ON public.password_resets(
 ALTER TABLE IF EXISTS public.documents
   ADD COLUMN IF NOT EXISTS review_note text;
 
+-- Templates de documentos (modelos)
+CREATE TABLE IF NOT EXISTS public.document_templates (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  category text NOT NULL DEFAULT 'OTHER',
+  description text,
+  icon text,
+  content text NOT NULL,
+  tags text[] NOT NULL DEFAULT '{}',
+  is_global boolean NOT NULL DEFAULT true,
+  department_id text,
+  usage_count integer NOT NULL DEFAULT 0,
+  is_active boolean NOT NULL DEFAULT true,
+  created_by uuid,
+  created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL,
+  updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_document_templates_active ON public.document_templates(is_active);
+CREATE INDEX IF NOT EXISTS idx_document_templates_global ON public.document_templates(is_global);
+
+CREATE OR REPLACE FUNCTION public.increment_template_usage(p_template_id uuid)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  UPDATE public.document_templates
+  SET usage_count = usage_count + 1,
+      updated_at = NOW()
+  WHERE id = p_template_id;
+END;
+$$;
+
 -- Nova tabela de Activity Logs
 CREATE TABLE IF NOT EXISTS public.activity_logs (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

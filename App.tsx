@@ -23,6 +23,7 @@ import { Modal } from './components/Modal';
 import { Button } from './components/Button';
 import { AlertTriangle, FileText } from 'lucide-react';
 import { sanitizeHtml } from './lib/sanitize';
+import { createTemplate as dbCreateTemplate, listTemplates as dbListTemplates, incrementTemplateUsage } from './lib/templates';
 
 type ViewState =
   | 'HOME'
@@ -606,6 +607,16 @@ const searchParams: any = {
     document.title = systemSettings.appName || systemSettings.landingTitle || 'Peta Wiki';
   }, [systemSettings]);
 
+  const refreshTemplates = useCallback(async () => {
+    try {
+      const t = await dbListTemplates();
+      setTemplates(t);
+    } catch (e) {
+      // Fallback: keep mock templates if DB isn't ready
+      setTemplates(MOCK_TEMPLATES);
+    }
+  }, []);
+
   // Initial Fetch
   useEffect(() => {
     async function fetchData() {
@@ -709,8 +720,8 @@ const searchParams: any = {
         if (settingsRes.data?.settings) {
             setSystemSettings(settingsRes.data.settings);
         }
-        
-        setTemplates(MOCK_TEMPLATES); 
+
+        await refreshTemplates();
         
       } catch (e) {
         console.error("Erro ao carregar dados:", e);
@@ -721,7 +732,7 @@ const searchParams: any = {
       }
     }
     fetchData();
-  }, []);
+  }, [refreshTemplates]);
 
   useEffect(() => {
     const handler = () => {
@@ -1016,6 +1027,15 @@ const handleUpdateAvatar = async (base64: string) => {
     return visibleDocumentsFiltered.filter((d) => d.categoryId === activeCategoryId);
   }, [activeCategoryId, visibleDocumentsFiltered]);
 
+  const availableTemplates = useMemo(() => {
+    if (!currentUser) return [];
+    if (currentUser.role === 'ADMIN') return templates;
+    if (currentUser.role === 'EDITOR') {
+      return templates.filter((t) => t.isGlobal || !t.departmentId || t.departmentId === currentUser.department);
+    }
+    return [];
+  }, [currentUser, templates]);
+
  const handleSaveCategory = async (data: Partial<Category>) => {
     const parentId = data.parentId ?? null;
     const departmentId = data.departmentId ?? (currentUser?.department ?? null);
@@ -1084,6 +1104,10 @@ const handleUpdateAvatar = async (base64: string) => {
   };
 
   const handleTemplateSelect = (template: DocumentTemplate | null) => {
+    if (template?.id) {
+      // Best-effort: ignore failures
+      void incrementTemplateUsage(template.id);
+    }
     setNewDocTemplate(template ? {
         content: template.content,
         tags: template.tags,
@@ -1092,21 +1116,34 @@ const handleUpdateAvatar = async (base64: string) => {
     setCurrentView('DOCUMENT_CREATE');
   };
   
-  const handleCreateTemplate = (doc: Partial<Document>) => {
-    const newTemplate: DocumentTemplate = {
-      id: `tpl_${Date.now()}`,
-      name: doc.title || 'Novo Template',
-      category: 'OTHER',
-      content: doc.content || '',
-      tags: doc.tags || [],
-      isGlobal: true,
-      usageCount: 0,
-    };
-    setTemplates([...templates, newTemplate]);
-    toast.success('Template salvo.');
+  const handleCreateTemplate = async (doc: Partial<Document> & { templateName?: string }) => {
+    if (!currentUser) return;
+    if (currentUser.role !== 'ADMIN') return;
+    if (isMockUser(currentUser)) {
+      toast.info('Modo mock: salvamento de modelo desativado.');
+      return;
+    }
+
+    const name = (doc.templateName || doc.title || '').trim() || 'Novo Modelo';
+    try {
+      await dbCreateTemplate({
+        name,
+        content: doc.content || '',
+        tags: doc.tags || [],
+        category: 'OTHER',
+        isGlobal: true,
+        createdBy: currentUser.id,
+      });
+
+      await refreshTemplates();
+      toast.success('Modelo salvo e disponível para editores.');
+    } catch (e: any) {
+      console.error(e);
+      toast.error(`Falha ao salvar modelo: ${e?.message || 'erro'}`);
+    }
   };
 
-  const handleSaveDocument = async (data: Partial<Document>) => {
+  const handleSaveDocument = async (data: Partial<Document> & { saveAsTemplate?: boolean; templateName?: string }) => {
     if (!currentUser) return;
     
 const targetCategoryId = 
@@ -1172,6 +1209,25 @@ const targetCategoryId =
               await supabase.from('categories').update({ doc_count: currentCat.docCount + 1 }).eq('id', targetCategoryId);
           }
           toast.success('Documento salvo e persistido.');
+
+          if (!isMockUser(currentUser) && currentUser.role === 'ADMIN' && data.saveAsTemplate) {
+            const name = (data.templateName || newDoc.title || '').trim() || 'Novo Modelo';
+            try {
+              await dbCreateTemplate({
+                name,
+                content: newDoc.content,
+                tags: newDoc.tags,
+                category: 'OTHER',
+                isGlobal: true,
+                createdBy: currentUser.id,
+              });
+              await refreshTemplates();
+              toast.success('Modelo criado a partir do documento.');
+            } catch (e: any) {
+              console.error(e);
+              toast.error(`Documento criado, mas falha ao salvar modelo: ${e?.message || 'erro'}`);
+            }
+          }
           if (!isMockUser(currentUser) && newDoc.status === "PENDING_REVIEW") {
             const admins = users.filter(u => u.role === "ADMIN" && !String(u.id).startsWith("mock_"));
             await Promise.all(
@@ -1548,7 +1604,7 @@ const toggleFavorites = () => {
           {currentView === 'TEMPLATE_SELECTION' && (
             <LazyWrapper>
               <TemplateSelector 
-                templates={templates}
+                templates={availableTemplates}
                 onSelect={handleTemplateSelect}
                 onCancel={() => setCurrentView(activeCategoryId ? 'CATEGORY_VIEW' : 'HOME')}
               />
