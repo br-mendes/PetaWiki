@@ -14,24 +14,9 @@ export default defineConfig(({ mode }) => {
       sourcemap: false,
       rollupOptions: {
         output: {
-          // Dividir o bundle em chunks menores para melhor performance
-          manualChunks: {
-            // Core libraries
-            vendor: ['react', 'react-dom', 'lucide-react'],
-            
-            // UI components
-            ui: ['./components/Button.tsx', './components/Modal.tsx', './components/Toast.tsx'],
-            
-            // Heavy components
-            admin: ['./components/AdminSettings.tsx'],
-            review: ['./components/ReviewCenter.tsx'],
-            drafts: ['./components/DraftManager.tsx'],
-            analytics: ['./components/AnalyticsDashboard.tsx'],
-            templates: ['./components/TemplateSelector.tsx'],
-            profile: ['./components/UserProfile.tsx'],
-            
-            // Utils
-            utils: ['./lib/supabase.ts', './lib/export.ts'],
+          // Avoid manual chunk cycles; let Rollup split app code naturally.
+          manualChunks(id) {
+            if (id.includes('node_modules')) return 'vendor';
           }
         }
       }
