@@ -26,6 +26,7 @@ import { sanitizeHtml } from './lib/sanitize';
 
 type ViewState =
   | 'HOME'
+  | 'CATEGORY_VIEW'
   | 'DOCUMENT_VIEW'
   | 'DOCUMENT_EDIT'
   | 'DOCUMENT_CREATE'
@@ -989,7 +990,7 @@ const handleUpdateAvatar = async (base64: string) => {
     setSelectedDocId(null);
     setSearchQuery('');
     setSearchResultDocs(null);
-    setCurrentView('HOME');
+    setCurrentView('CATEGORY_VIEW');
 
     const docsInCat = visibleDocuments.filter(d => d.categoryId === category.id);
     if (docsInCat.length === 0 && isAdminOrEditor && (!category.children || category.children.length === 0)) {
@@ -1339,7 +1340,13 @@ const toggleFavorites = () => {
     documents: visibleDocumentsFiltered,
     onSelectCategory: handleSelectCategory,
     onSelectDocument: handleSelectDocument,
-    onNavigateHome: () => setCurrentView('HOME'),
+    onNavigateHome: () => {
+      setCurrentView('HOME');
+      setActiveCategoryId(null);
+      setSelectedDocId(null);
+      setSearchQuery('');
+      setSearchResultDocs(null);
+    },
     user: currentUser,
     onCreateCategory: (pid: string | null) => { setCategoryModalParentId(pid); setIsCategoryModalOpen(true); },
     onDeleteCategory: handleDeleteCategory,
@@ -1397,69 +1404,7 @@ const toggleFavorites = () => {
         <main className="flex-1 overflow-y-auto">
           {currentView === 'HOME' && (
             <div className="p-8 max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
-              {activeCategoryId ? (
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <h2 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
-                        {activeCategory?.name || 'Categoria'}
-                      </h2>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">
-                        {activeCategoryId ? getCategoryPath(activeCategoryId, categories) : ''}
-                      </p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-                        {activeCategoryDocs.length} documento(s)
-                      </p>
-                    </div>
-
-                    {isAdminOrEditor && (
-                      <Button
-                        onClick={() => setCurrentView('TEMPLATE_SELECTION')}
-                        className="shrink-0"
-                      >
-                        Criar Documento
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="mt-6">
-                    {activeCategoryDocs.length === 0 ? (
-                      <div className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg p-10 text-center text-gray-500 dark:text-gray-400">
-                        <div className="mx-auto mb-3 w-10 h-10 rounded-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-                          <FileText size={18} className="opacity-60" />
-                        </div>
-                        <div className="text-sm">Nenhum documento nesta pasta.</div>
-                      </div>
-                    ) : (
-                      <div className="divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                        {activeCategoryDocs.map((doc) => (
-                          <button
-                            key={doc.id}
-                            onClick={() => handleSelectDocument(doc)}
-                            className="w-full text-left px-4 py-3 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                            title={doc.title}
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className="mt-0.5 text-gray-400">
-                                <FileText size={16} />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <div className="font-medium text-gray-900 dark:text-white truncate">
-                                  {doc.title}
-                                </div>
-                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                  Atualizado em {new Date(doc.updatedAt).toLocaleString()}
-                                </div>
-                              </div>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-              systemSettings.showWelcomeCard !== false && (
+              {systemSettings.showWelcomeCard !== false && (
                 <div className="text-center py-8">
                   <img 
                     src={systemSettings.logoCollapsedUrl} 
@@ -1482,13 +1427,73 @@ const toggleFavorites = () => {
                     </button>
                   )}
                 </div>
-              ))}
+              )}
               {/* Home Content Personalizado */}
               {systemSettings.homeContent && (
                 <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
                    <div className="prose prose-blue dark:prose-invert max-w-none text-gray-800 dark:text-gray-300" dangerouslySetInnerHTML={{ __html: safeHomeContent }} />
                 </div>
               )}
+            </div>
+          )}
+
+          {currentView === 'CATEGORY_VIEW' && activeCategoryId && (
+            <div className="p-8 max-w-5xl mx-auto space-y-6 animate-in fade-in duration-300">
+              <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white truncate">
+                      {activeCategory?.name || 'Categoria'}
+                    </h2>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">
+                      {getCategoryPath(activeCategoryId, categories)}
+                    </p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
+                      {activeCategoryDocs.length} documento(s)
+                    </p>
+                  </div>
+
+                  {isAdminOrEditor && (
+                    <Button onClick={() => setCurrentView('TEMPLATE_SELECTION')} className="shrink-0">
+                      Criar Documento
+                    </Button>
+                  )}
+                </div>
+
+                <div className="mt-6">
+                  {activeCategoryDocs.length === 0 ? (
+                    <div className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg p-10 text-center text-gray-500 dark:text-gray-400">
+                      <div className="mx-auto mb-3 w-10 h-10 rounded-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+                        <FileText size={18} className="opacity-60" />
+                      </div>
+                      <div className="text-sm">Nenhum documento nesta pasta.</div>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                      {activeCategoryDocs.map((doc) => (
+                        <button
+                          key={doc.id}
+                          onClick={() => handleSelectDocument(doc)}
+                          className="w-full text-left px-4 py-3 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                          title={doc.title}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="mt-0.5 text-gray-400">
+                              <FileText size={16} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="font-medium text-gray-900 dark:text-white truncate">{doc.title}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                Atualizado em {new Date(doc.updatedAt).toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
@@ -1545,7 +1550,7 @@ const toggleFavorites = () => {
               <TemplateSelector 
                 templates={templates}
                 onSelect={handleTemplateSelect}
-                onCancel={() => setCurrentView('HOME')}
+                onCancel={() => setCurrentView(activeCategoryId ? 'CATEGORY_VIEW' : 'HOME')}
               />
             </LazyWrapper>
           )}
