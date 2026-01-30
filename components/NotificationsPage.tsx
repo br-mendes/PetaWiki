@@ -23,10 +23,6 @@ export const NotificationsPage: React.FC<{
   const [loading, setLoading] = React.useState(false);
   const [items, setItems] = React.useState<NotificationItem[]>([]);
 
-  React.useEffect(() => {
-    console.log('NotificationsPage mounted with userId:', userId);
-  }, [userId]);
-
   const formatDate = (iso: string) => {
     try {
       return new Intl.DateTimeFormat("pt-BR", {

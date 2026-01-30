@@ -11,7 +11,6 @@ import { DocumentEditor } from './components/DocumentEditor';
 import { LazyWrapper } from './components/LazyWrapper';
 import { LazyComponents } from './components/LazyComponents';
 import { LoginPage } from './components/LoginPage';
-import { NotificationsPage } from './components/NotificationsPage';
 import { Role, Document, User, DocumentTemplate, SystemSettings, DocumentVersion } from './types';
 import { MOCK_TEMPLATES, DEFAULT_SYSTEM_SETTINGS, MOCK_USERS } from './constants';
 import { supabase } from './lib/supabase';
@@ -56,6 +55,7 @@ const AppContent = () => {
     CategoryModal,
     AdminSettings,
     UserProfile,
+    NotificationsPage,
   } = LazyComponents;
 
   // Auth & System State
@@ -150,7 +150,6 @@ const AppContent = () => {
 
     const processUrl = async () => {
       const path = window.location.pathname;
-      console.log('Processing URL:', path, 'params:', params);
 
       // Handle special routes first
       if (path === '/novo' || path.startsWith('/novo')) {
@@ -178,7 +177,6 @@ const AppContent = () => {
       }
 
       if (path === '/notificacoes' || path.startsWith('/notificacoes')) {
-        console.log('Navigating to NOTIFICATIONS page');
         setCurrentView('NOTIFICATIONS');
         return;
       }
@@ -187,7 +185,6 @@ const AppContent = () => {
       if (params.categoryId && categories.length > 0) {
         const cat = findCategoryById(categories, params.categoryId);
         if (cat) {
-          console.log('Found category:', cat);
           setActiveCategoryId(cat.id);
           setCurrentView('CATEGORY_VIEW');
           setSelectedDocId(null);
@@ -197,11 +194,8 @@ const AppContent = () => {
 
       // Handle document from URL
       if (params.docId) {
-        console.log('Looking for document:', params.docId);
-        
         const doc = documents.find(d => d.id === params.docId);
         if (doc) {
-          console.log('Found document in state:', doc);
           setSelectedDocId(doc.id);
           setActiveCategoryId(doc.categoryId || null);
           setCurrentView(params.action === 'editar' ? 'DOCUMENT_EDIT' : 'DOCUMENT_VIEW');
@@ -211,7 +205,6 @@ const AppContent = () => {
         // Fetch document from DB - wait for categories to load
         if (categories.length > 0) {
           try {
-            console.log('Fetching document from DB:', params.docId);
             const { data, error } = await supabase
               .from("documents")
               .select("*")
@@ -219,12 +212,10 @@ const AppContent = () => {
               .single();
             
             if (error) {
-              console.error('DB error:', error);
               throw error;
             }
-            
+
             if (data) {
-              console.log('Fetched document:', data);
               const fallbackCatId = defaultCategoryId || categories[0]?.id || null;
               const mappedDoc = {
                 id: data.id,
@@ -248,7 +239,6 @@ const AppContent = () => {
               setActiveCategoryId(mappedDoc.categoryId || null);
               setCurrentView(params.action === 'editar' ? 'DOCUMENT_EDIT' : 'DOCUMENT_VIEW');
             } else {
-              console.log('Document not found in DB');
               navigate('/');
             }
           } catch (e) {
@@ -261,7 +251,6 @@ const AppContent = () => {
 
       // Handle root path (/)
       if (!params.categoryId && !params.docId && (path === '/' || path === '')) {
-        console.log('Setting to HOME');
         setCurrentView('HOME');
         setActiveCategoryId(null);
         setSelectedDocId(null);
@@ -278,7 +267,6 @@ const AppContent = () => {
   useEffect(() => {
     const doc = documents.find(d => d.id === selectedDocId) || null;
     if (params.docId && selectedDocId && doc) {
-      console.log('Document found and selectedDocument is available, updating view');
       setCurrentView(params.action === 'editar' ? 'DOCUMENT_EDIT' : 'DOCUMENT_VIEW');
     }
   }, [params.docId, params.action, selectedDocId, documents]);
@@ -1252,14 +1240,9 @@ const handleUpdateAvatar = async (base64: string) => {
   // Enhanced selectedDocument calculation
   const selectedDocument = documents.find(d => d.id === selectedDocId) || null;
 
-  // Add logging to debug selectedDocument
+  // Track selectedDocument changes
   React.useEffect(() => {
-    console.log('State update:', {
-      selectedDocId,
-      documentsCount: documents.length,
-      selectedDocument: selectedDocument ? {id: selectedDocument.id, title: selectedDocument.title} : null,
-      currentView
-    });
+    // Track changes for debugging purposes
   }, [selectedDocId, selectedDocument, currentView]);
   const isAdminOrEditor = currentUser?.role === 'ADMIN' || currentUser?.role === 'EDITOR';
 
@@ -1903,12 +1886,14 @@ const toggleFavorites = () => {
           )}
 
           {currentView === 'NOTIFICATIONS' && currentUser && (
-            <NotificationsPage
-              userId={currentUser.id}
-              onOpenDocumentById={openDocumentById}
-              onOpenReviewCenterByDocId={openReviewCenter}
-              onBack={() => setCurrentView('HOME')}
-            />
+            <LazyWrapper>
+              <NotificationsPage
+                userId={currentUser.id}
+                onOpenDocumentById={openDocumentById}
+                onOpenReviewCenterByDocId={openReviewCenter}
+                onBack={() => setCurrentView('HOME')}
+              />
+            </LazyWrapper>
           )}
         </main>
       </div>
