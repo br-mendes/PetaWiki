@@ -142,15 +142,44 @@ const AppContent = () => {
   const params = useParams<{ categoryId?: string; docId?: string; action?: string }>();
   const [searchParams] = useSearchParams();
 
-  // Sync URL params to app state - simplified version
+  // Single unified useEffect for all URL handling
   useEffect(() => {
     if (!isAuthenticated || !params) return;
 
     const processUrl = async () => {
+      const path = window.location.pathname;
+      console.log('Processing URL:', path, 'params:', params);
+
+      // Handle special routes first
+      if (path === '/novo' || path.startsWith('/novo')) {
+        setCurrentView('DOCUMENT_CREATE');
+        const catParam = searchParams.get('categoria');
+        if (catParam) setActiveCategoryId(catParam);
+        return;
+      }
+
+      if (path === '/analytics' || path.startsWith('/analytics')) {
+        setCurrentView('ANALYTICS');
+        return;
+      }
+
+      if (path === '/admin' || path.startsWith('/admin')) {
+        setCurrentView('ADMIN_SETTINGS');
+        return;
+      }
+
+      if (path === '/revisoes' || path.startsWith('/revisoes')) {
+        const m = path.match(/^\/revisoes\/([^/?#]+)$/);
+        if (m) setReviewCenterDocId(m[1]);
+        setCurrentView('REVIEW_CENTER');
+        return;
+      }
+
       // Handle category from URL
       if (params.categoryId && categories.length > 0) {
         const cat = findCategoryById(categories, params.categoryId);
         if (cat) {
+          console.log('Found category:', cat);
           setActiveCategoryId(cat.id);
           setCurrentView('CATEGORY_VIEW');
           setSelectedDocId(null);
@@ -160,56 +189,71 @@ const AppContent = () => {
 
       // Handle document from URL
       if (params.docId) {
+        console.log('Looking for document:', params.docId);
+        
         const doc = documents.find(d => d.id === params.docId);
         if (doc) {
+          console.log('Found document in state:', doc);
           setSelectedDocId(doc.id);
           setActiveCategoryId(doc.categoryId || null);
           setCurrentView(params.action === 'editar' ? 'DOCUMENT_EDIT' : 'DOCUMENT_VIEW');
           return;
         }
 
-        // Fetch document from DB
-        try {
-          const { data, error } = await supabase
-            .from("documents")
-            .select("*")
-            .eq("id", params.docId)
-            .single();
-          
-          if (error) throw error;
-          if (data) {
-            const fallbackCatId = defaultCategoryId || categories[0]?.id || null;
-            const mappedDoc = {
-              id: data.id,
-              title: data.title,
-              content: data.content,
-              categoryId: data.category_id || fallbackCatId || "",
-              status: data.status,
-              authorId: data.author_id,
-              createdAt: data.created_at,
-              updatedAt: data.updated_at,
-              deletedAt: data.deleted_at,
-              views: data.views,
-              tags: data.tags || [],
-              categoryPath: getCategoryPath(data.category_id, categories),
-              versions: [],
-              reviewNote: data.review_note ?? null,
-            };
+        // Fetch document from DB - wait for categories to load
+        if (categories.length > 0) {
+          try {
+            console.log('Fetching document from DB:', params.docId);
+            const { data, error } = await supabase
+              .from("documents")
+              .select("*")
+              .eq("id", params.docId)
+              .single();
             
-            setDocuments(prev => prev.some(d => d.id === mappedDoc.id) ? prev : [...prev, mappedDoc]);
-            setSelectedDocId(mappedDoc.id);
-            setActiveCategoryId(mappedDoc.categoryId || null);
-            setCurrentView(params.action === 'editar' ? 'DOCUMENT_EDIT' : 'DOCUMENT_VIEW');
+            if (error) {
+              console.error('DB error:', error);
+              throw error;
+            }
+            
+            if (data) {
+              console.log('Fetched document:', data);
+              const fallbackCatId = defaultCategoryId || categories[0]?.id || null;
+              const mappedDoc = {
+                id: data.id,
+                title: data.title,
+                content: data.content,
+                categoryId: data.category_id || fallbackCatId || "",
+                status: data.status,
+                authorId: data.author_id,
+                createdAt: data.created_at,
+                updatedAt: data.updated_at,
+                deletedAt: data.deleted_at,
+                views: data.views,
+                tags: data.tags || [],
+                categoryPath: getCategoryPath(data.category_id, categories),
+                versions: [],
+                reviewNote: data.review_note ?? null,
+              };
+              
+              setDocuments(prev => prev.some(d => d.id === mappedDoc.id) ? prev : [...prev, mappedDoc]);
+              setSelectedDocId(mappedDoc.id);
+              setActiveCategoryId(mappedDoc.categoryId || null);
+              setCurrentView(params.action === 'editar' ? 'DOCUMENT_EDIT' : 'DOCUMENT_VIEW');
+            } else {
+              console.log('Document not found in DB');
+              navigate('/');
+            }
+          } catch (e) {
+            console.error('Failed to fetch document:', e);
+            navigate('/');
           }
-        } catch (e) {
-          console.error('Failed to fetch document:', e);
-          navigate('/');
         }
         return;
       }
 
-      // Handle root path
-      if (!params.categoryId && !params.docId) {
+      // Handle root path (/)
+      if (!params.categoryId && !params.docId && (path === '/' || path === '')) {
+        console.log('Setting to HOME');
         setCurrentView('HOME');
         setActiveCategoryId(null);
         setSelectedDocId(null);
@@ -217,43 +261,10 @@ const AppContent = () => {
       }
     };
 
-    processUrl();
-  }, [params.categoryId, params.docId, params.action, isAuthenticated, categories.length]); // Remove documents from deps
-
-  // Handle special routes that don't use params
-  useEffect(() => {
-    if (!isAuthenticated) return;
-
-    const path = window.location.pathname;
-
-    // Handle /novo
-    if (path === '/novo' || path.startsWith('/novo')) {
-      setCurrentView('DOCUMENT_CREATE');
-      const catParam = searchParams.get('categoria');
-      if (catParam) setActiveCategoryId(catParam);
-      return;
-    }
-
-    // Handle /analytics
-    if (path === '/analytics' || path.startsWith('/analytics')) {
-      setCurrentView('ANALYTICS');
-      return;
-    }
-
-    // Handle /admin
-    if (path === '/admin' || path.startsWith('/admin')) {
-      setCurrentView('ADMIN_SETTINGS');
-      return;
-    }
-
-    // Handle /revisoes
-    if (path === '/revisoes' || path.startsWith('/revisoes')) {
-      const m = path.match(/^\/revisoes\/([^/?#]+)$/);
-      if (m) setReviewCenterDocId(m[1]);
-      setCurrentView('REVIEW_CENTER');
-      return;
-    }
-  }, [isAuthenticated, searchParams]);
+    // Small delay to ensure state is ready
+    const timeoutId = setTimeout(processUrl, 100);
+    return () => clearTimeout(timeoutId);
+  }, [params, isAuthenticated, categories.length, documents.length]); // Include documents.length to refetch if needed
 
   // Helper functions for navigation
   const navigateToCategory = useCallback((categoryId: string | null) => {
