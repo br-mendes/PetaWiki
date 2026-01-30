@@ -165,6 +165,32 @@ const AppContent = () => {
         } else {
           setCurrentView('DOCUMENT_VIEW');
         }
+      } else {
+        // Try to fetch document from DB if not in local state
+        const fetchDocument = async () => {
+          try {
+            const { data, error } = await supabase
+              .from("documents")
+              .select("*")
+              .eq("id", params.docId)
+              .single();
+            
+            if (error) throw error;
+            if (data) {
+              setSelectedDocId(data.id);
+              if (params.action === 'editar') {
+                setCurrentView('DOCUMENT_EDIT');
+              } else {
+                setCurrentView('DOCUMENT_VIEW');
+              }
+            }
+          } catch (e) {
+            console.error('Failed to fetch document:', e);
+            // Redirect to home if document not found
+            navigateToHome();
+          }
+        };
+        fetchDocument();
       }
     }
   }, [params.categoryId, params.docId, params.action, isAuthenticated, categories, documents]);
@@ -998,7 +1024,12 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
     setIsAuthenticated(false);
     setCurrentUser(null);
     setCurrentView('HOME');
+    setActiveCategoryId(null);
+    setSelectedDocId(null);
+    setReviewCenterDocId(null);
     localStorage.removeItem(SESSION_KEY);
+    // Clear URL on logout
+    navigate('/');
     if (isTimeout) toast.info('Sessão expirada.');
     else toast.info('Você saiu do sistema.');
   };
@@ -1692,7 +1723,7 @@ const toggleFavorites = () => {
             </LazyWrapper>
           )}
 
-          {currentView === 'ADMIN_SETTINGS' && currentUser.role === 'ADMIN' && (
+          {currentView === 'ADMIN_SETTINGS' && currentUser && currentUser.role === 'ADMIN' && (
             <LazyWrapper>
               <AdminSettings
                 mode="page"
