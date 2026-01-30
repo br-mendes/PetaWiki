@@ -5,10 +5,9 @@
   "installCommand": "npm install",
   "devCommand": "npm run dev",
   "functions": {
-    "vercel.json": {
-      "runtime": "node20",
-      "maxDuration": 10,
-      "includeFiles": "dist/**"
+    "api/**/*.{ts,js}": {
+      "runtime": "nodejs20.x",
+      "maxDuration": 10
     }
   },
   "build": {
