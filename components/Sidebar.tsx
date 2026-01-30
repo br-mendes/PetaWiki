@@ -475,6 +475,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   userId={user.id}
                   onOpenDocumentById={onOpenDocumentById}
                   onOpenReviewCenterByDocId={onOpenReviewCenterByDocId}
+                  placement="top"
                 />
               </div>
 

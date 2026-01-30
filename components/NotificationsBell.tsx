@@ -18,7 +18,8 @@ export const NotificationsBell: React.FC<{
   onOpenDocumentById?: (docId: string) => void | Promise<void>;
   onOpenReviewCenterByDocId?: (docId: string) => void | Promise<void>;
   limit?: number;
-}> = ({ userId, onOpenDocumentById, onOpenReviewCenterByDocId, limit = 30 }) => {
+  placement?: 'top' | 'bottom';
+}> = ({ userId, onOpenDocumentById, onOpenReviewCenterByDocId, limit = 30, placement = 'bottom' }) => {
   const toast = useToast();
   const [open, setOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
@@ -174,8 +175,12 @@ export const NotificationsBell: React.FC<{
         )}
       </button>
 
-      {open && (
-        <div className="absolute right-0 mt-2 w-96 max-w-[90vw] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl overflow-hidden z-50">
+       {open && (
+         <div
+           className={`absolute right-0 w-96 max-w-[90vw] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl overflow-hidden z-50 ${
+             placement === 'top' ? 'bottom-full mb-2' : 'mt-2'
+           }`}
+         >
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
             <div className="font-semibold text-gray-900 dark:text-gray-100">
               Notificacoes

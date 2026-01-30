@@ -191,6 +191,7 @@ const TreeNode: React.FC<{
   const docCount = (category as any).docCount ?? (category as any).doc_count ?? 0;
   const docs = showDocuments ? docsByCatId?.get(category.id) || [] : [];
   const hasNested = hasChildren || (showDocuments && docs.length > 0);
+  const showBadge = docCount > 0 && (level === 0 || isSelected || isExpanded);
 
   const toggleExpand = (e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -205,6 +206,7 @@ const TreeNode: React.FC<{
             ? "bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800/60 dark:text-blue-200"
             : "bg-transparent border-transparent hover:bg-gray-50 hover:border-gray-200 dark:hover:bg-gray-800/60 dark:hover:border-gray-700 text-gray-800 dark:text-gray-200"
         }`}
+        style={{ paddingLeft: `${Math.min(level, 5) * 10 + 6}px` }}
         draggable
         onDragStart={(e) => {
           e.dataTransfer.setData(CAT_MIME, category.id);
@@ -234,7 +236,7 @@ const TreeNode: React.FC<{
           type="button"
           onClick={toggleExpand}
           title={hasNested ? (isExpanded ? "Recolher" : "Expandir") : ""}
-          className={`mr-1 w-6 h-6 rounded-md flex items-center justify-center transition-colors ${
+          className={`mr-1 w-5 h-5 rounded-md flex items-center justify-center transition-colors ${
             hasNested
               ? "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
               : "text-gray-300 dark:text-gray-700"
@@ -257,12 +259,12 @@ const TreeNode: React.FC<{
         </div>
 
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="text-sm font-medium truncate" title={category.name}>
+          <span className="text-[13px] font-medium leading-snug line-clamp-2" title={category.name}>
             {category.name}
           </span>
         </div>
 
-        {docCount > 0 && (
+        {showBadge && (
           <span className="shrink-0 text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
             {docCount}
           </span>
@@ -351,7 +353,7 @@ const TreeNode: React.FC<{
       </div>
 
       {isExpanded && hasNested && (
-        <div className="ml-4 pl-3 border-l border-gray-200/80 dark:border-gray-700/60">
+        <div className="ml-3 pl-2 border-l border-gray-200/70 dark:border-gray-700/60">
           {children.map((child, idx) => (
             <TreeNode
               key={child.id}
@@ -390,7 +392,7 @@ const TreeNode: React.FC<{
               className="flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-800 dark:text-gray-200"
             >
               <FileText size={14} className="text-gray-400 shrink-0" />
-              <span className="text-sm truncate flex-1 min-w-0">{doc.title}</span>
+              <span className="text-[13px] truncate flex-1 min-w-0">{doc.title}</span>
               {doc.status !== 'PUBLISHED' && (
                 <span
                   className={`w-2 h-2 rounded-full shrink-0 ${doc.status === 'DRAFT' ? 'bg-gray-300' : doc.status === 'REJECTED' ? 'bg-red-400' : 'bg-yellow-400'}`}
@@ -437,7 +439,7 @@ export const CategoryTree: React.FC<CategoryTreeProps> = ({
   }, [documents]);
 
   return (
-    <div className="rounded-xl bg-white/60 dark:bg-gray-800/50">
+    <div className="rounded-xl bg-white/60 dark:bg-gray-800/50 overflow-x-hidden">
       <button
         type="button"
         className="w-full flex items-center py-2 px-2 rounded-lg cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/60 text-gray-800 dark:text-gray-200"
