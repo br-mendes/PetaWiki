@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback, memo } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate, useParams, useSearchParams, Navigate } from 'react-router-dom';
 import { listCategories, createCategory, renameCategory, deleteCategory, type Category } from "./lib/categories";
 import { CategoryTree } from "./components/CategoryTree";
 import { Sidebar } from './components/Sidebar';
@@ -136,16 +137,164 @@ const AppContent = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [settingsReturnView, setSettingsReturnView] = useState<ViewState>('HOME');
 
-  const openReviewCenter = useCallback((docId?: string | null) => {
-    setReviewCenterDocId(docId ?? null);
-    setCurrentView('REVIEW_CENTER');
+  // ========== ROUTING HOOKS ==========
+  const navigate = useNavigate();
+  const params = useParams<{ categoryId?: string; docId?: string; action?: string }>();
+  const [searchParams] = useSearchParams();
+
+  // Sync URL params to app state
+  useEffect(() => {
+    if (!isAuthenticated || categories.length === 0) return;
+
+    // Handle category from URL
+    if (params.categoryId) {
+      const cat = findCategoryById(categories, params.categoryId);
+      if (cat) {
+        setActiveCategoryId(cat.id);
+        setCurrentView('CATEGORY_VIEW');
+      }
+    }
+
+    // Handle document from URL
+    if (params.docId) {
+      const doc = documents.find(d => d.id === params.docId);
+      if (doc) {
+        setSelectedDocId(doc.id);
+        if (params.action === 'editar') {
+          setCurrentView('DOCUMENT_EDIT');
+        } else {
+          setCurrentView('DOCUMENT_VIEW');
+        }
+      }
+    }
+  }, [params.categoryId, params.docId, params.action, isAuthenticated, categories, documents]);
+
+  // Helper functions for navigation
+  const navigateToCategory = useCallback((categoryId: string | null) => {
+    if (categoryId) {
+      navigate(`/categoria/${categoryId}`);
+    } else {
+      navigate('/');
+    }
+  }, [navigate]);
+
+  const navigateToDocument = useCallback((docId: string, action?: 'editar') => {
+    if (action === 'editar') {
+      navigate(`/documento/${docId}/editar`);
+    } else {
+      navigate(`/documento/${docId}`);
+    }
+  }, [navigate]);
+
+  const navigateToCreate = useCallback((categoryId?: string) => {
+    const url = categoryId ? `/novo?categoria=${categoryId}` : '/novo';
+    navigate(url);
+  }, [navigate]);
+
+  const navigateToReview = useCallback((docId?: string) => {
+    if (docId) {
+      navigate(`/revisoes/${docId}`);
+    } else {
+      navigate('/revisoes');
+    }
+  }, [navigate]);
+
+  const navigateToHome = useCallback(() => {
+    navigate('/');
+  }, [navigate]);
+
+  const navigateToAnalytics = useCallback(() => {
+    navigate('/analytics');
+  }, [navigate]);
+
+  const navigateToAdmin = useCallback(() => {
+    navigate('/admin');
+  }, [navigate]);
+
+  // Helper to find category by ID
+  const findCategoryById = React.useCallback((nodes: Category[], id: string): Category | null => {
+    for (const n of nodes) {
+      if (n.id === id) return n;
+      const kids = (n.children || []) as Category[];
+      if (kids.length) {
+        const found = findCategoryById(kids, id);
+        if (found) return found;
+      }
+    }
+    return null;
   }, []);
+
+  // Replace state setters with navigate functions
+  const openReviewCenter = useCallback((docId?: string | null) => {
+    navigateToReview(docId || undefined);
+  }, [navigateToReview]);
 
   const openAdminSettings = useCallback(() => {
     setSettingsReturnView(currentView);
-    setCurrentView('ADMIN_SETTINGS');
-  }, [currentView]);
-  
+    navigateToAdmin();
+  }, [currentView, navigateToAdmin]);
+
+  // Update URL when internal state changes (guard to prevent loops)
+  const updatePath = useCallback((target: string) => {
+    if (window.location.pathname !== target) {
+      window.history.pushState({}, '', target);
+      window.dispatchEvent(new Event('routechange'));
+    }
+  }, []);
+
+  // Override handleSelectDocument to update URL
+  const handleSelectDocumentWithNavigate = useCallback((doc: Document) => {
+    navigateToDocument(doc.id);
+  }, [navigateToDocument]);
+
+  const handleSelectCategoryWithNavigate = useCallback((category: Category) => {
+    setActiveCategoryId(category.id);
+    navigateToCategory(category.id);
+  }, [navigateToCategory]);
+
+  // Sync internal state -> URL
+  useEffect(() => {
+    // Build path based on currentView and state
+    let newPath = '/';
+
+    switch (currentView) {
+      case 'HOME':
+        newPath = '/';
+        break;
+      case 'CATEGORY_VIEW':
+        if (activeCategoryId) newPath = `/categoria/${activeCategoryId}`;
+        break;
+      case 'DOCUMENT_VIEW':
+        if (selectedDocId) newPath = `/documento/${selectedDocId}`;
+        break;
+      case 'DOCUMENT_EDIT':
+        if (selectedDocId) newPath = `/documento/${selectedDocId}/editar`;
+        break;
+      case 'DOCUMENT_CREATE':
+        newPath = '/novo';
+        if (activeCategoryId) newPath += `?categoria=${encodeURIComponent(activeCategoryId)}`;
+        break;
+      case 'ANALYTICS':
+        newPath = '/analytics';
+        break;
+      case 'ADMIN_SETTINGS':
+        newPath = '/admin';
+        break;
+      case 'REVIEW_CENTER':
+        if (reviewCenterDocId) newPath = `/revisoes/${reviewCenterDocId}`;
+        else newPath = '/revisoes';
+        break;
+    }
+
+    updatePath(newPath);
+  }, [
+    currentView,
+    activeCategoryId,
+    selectedDocId,
+    reviewCenterDocId,
+    updatePath
+  ]);
+   
   // Confirmation Modal
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -557,7 +706,7 @@ const searchParams: any = {
     const local = documents.find((d) => d.id === docId);
     if (local) {
       setActiveCategoryId(local.categoryId || null);
-      handleSelectDocument(local);
+      navigateToDocument(local.id);
       return;
     }
 
@@ -590,7 +739,7 @@ const searchParams: any = {
 
       setDocuments((prev) => (prev.some((d) => d.id === mapped.id) ? prev : [...prev, mapped]));
       setActiveCategoryId(mapped.categoryId || null);
-      handleSelectDocument(mapped);
+      navigateToDocument(mapped.id);
     } catch (e: any) {
       console.error(e);
       toast.error("Nao foi possivel abrir o documento da notificacao.");
@@ -736,16 +885,12 @@ const searchParams: any = {
 
   useEffect(() => {
     const handler = () => {
-      setActiveCategoryId(null);
-      setSelectedDocId(null);
-      setSearchQuery('');
-      setSearchResultDocs(null);
-      setCurrentView('HOME');
+      navigateToHome();
     };
 
     window.addEventListener('clearCategoryFilter', handler as any);
     return () => window.removeEventListener('clearCategoryFilter', handler as any);
-  }, []);
+  }, [navigateToHome]);
 
 const handleLogin = (usernameInput: string, passwordInput: string) => {
     // Mock authentication mode
@@ -997,6 +1142,10 @@ const handleUpdateAvatar = async (base64: string) => {
   };
 
   const handleSelectCategory = (category: Category) => {
+    handleSelectCategoryWithNavigate(category);
+  };
+
+  const handleSelectCategoryWithoutNavigate = (category: Category) => {
     setActiveCategoryId(category.id);
     setSelectedDocId(null);
     setSearchQuery('');
@@ -1010,7 +1159,7 @@ const handleUpdateAvatar = async (base64: string) => {
             title: 'Categoria Vazia',
             message: `Nenhum documento aqui. Criar um?`,
             onConfirm: () => {
-                setNewDocTemplate({ content: '', tags: [] }); 
+                setNewDocTemplate({ content: '', tags: [] });
                 setCurrentView('TEMPLATE_SELECTION');
             }
         });
@@ -1105,7 +1254,6 @@ const handleUpdateAvatar = async (base64: string) => {
 
   const handleTemplateSelect = (template: DocumentTemplate | null) => {
     if (template?.id) {
-      // Best-effort: ignore failures
       void incrementTemplateUsage(template.id);
     }
     setNewDocTemplate(template ? {
@@ -1113,7 +1261,7 @@ const handleUpdateAvatar = async (base64: string) => {
         tags: template.tags,
         templateId: template.id
     } : { content: '', tags: [] });
-    setCurrentView('DOCUMENT_CREATE');
+    navigateToCreate(activeCategoryId || undefined);
   };
   
   const handleSaveDocument = async (data: Partial<Document> & { saveAsTemplate?: boolean; templateName?: string }) => {
@@ -1367,14 +1515,10 @@ const toggleFavorites = () => {
   const commonProps = {
     categories: categoryTree,
     documents: visibleDocumentsFiltered,
-    onSelectCategory: handleSelectCategory,
-    onSelectDocument: handleSelectDocument,
+    onSelectCategory: handleSelectCategoryWithNavigate,
+    onSelectDocument: handleSelectDocumentWithNavigate,
     onNavigateHome: () => {
-      setCurrentView('HOME');
-      setActiveCategoryId(null);
-      setSelectedDocId(null);
-      setSearchQuery('');
-      setSearchResultDocs(null);
+      navigateToHome();
     },
     user: currentUser,
     onCreateCategory: (pid: string | null) => { setCategoryModalParentId(pid); setIsCategoryModalOpen(true); },
@@ -1385,7 +1529,7 @@ const toggleFavorites = () => {
     onOpenProfile: () => setIsProfileOpen(true),
     toggleTheme: handleToggleTheme,
     isDarkMode,
-    onNavigateToAnalytics: () => setCurrentView('ANALYTICS'),
+    onNavigateToAnalytics: navigateToAnalytics,
     onNavigateToReviewCenter: () => openReviewCenter(null),
     activeCategoryId,
     setCategories,
@@ -1393,11 +1537,10 @@ const toggleFavorites = () => {
     onDropCategory: moveCategoryToParent,
     onReorderCategory: reorderCategory,
     favoriteDocuments: visibleDocuments.filter(d => favoriteDocIds.includes(d.id)),
+    onToggleFavorites: toggleFavorites,
+    favoriteCount: favoriteDocIds.length,
     onOpenDocumentById: openDocumentById,
-    // NOVO
-     docFilter,
-     onToggleFavorites: toggleFavorites,
-     favoriteCount: favoriteDocIds.length,
+    onOpenReviewCenterByDocId: openReviewCenter,
   };
 
   const isNavbarMode = systemSettings.layoutMode === 'NAVBAR';
@@ -1411,25 +1554,25 @@ const toggleFavorites = () => {
              searchQuery={searchQuery}
              onSearch={setSearchQuery}
              searchResults={searchResultDocs} 
-             onOpenReviewCenterByDocId={(docId) => openReviewCenter(docId)}
-          />
+             onOpenReviewCenterByDocId={openReviewCenter}
+         />
       ) : (
          <Sidebar {...commonProps} searchQuery={searchQuery} />
       )}
 
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         {!isNavbarMode && (
-              <Header 
+              <Header
                   searchQuery={searchQuery}
                   onSearch={setSearchQuery}
                   searchResults={searchResultDocs}
-                  onSelectDocument={handleSelectDocument}
+                  onSelectDocument={handleSelectDocumentWithNavigate}
                   userId={currentUser.id}
                   onOpenDocumentById={openDocumentById}
-                  onOpenReviewCenterByDocId={(docId) => openReviewCenter(docId)}
+                  onOpenReviewCenterByDocId={openReviewCenter}
                   showNotifications={false}
               />
-         )}
+          )}
 
         <main className="flex-1 overflow-y-auto">
           {currentView === 'HOME' && (
@@ -1503,7 +1646,7 @@ const toggleFavorites = () => {
                       {activeCategoryDocs.map((doc) => (
                         <button
                           key={doc.id}
-                          onClick={() => handleSelectDocument(doc)}
+                          onClick={() => handleSelectDocumentWithNavigate(doc)}
                           className="w-full text-left px-4 py-3 bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                           title={doc.title}
                         >
@@ -1580,7 +1723,7 @@ const toggleFavorites = () => {
               <TemplateSelector 
                 templates={availableTemplates}
                 onSelect={handleTemplateSelect}
-                onCancel={() => setCurrentView(activeCategoryId ? 'CATEGORY_VIEW' : 'HOME')}
+                onCancel={() => activeCategoryId ? navigateToCategory(activeCategoryId) : navigateToHome()}
               />
             </LazyWrapper>
           )}
@@ -1589,7 +1732,7 @@ const toggleFavorites = () => {
             <DocumentView 
               document={selectedDocument} 
               user={currentUser}
-              onEdit={() => setCurrentView('DOCUMENT_EDIT')}
+              onEdit={() => navigateToDocument(selectedDocument.id, 'editar')}
               onDelete={() => handleSoftDeleteDocument(selectedDocument)}
               systemSettings={systemSettings}
               onRestoreVersion={handleRestoreVersion}
@@ -1604,7 +1747,13 @@ const toggleFavorites = () => {
               document={currentView === 'DOCUMENT_EDIT' ? selectedDocument : null}
               user={currentUser}
               onSave={handleSaveDocument}
-              onCancel={() => { selectedDocument ? setCurrentView('DOCUMENT_VIEW') : setCurrentView('HOME'); }}
+              onCancel={() => { 
+                if (selectedDocument) {
+                  navigateToDocument(selectedDocument.id);
+                } else {
+                  navigateToHome();
+                }
+              }}
               categories={categoryTree}
               allCategories={categories} 
               initialCategoryId={currentView === 'DOCUMENT_CREATE' ? (activeCategoryId ?? selectedDocument?.categoryId) : selectedDocument?.categoryId}
@@ -1666,9 +1815,11 @@ const toggleFavorites = () => {
 
 const App = () => {
   return (
-    <ToastProvider>
-      <AppContent />
-    </ToastProvider>
+    <BrowserRouter>
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
+    </BrowserRouter>
   );
 };
 
