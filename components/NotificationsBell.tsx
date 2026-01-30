@@ -2,16 +2,7 @@ import React from "react";
 import { Bell, Check, FileText, X } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useToast } from "./Toast";
-
-type NotificationItem = {
-  id: string;
-  title: string;
-  body: string | null;
-  type: string;
-  document_id: string | null;
-  is_read: boolean;
-  created_at: string;
-};
+import type { NotificationItem } from "../types/notifications";
 
 export const NotificationsBell: React.FC<{
   userId: string;

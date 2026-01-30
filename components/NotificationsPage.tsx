@@ -2,16 +2,7 @@ import React from "react";
 import { Bell, Check, FileText, X, ChevronLeft } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useToast } from "./Toast";
-
-type NotificationItem = {
-  id: string;
-  title: string;
-  body: string | null;
-  type: string;
-  document_id: string | null;
-  is_read: boolean;
-  created_at: string;
-};
+import type { NotificationItem } from "../types/notifications";
 
 export const NotificationsPage: React.FC<{
   userId: string;
@@ -169,100 +160,80 @@ export const NotificationsPage: React.FC<{
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        {loading ? (
-          <div className="p-12 text-center text-gray-500 dark:text-gray-400">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-sm">Carregando notificações...</p>
-          </div>
-        ) : items.length === 0 ? (
-          <div className="p-12 text-center text-gray-500 dark:text-gray-400">
-            <Bell size={48} className="mx-auto mb-4 opacity-30" />
-            <p className="text-lg font-medium mb-2">Nenhuma notificação</p>
-            <p className="text-sm">Você não tem notificações por aqui.</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-gray-100 dark:divide-gray-700">
-            {items.map((n) => (
-              <div
-                key={n.id}
-                className={`p-4 sm:p-5 transition-all ${
-                  n.is_read ? "" : "bg-blue-50/40 dark:bg-blue-900/10 border-l-4 border-blue-500"
-                }`}
-              >
-                <div className="flex items-start gap-3 sm:gap-4">
-                  <span
-                    className={`mt-1.5 w-3 h-3 rounded-full ${typeDotClass(
-                      n.type
-                    )} shrink-0`}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {n.document_id && (
-                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-medium rounded-full">
-                            <FileText size={12} />
-                            Documento
+          {loading ? (
+            <div className="p-12 text-center text-gray-500 dark:text-gray-400">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-sm">Carregando notificações...</p>
+            </div>
+          ) : items.length === 0 ? (
+            <div className="p-12 text-center text-gray-500 dark:text-gray-400">
+              <Bell size={48} className="mx-auto mb-4 opacity-30" />
+              <p className="text-lg font-medium mb-2">Nenhuma notificação</p>
+              <p className="text-sm">Você não tem notificações por aqui.</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-100 dark:divide-gray-700">
+              {items.map((n) => (
+                <div
+                  key={n.id}
+                  className={`p-4 sm:p-5 transition-all ${
+                    n.is_read ? "" : "bg-blue-50/40 dark:bg-blue-900/10 border-l-4 border-blue-500"
+                  }`}
+                >
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <span
+                      className={`mt-1.5 w-3 h-3 rounded-full ${typeDotClass(
+                        n.type
+                      )} shrink-0`}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {n.document_id && (
+                            <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 text-xs font-medium rounded-full">
+                              <FileText size={12} />
+                              Documento
+                            </span>
+                          )}
+                          <span className="inline-flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs font-medium rounded-full">
+                            {typeLabel(n.type)}
                           </span>
-                        )}
-                        <span className="inline-flex items-center px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-xs font-medium rounded-full">
-                          {typeLabel(n.type)}
-                        </span>
+                        </div>
+                        <div className="text-[11px] sm:text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                          {formatDate(n.created_at)}
+                        </div>
                       </div>
-                      <div className="text-[11px] sm:text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
-                        {formatDate(n.created_at)}
-                      </div>
-                    </div>
 
-                    {n.document_id && onOpenDocumentById ? (
-                      <button
-                        type="button"
-                        onClick={() => handleOpen(n)}
-                        className="text-left w-full"
-                        title="Abrir documento"
-                      >
-                        <h3 className="font-semibold text-gray-900 dark:text-white truncate mb-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                          {n.title}
-                        </h3>
-                        {n.body && (
-                          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
-                            {n.body}
-                          </p>
-                        )}
-                      </button>
-                    ) : (
-                      <div>
-                        <h3 className="font-semibold text-gray-900 dark:text-white truncate mb-1">
-                          {n.title}
-                        </h3>
-                        {n.body && (
-                          <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
-                            {n.body}
-                          </p>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
-                      <span className="text-[11px] sm:text-xs text-gray-400 dark:text-gray-500">
-                        {n.is_read ? "Lida" : "Não lida"}
-                      </span>
-                      {!n.is_read && (
-                        <button
-                          type="button"
-                          onClick={() => markRead(n.id)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
-                        >
-                          <Check size={14} />
-                          Marcar como lida
-                        </button>
+                      <h3 className={`font-semibold text-gray-900 dark:text-white truncate mb-1 ${onOpenDocumentById && n.document_id ? 'hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer' : ''}`}>
+                        {n.title}
+                      </h3>
+                      {n.body && (
+                        <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+                          {n.body}
+                        </p>
                       )}
+
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 dark:border-gray-700">
+                        <span className="text-[11px] sm:text-xs text-gray-400 dark:text-gray-500">
+                          {n.is_read ? "Lida" : "Não lida"}
+                        </span>
+                        {!n.is_read && (
+                          <button
+                            type="button"
+                            onClick={() => markRead(n.id)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                          >
+                            <Check size={14} />
+                            Marcar como lida
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
       </div>
     </div>
   );

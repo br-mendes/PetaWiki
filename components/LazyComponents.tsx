@@ -1,4 +1,4 @@
-import { lazy } from 'react';
+import { lazy, Suspense } from 'react';
 
 // Componentes pesados carregados sob demanda
 export const AdminSettings = lazy(() => import('./AdminSettings').then(module => ({ default: module.AdminSettings })));
@@ -20,3 +20,4 @@ export const LazyComponents = {
   CategoryModal,
   NotificationsPage,
 };
+
