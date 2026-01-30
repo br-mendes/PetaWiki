@@ -1419,16 +1419,17 @@ const toggleFavorites = () => {
 
       <div className="flex-1 flex flex-col h-full overflow-hidden">
         {!isNavbarMode && (
-             <Header 
-                 searchQuery={searchQuery}
-                 onSearch={setSearchQuery}
-                 searchResults={searchResultDocs}
-                 onSelectDocument={handleSelectDocument}
-                 userId={currentUser.id}
-                 onOpenDocumentById={openDocumentById}
-                 onOpenReviewCenterByDocId={(docId) => openReviewCenter(docId)}
-             />
-        )}
+              <Header 
+                  searchQuery={searchQuery}
+                  onSearch={setSearchQuery}
+                  searchResults={searchResultDocs}
+                  onSelectDocument={handleSelectDocument}
+                  userId={currentUser.id}
+                  onOpenDocumentById={openDocumentById}
+                  onOpenReviewCenterByDocId={(docId) => openReviewCenter(docId)}
+                  showNotifications={false}
+              />
+         )}
 
         <main className="flex-1 overflow-y-auto">
           {currentView === 'HOME' && (

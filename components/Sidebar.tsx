@@ -11,6 +11,7 @@ import { Category, User, SystemSettings, Document } from '../types';
 import { canUserModifyCategory } from '../lib/hierarchy';
 import { createCategory, renameCategory, deleteCategory } from '../lib/categories';
 import { CategoryTree } from './CategoryTree';
+import { NotificationsBell } from './NotificationsBell';
 
 // Mapping string keys from DB/Category to Actual Components
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -46,6 +47,8 @@ interface SidebarProps {
   isDarkMode: boolean;
   onNavigateToAnalytics: () => void;
   onNavigateToReviewCenter?: () => void;
+  onOpenDocumentById?: (docId: string) => void | Promise<void>;
+  onOpenReviewCenterByDocId?: (docId: string) => void | Promise<void>;
   // Search Context
   searchQuery?: string;
   //  NOVO: Favoritos
@@ -241,6 +244,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isDarkMode,
   onNavigateToAnalytics,
   onNavigateToReviewCenter,
+  onOpenDocumentById,
+  onOpenReviewCenterByDocId,
   searchQuery,
   // Novo: favoritos
   docFilter,
@@ -448,7 +453,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
           </div>
           
-          <div className="grid grid-cols-4 gap-1">
+          <div className="grid grid-cols-5 gap-1">
               <button 
                   onClick={onOpenProfile} 
                   title="Meu Perfil"
@@ -464,6 +469,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
               >
                   {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
               </button>
+
+              <div className="flex items-center justify-center">
+                <NotificationsBell
+                  userId={user.id}
+                  onOpenDocumentById={onOpenDocumentById}
+                  onOpenReviewCenterByDocId={onOpenReviewCenterByDocId}
+                />
+              </div>
 
               {user.role === 'ADMIN' ? (
                   <button 

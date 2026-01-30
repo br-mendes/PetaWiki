@@ -177,7 +177,7 @@ const TreeNode: React.FC<{
   onDocumentSelect,
   showDocuments,
 }) => {
-  const [isExpanded, setIsExpanded] = React.useState(level < 2);
+  const [isExpanded, setIsExpanded] = React.useState(level < 1);
   const [menuOpen, setMenuOpen] = React.useState(false);
   const children = category.children || [];
   const hasChildren = children.length > 0;
@@ -190,21 +190,21 @@ const TreeNode: React.FC<{
 
   const docCount = (category as any).docCount ?? (category as any).doc_count ?? 0;
   const docs = showDocuments ? docsByCatId?.get(category.id) || [] : [];
+  const hasNested = hasChildren || (showDocuments && docs.length > 0);
 
   const toggleExpand = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (hasChildren) setIsExpanded((v) => !v);
+    if (hasNested) setIsExpanded((v) => !v);
   };
 
   return (
     <div>
       <div
-        className={`flex items-center gap-2 py-2 px-2 rounded-md cursor-pointer transition-colors group min-w-0 ${
+        className={`flex items-center gap-2 py-2 px-2 rounded-lg cursor-pointer transition-colors group min-w-0 border ${
           isSelected
-            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
-            : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+            ? "bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800/60 dark:text-blue-200"
+            : "bg-transparent border-transparent hover:bg-gray-50 hover:border-gray-200 dark:hover:bg-gray-800/60 dark:hover:border-gray-700 text-gray-800 dark:text-gray-200"
         }`}
-        style={{ paddingLeft: `${level * 20 + 8}px` }}
         draggable
         onDragStart={(e) => {
           e.dataTransfer.setData(CAT_MIME, category.id);
@@ -230,33 +230,43 @@ const TreeNode: React.FC<{
           }
         }}
       >
-        <div className="mr-2 w-4 h-4 flex items-center justify-center text-gray-400" onClick={toggleExpand}>
-          {hasChildren ? (
-            isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />
+        <button
+          type="button"
+          onClick={toggleExpand}
+          title={hasNested ? (isExpanded ? "Recolher" : "Expandir") : ""}
+          className={`mr-1 w-6 h-6 rounded-md flex items-center justify-center transition-colors ${
+            hasNested
+              ? "text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+              : "text-gray-300 dark:text-gray-700"
+          }`}
+          aria-label={hasNested ? (isExpanded ? "Recolher" : "Expandir") : "Sem filhos"}
+        >
+          {hasNested ? (
+            isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />
           ) : (
-            <div className="w-2 h-2 bg-gray-300 dark:bg-gray-600 rounded-full" />
+            <span className="w-2 h-2 bg-gray-300 dark:bg-gray-700 rounded-full" />
           )}
-        </div>
+        </button>
 
-        <div className="mr-2 flex items-center">
-          {isExpanded && hasChildren ? (
-            <FolderOpen size={16} className="text-blue-500" />
+        <div className="mr-1 flex items-center">
+          {isExpanded && hasNested ? (
+            <FolderOpen size={16} className="text-blue-600 dark:text-blue-300" />
           ) : (
             <Folder size={16} className="text-gray-500 dark:text-gray-400" />
           )}
         </div>
 
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <span className="text-sm truncate" title={category.name}>
+          <span className="text-sm font-medium truncate" title={category.name}>
             {category.name}
           </span>
-
-          {level > 0 && (
-            <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0">
-              ({docCount})
-            </span>
-          )}
         </div>
+
+        {docCount > 0 && (
+          <span className="shrink-0 text-[11px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+            {docCount}
+          </span>
+        )}
 
         {showControls && (
           <div className="ml-2 shrink-0 opacity-0 group-hover:opacity-100 flex items-center gap-1">
@@ -340,8 +350,8 @@ const TreeNode: React.FC<{
         )}
       </div>
 
-      {isExpanded && (hasChildren || (showDocuments && docs.length > 0)) && (
-        <div>
+      {isExpanded && hasNested && (
+        <div className="ml-4 pl-3 border-l border-gray-200/80 dark:border-gray-700/60">
           {children.map((child, idx) => (
             <TreeNode
               key={child.id}
@@ -377,8 +387,7 @@ const TreeNode: React.FC<{
                 onDocumentSelect?.(doc);
               }}
               title={doc.title}
-              className="flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200"
-              style={{ paddingLeft: `${(level + 1) * 20 + 28}px` }}
+              className="flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-800 dark:text-gray-200"
             >
               <FileText size={14} className="text-gray-400 shrink-0" />
               <span className="text-sm truncate flex-1 min-w-0">{doc.title}</span>
@@ -428,10 +437,10 @@ export const CategoryTree: React.FC<CategoryTreeProps> = ({
   }, [documents]);
 
   return (
-    <div className="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+    <div className="rounded-xl bg-white/60 dark:bg-gray-800/50">
       <button
         type="button"
-        className="w-full flex items-center py-2 px-2 rounded-md cursor-pointer transition-colors border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+        className="w-full flex items-center py-2 px-2 rounded-lg cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/60 text-gray-800 dark:text-gray-200"
         onClick={() => onCategorySelect?.(null)}
         onDragOver={(e) => e.preventDefault()}
         onDrop={async (e) => {
@@ -443,30 +452,32 @@ export const CategoryTree: React.FC<CategoryTreeProps> = ({
         title="Raiz (solte uma pasta aqui para virar raiz)"
       >
         <div className="mr-2 w-4 h-4 flex items-center justify-center text-gray-400" />
-        <span className="flex-1 text-sm font-medium">Raiz</span>
+        <span className="flex-1 text-sm font-semibold">Todas as pastas</span>
       </button>
 
-      {categories.map((category, index) => (
-        <TreeNode
-          key={category.id}
-          category={category}
-          level={0}
-          siblingIndex={index}
-          siblingCount={categories.length}
-          selectedId={selectedId}
-          onCategorySelect={onCategorySelect}
-          onCreate={onCreate}
-          onRename={onRename}
-          onDelete={onDelete}
-          showControls={showControls}
-          onDropDocument={onDropDocument}
-          onDropCategory={onDropCategory}
-          onReorderCategory={onReorderCategory}
-          docsByCatId={docsByCatId}
-          onDocumentSelect={onDocumentSelect}
-          showDocuments={showDocuments}
-        />
-      ))}
+      <div className="mt-1 space-y-0.5">
+        {categories.map((category, index) => (
+          <TreeNode
+            key={category.id}
+            category={category}
+            level={0}
+            siblingIndex={index}
+            siblingCount={categories.length}
+            selectedId={selectedId}
+            onCategorySelect={onCategorySelect}
+            onCreate={onCreate}
+            onRename={onRename}
+            onDelete={onDelete}
+            showControls={showControls}
+            onDropDocument={onDropDocument}
+            onDropCategory={onDropCategory}
+            onReorderCategory={onReorderCategory}
+            docsByCatId={docsByCatId}
+            onDocumentSelect={onDocumentSelect}
+            showDocuments={showDocuments}
+          />
+        ))}
+      </div>
     </div>
   );
 };
