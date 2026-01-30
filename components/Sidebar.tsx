@@ -405,6 +405,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <CategoryTree
             categories={categories}
             selectedId={activeCategoryId}
+            documents={documents}
+            onDocumentSelect={onSelectDocument}
+            showDocuments={true}
             onCategorySelect={(categoryId) => {
               if (categoryId === null) {
                 window.dispatchEvent(new CustomEvent("clearCategoryFilter"));

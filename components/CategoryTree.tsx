@@ -10,8 +10,9 @@ import {
   ArrowDown,
   Pencil,
   Trash2,
+  FileText,
 } from "lucide-react";
-import { Category } from "../types";
+import { Category, Document } from "../types";
 
 type Direction = "up" | "down";
 
@@ -19,6 +20,11 @@ interface CategoryTreeProps {
   categories: Category[];              // TREE (com children)
   selectedId?: string | null;          // categoria ativa
   onCategorySelect?: (categoryId: string | null) => void;
+
+  // Optional: show documents inside categories (sidebar explorer)
+  documents?: Document[];
+  onDocumentSelect?: (doc: Document) => void;
+  showDocuments?: boolean;
 
   // CRUD rapido (opcional)
   onCreate?: (parentId: string | null) => void;
@@ -149,6 +155,10 @@ const TreeNode: React.FC<{
   onDropDocument?: (docId: string, categoryId: string) => Promise<void> | void;
   onDropCategory?: (categoryId: string, newParentId: string | null) => Promise<void> | void;
   onReorderCategory?: (categoryId: string, direction: Direction) => Promise<void> | void;
+
+  docsByCatId?: Map<string, Document[]>;
+  onDocumentSelect?: (doc: Document) => void;
+  showDocuments?: boolean;
 }> = ({
   category,
   level,
@@ -163,6 +173,9 @@ const TreeNode: React.FC<{
   onDropDocument,
   onDropCategory,
   onReorderCategory,
+  docsByCatId,
+  onDocumentSelect,
+  showDocuments,
 }) => {
   const [isExpanded, setIsExpanded] = React.useState(level < 2);
   const [menuOpen, setMenuOpen] = React.useState(false);
@@ -176,6 +189,7 @@ const TreeNode: React.FC<{
   const canDropCategory = typeof onDropCategory === "function";
 
   const docCount = (category as any).docCount ?? (category as any).doc_count ?? 0;
+  const docs = showDocuments ? docsByCatId?.get(category.id) || [] : [];
 
   const toggleExpand = (e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -326,7 +340,7 @@ const TreeNode: React.FC<{
         )}
       </div>
 
-      {isExpanded && hasChildren && (
+      {isExpanded && (hasChildren || (showDocuments && docs.length > 0)) && (
         <div>
           {children.map((child, idx) => (
             <TreeNode
@@ -344,7 +358,37 @@ const TreeNode: React.FC<{
               onDropDocument={onDropDocument}
               onDropCategory={onDropCategory}
               onReorderCategory={onReorderCategory}
+              docsByCatId={docsByCatId}
+              onDocumentSelect={onDocumentSelect}
+              showDocuments={showDocuments}
             />
+          ))}
+
+          {showDocuments && docs.map((doc) => (
+            <div
+              key={doc.id}
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData(DOC_MIME, doc.id);
+                e.dataTransfer.effectAllowed = "move";
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDocumentSelect?.(doc);
+              }}
+              title={doc.title}
+              className="flex items-center gap-2 py-1.5 px-2 rounded-md cursor-pointer hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-200"
+              style={{ paddingLeft: `${(level + 1) * 20 + 28}px` }}
+            >
+              <FileText size={14} className="text-gray-400 shrink-0" />
+              <span className="text-sm truncate flex-1 min-w-0">{doc.title}</span>
+              {doc.status !== 'PUBLISHED' && (
+                <span
+                  className={`w-2 h-2 rounded-full shrink-0 ${doc.status === 'DRAFT' ? 'bg-gray-300' : doc.status === 'REJECTED' ? 'bg-red-400' : 'bg-yellow-400'}`}
+                  title={doc.status}
+                />
+              )}
+            </div>
           ))}
         </div>
       )}
@@ -356,6 +400,9 @@ export const CategoryTree: React.FC<CategoryTreeProps> = ({
   categories,
   selectedId = null,
   onCategorySelect,
+  documents = [],
+  onDocumentSelect,
+  showDocuments = false,
   onCreate,
   onRename,
   onDelete,
@@ -364,6 +411,22 @@ export const CategoryTree: React.FC<CategoryTreeProps> = ({
   onDropCategory,
   onReorderCategory,
 }) => {
+  const docsByCatId = React.useMemo(() => {
+    const map = new Map<string, Document[]>();
+    for (const d of documents) {
+      if (!d.categoryId) continue;
+      const arr = map.get(d.categoryId) || [];
+      arr.push(d);
+      map.set(d.categoryId, arr);
+    }
+    // Stable sorting by title
+    for (const [k, arr] of map.entries()) {
+      arr.sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+      map.set(k, arr);
+    }
+    return map;
+  }, [documents]);
+
   return (
     <div className="border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
       <button
@@ -399,6 +462,9 @@ export const CategoryTree: React.FC<CategoryTreeProps> = ({
           onDropDocument={onDropDocument}
           onDropCategory={onDropCategory}
           onReorderCategory={onReorderCategory}
+          docsByCatId={docsByCatId}
+          onDocumentSelect={onDocumentSelect}
+          showDocuments={showDocuments}
         />
       ))}
     </div>
