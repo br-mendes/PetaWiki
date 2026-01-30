@@ -278,7 +278,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Base classes differ based on variant
   const containerClasses = isDropdown 
     ? "w-full h-full flex flex-col bg-white dark:bg-gray-800" 
-    : "w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 h-full flex flex-col transition-colors z-20 shadow-xl";
+    : "w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 h-full flex flex-col transition-colors z-20 shadow-xl relative";
 
   return (
     <div className={containerClasses}>
