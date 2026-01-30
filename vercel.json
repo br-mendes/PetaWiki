@@ -5,8 +5,10 @@
   "installCommand": "npm install",
   "devCommand": "npm run dev",
   "functions": {
-    "api/**/*.{ts,js}": {
-      "runtime": "nodejs20.x",
+    "api/**/*.ts": {
+      "maxDuration": 10
+    },
+    "api/**/*.js": {
       "maxDuration": 10
     }
   },
