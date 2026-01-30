@@ -126,7 +126,20 @@ export const ReviewCenter: React.FC<{
         p_status: status,
         p_actor_user_id: actorUserId,
       });
-      if (error) throw error;
+      if (error) {
+        // Fallback for environments without RPCs
+        const { error: fallbackError } = await supabase
+          .from("documents")
+          .update({
+            status,
+            review_note: reviewNote,
+            updated_by: actorUserId,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", docId);
+
+        if (fallbackError) throw fallbackError;
+      }
 
       // Notify author (best-effort)
       try {

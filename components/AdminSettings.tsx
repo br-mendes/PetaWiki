@@ -88,32 +88,51 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
     }
   };
 
-  const approveDoc = async (id: string) => {
+  const updateDocStatus = async (id: string, status: "PUBLISHED" | "REJECTED") => {
     const { error } = await supabase.rpc("set_document_status", {
       p_document_id: id,
-      p_status: "PUBLISHED",
+      p_status: status,
       p_actor_user_id: actorUserId,
     });
-    if (error) {
-      console.error(error);
-      alert("Falha ao aprovar.");
-      return;
+
+    if (!error) return;
+
+    // Fallback for environments without RPCs
+    const { error: fallbackError } = await supabase
+      .from("documents")
+      .update({
+        status,
+        updated_by: actorUserId,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (fallbackError) {
+      console.error(fallbackError);
+      throw fallbackError;
     }
-    setPendingDocs(prev => prev.filter(d => d.id !== id));
+  };
+
+  const approveDoc = async (id: string) => {
+    try {
+      await updateDocStatus(id, "PUBLISHED");
+      setPendingDocs(prev => prev.filter(d => d.id !== id));
+      toast.success("Documento aprovado.");
+    } catch (error: any) {
+      console.error(error);
+      toast.error(`Falha ao aprovar: ${error?.message || "erro"}`);
+    }
   };
 
   const rejectDoc = async (id: string) => {
-    const { error } = await supabase.rpc("set_document_status", {
-      p_document_id: id,
-      p_status: "REJECTED",
-      p_actor_user_id: actorUserId,
-    });
-    if (error) {
+    try {
+      await updateDocStatus(id, "REJECTED");
+      setPendingDocs(prev => prev.filter(d => d.id !== id));
+      toast.success("Documento rejeitado.");
+    } catch (error: any) {
       console.error(error);
-      alert("Falha ao rejeitar.");
-      return;
+      toast.error(`Falha ao rejeitar: ${error?.message || "erro"}`);
     }
-    setPendingDocs(prev => prev.filter(d => d.id !== id));
   };
   
   // Branding State
