@@ -220,7 +220,7 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
           <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 hidden md:block"></div>
 
           {isAdmin && isNew && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
+            <div className="hidden lg:flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40">
               <label className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -420,6 +420,33 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
               placeholder="Digite um título claro e descritivo..."
             />
           </div>
+
+          {/* Modelo (mobile/tablet) */}
+          {isAdmin && isNew && (
+            <div className="lg:hidden rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/40 p-4">
+              <label className="flex items-center gap-2 text-sm text-gray-800 dark:text-gray-200 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={saveAsTemplate}
+                  onChange={(e) => setSaveAsTemplate(e.target.checked)}
+                />
+                Salvar como modelo
+              </label>
+              {saveAsTemplate && (
+                <div className="mt-3">
+                  <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                    Nome do modelo
+                  </label>
+                  <input
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    placeholder="Ex: Procedimento de Onboarding"
+                    className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Editor Rico */}
           <div>
