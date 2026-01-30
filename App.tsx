@@ -975,6 +975,12 @@ const handleUpdateAvatar = async (base64: string) => {
   };
 
   const handleSelectCategory = (category: Category) => {
+    setActiveCategoryId(category.id);
+    setSelectedDocId(null);
+    setSearchQuery('');
+    setSearchResultDocs(null);
+    setCurrentView('HOME');
+
     const docsInCat = visibleDocuments.filter(d => d.categoryId === category.id);
     if (docsInCat.length === 0 && isAdminOrEditor && (!category.children || category.children.length === 0)) {
         setConfirmModal({

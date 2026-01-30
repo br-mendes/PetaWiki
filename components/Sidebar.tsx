@@ -258,6 +258,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
   
   const isDropdown = variant === 'DROPDOWN';
 
+  const findCategoryById = React.useCallback((nodes: Category[], id: string): Category | null => {
+    for (const n of nodes) {
+      if (n.id === id) return n;
+      const kids = (n.children || []) as Category[];
+      if (kids.length) {
+        const found = findCategoryById(kids, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  }, []);
+
   // Base classes differ based on variant
   const containerClasses = isDropdown 
     ? "w-full h-full flex flex-col bg-white dark:bg-gray-800" 
@@ -398,7 +410,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 window.dispatchEvent(new CustomEvent("clearCategoryFilter"));
                 return;
               }
-              const selectedCat = categories.find(c => c.id === categoryId);
+              const selectedCat = findCategoryById(categories, categoryId);
               if (selectedCat) onSelectCategory(selectedCat);
             }}
             showControls={isAdminOrEditor}
