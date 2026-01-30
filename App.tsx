@@ -178,6 +178,7 @@ const AppContent = () => {
       }
 
       if (path === '/notificacoes' || path.startsWith('/notificacoes')) {
+        console.log('Navigating to NOTIFICATIONS page');
         setCurrentView('NOTIFICATIONS');
         return;
       }

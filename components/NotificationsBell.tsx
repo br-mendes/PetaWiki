@@ -71,7 +71,7 @@ export const NotificationsBell: React.FC<{
       setItems((data || []) as NotificationItem[]);
       if (!opts?.silent) setLoading(false);
     },
-    [userId, limit]
+    [userId, limit, toast]
   );
 
   React.useEffect(() => {

@@ -23,6 +23,10 @@ export const NotificationsPage: React.FC<{
   const [loading, setLoading] = React.useState(false);
   const [items, setItems] = React.useState<NotificationItem[]>([]);
 
+  React.useEffect(() => {
+    console.log('NotificationsPage mounted with userId:', userId);
+  }, [userId]);
+
   const formatDate = (iso: string) => {
     try {
       return new Intl.DateTimeFormat("pt-BR", {
@@ -68,7 +72,7 @@ export const NotificationsPage: React.FC<{
       setItems((data || []) as NotificationItem[]);
       if (!opts?.silent) setLoading(false);
     },
-    [userId]
+    [userId, toast]
   );
 
   React.useEffect(() => {
@@ -126,7 +130,7 @@ export const NotificationsPage: React.FC<{
     }
   };
 
-  const unreadCount = items.filter((n) => !n.is_read).length;
+  const unreadCount = React.useMemo(() => items.filter((n) => !n.is_read).length, [items]);
 
   return (
     <div className="p-4 sm:p-8 max-w-4xl mx-auto animate-in fade-in duration-300">
