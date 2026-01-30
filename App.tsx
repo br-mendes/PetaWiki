@@ -142,113 +142,118 @@ const AppContent = () => {
   const params = useParams<{ categoryId?: string; docId?: string; action?: string }>();
   const [searchParams] = useSearchParams();
 
-  // Sync URL params to app state
+  // Sync URL params to app state - simplified version
+  useEffect(() => {
+    if (!isAuthenticated || !params) return;
+
+    const processUrl = async () => {
+      // Handle category from URL
+      if (params.categoryId && categories.length > 0) {
+        const cat = findCategoryById(categories, params.categoryId);
+        if (cat) {
+          setActiveCategoryId(cat.id);
+          setCurrentView('CATEGORY_VIEW');
+          setSelectedDocId(null);
+          return;
+        }
+      }
+
+      // Handle document from URL
+      if (params.docId) {
+        const doc = documents.find(d => d.id === params.docId);
+        if (doc) {
+          setSelectedDocId(doc.id);
+          setActiveCategoryId(doc.categoryId || null);
+          setCurrentView(params.action === 'editar' ? 'DOCUMENT_EDIT' : 'DOCUMENT_VIEW');
+          return;
+        }
+
+        // Fetch document from DB
+        try {
+          const { data, error } = await supabase
+            .from("documents")
+            .select("*")
+            .eq("id", params.docId)
+            .single();
+          
+          if (error) throw error;
+          if (data) {
+            const fallbackCatId = defaultCategoryId || categories[0]?.id || null;
+            const mappedDoc = {
+              id: data.id,
+              title: data.title,
+              content: data.content,
+              categoryId: data.category_id || fallbackCatId || "",
+              status: data.status,
+              authorId: data.author_id,
+              createdAt: data.created_at,
+              updatedAt: data.updated_at,
+              deletedAt: data.deleted_at,
+              views: data.views,
+              tags: data.tags || [],
+              categoryPath: getCategoryPath(data.category_id, categories),
+              versions: [],
+              reviewNote: data.review_note ?? null,
+            };
+            
+            setDocuments(prev => prev.some(d => d.id === mappedDoc.id) ? prev : [...prev, mappedDoc]);
+            setSelectedDocId(mappedDoc.id);
+            setActiveCategoryId(mappedDoc.categoryId || null);
+            setCurrentView(params.action === 'editar' ? 'DOCUMENT_EDIT' : 'DOCUMENT_VIEW');
+          }
+        } catch (e) {
+          console.error('Failed to fetch document:', e);
+          navigate('/');
+        }
+        return;
+      }
+
+      // Handle root path
+      if (!params.categoryId && !params.docId) {
+        setCurrentView('HOME');
+        setActiveCategoryId(null);
+        setSelectedDocId(null);
+        return;
+      }
+    };
+
+    processUrl();
+  }, [params.categoryId, params.docId, params.action, isAuthenticated, categories.length]); // Remove documents from deps
+
+  // Handle special routes that don't use params
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    // Handle category from URL
-    if (params.categoryId && categories.length > 0) {
-      const cat = findCategoryById(categories, params.categoryId);
-      if (cat) {
-        setActiveCategoryId(cat.id);
-        setCurrentView('CATEGORY_VIEW');
-        setSelectedDocId(null);
-      }
-    }
-
-    // Handle document from URL
-    if (params.docId) {
-      const doc = documents.find(d => d.id === params.docId);
-      if (doc) {
-        setSelectedDocId(doc.id);
-        setActiveCategoryId(doc.categoryId || null);
-        if (params.action === 'editar') {
-          setCurrentView('DOCUMENT_EDIT');
-        } else {
-          setCurrentView('DOCUMENT_VIEW');
-        }
-      } else {
-        // Try to fetch document from DB if not in local state
-        const fetchDocument = async () => {
-          try {
-            const { data, error } = await supabase
-              .from("documents")
-              .select("*")
-              .eq("id", params.docId)
-              .single();
-            
-            if (error) throw error;
-            if (data) {
-              const fallbackCatId = defaultCategoryId || categories[0]?.id || null;
-              const mappedDoc = {
-                id: data.id,
-                title: data.title,
-                content: data.content,
-                categoryId: data.category_id || fallbackCatId || "",
-                status: data.status,
-                authorId: data.author_id,
-                createdAt: data.created_at,
-                updatedAt: data.updated_at,
-                deletedAt: data.deleted_at,
-                views: data.views,
-                tags: data.tags || [],
-                categoryPath: getCategoryPath(data.category_id, categories),
-                versions: [],
-                reviewNote: data.review_note ?? null,
-              };
-              
-              // Add to documents state
-              setDocuments(prev => prev.some(d => d.id === mappedDoc.id) ? prev : [...prev, mappedDoc]);
-              setSelectedDocId(mappedDoc.id);
-              setActiveCategoryId(mappedDoc.categoryId || null);
-              
-              if (params.action === 'editar') {
-                setCurrentView('DOCUMENT_EDIT');
-              } else {
-                setCurrentView('DOCUMENT_VIEW');
-              }
-            }
-          } catch (e) {
-            console.error('Failed to fetch document:', e);
-            // Redirect to home if document not found
-            navigate('/');
-          }
-        };
-        fetchDocument();
-      }
-    }
-
-    // Handle root path
-    if (!params.categoryId && !params.docId) {
-      setCurrentView('HOME');
-      setActiveCategoryId(null);
-      setSelectedDocId(null);
-    }
+    const path = window.location.pathname;
 
     // Handle /novo
-    if (window.location.pathname === '/novo' || window.location.pathname.startsWith('/novo')) {
+    if (path === '/novo' || path.startsWith('/novo')) {
       setCurrentView('DOCUMENT_CREATE');
       const catParam = searchParams.get('categoria');
       if (catParam) setActiveCategoryId(catParam);
+      return;
     }
 
     // Handle /analytics
-    if (window.location.pathname === '/analytics' || window.location.pathname.startsWith('/analytics')) {
+    if (path === '/analytics' || path.startsWith('/analytics')) {
       setCurrentView('ANALYTICS');
+      return;
     }
 
     // Handle /admin
-    if (window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin')) {
+    if (path === '/admin' || path.startsWith('/admin')) {
       setCurrentView('ADMIN_SETTINGS');
+      return;
     }
 
     // Handle /revisoes
-    if (window.location.pathname === '/revisoes' || window.location.pathname.startsWith('/revisoes')) {
-      const m = window.location.pathname.match(/^\/revisoes\/([^/?#]+)$/);
+    if (path === '/revisoes' || path.startsWith('/revisoes')) {
+      const m = path.match(/^\/revisoes\/([^/?#]+)$/);
       if (m) setReviewCenterDocId(m[1]);
       setCurrentView('REVIEW_CENTER');
+      return;
     }
-  }, [params.categoryId, params.docId, params.action, isAuthenticated, categories, documents, defaultCategoryId, searchParams]);
+  }, [isAuthenticated, searchParams]);
 
   // Helper functions for navigation
   const navigateToCategory = useCallback((categoryId: string | null) => {
@@ -1903,7 +1908,18 @@ const App = () => {
   return (
     <BrowserRouter>
       <ToastProvider>
-        <AppContent />
+        <Routes>
+          <Route path="/" element={<AppContent />} />
+          <Route path="/categoria/:categoryId" element={<AppContent />} />
+          <Route path="/documento/:docId" element={<AppContent />} />
+          <Route path="/documento/:docId/editar" element={<AppContent />} />
+          <Route path="/novo" element={<AppContent />} />
+          <Route path="/analytics" element={<AppContent />} />
+          <Route path="/admin" element={<AppContent />} />
+          <Route path="/revisoes" element={<AppContent />} />
+          <Route path="/revisoes/:docId" element={<AppContent />} />
+          <Route path="*" element={<AppContent />} />
+        </Routes>
       </ToastProvider>
     </BrowserRouter>
   );
