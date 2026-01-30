@@ -144,14 +144,15 @@ const AppContent = () => {
 
   // Sync URL params to app state
   useEffect(() => {
-    if (!isAuthenticated || categories.length === 0) return;
+    if (!isAuthenticated) return;
 
     // Handle category from URL
-    if (params.categoryId) {
+    if (params.categoryId && categories.length > 0) {
       const cat = findCategoryById(categories, params.categoryId);
       if (cat) {
         setActiveCategoryId(cat.id);
         setCurrentView('CATEGORY_VIEW');
+        setSelectedDocId(null);
       }
     }
 
@@ -160,6 +161,7 @@ const AppContent = () => {
       const doc = documents.find(d => d.id === params.docId);
       if (doc) {
         setSelectedDocId(doc.id);
+        setActiveCategoryId(doc.categoryId || null);
         if (params.action === 'editar') {
           setCurrentView('DOCUMENT_EDIT');
         } else {
@@ -177,7 +179,29 @@ const AppContent = () => {
             
             if (error) throw error;
             if (data) {
-              setSelectedDocId(data.id);
+              const fallbackCatId = defaultCategoryId || categories[0]?.id || null;
+              const mappedDoc = {
+                id: data.id,
+                title: data.title,
+                content: data.content,
+                categoryId: data.category_id || fallbackCatId || "",
+                status: data.status,
+                authorId: data.author_id,
+                createdAt: data.created_at,
+                updatedAt: data.updated_at,
+                deletedAt: data.deleted_at,
+                views: data.views,
+                tags: data.tags || [],
+                categoryPath: getCategoryPath(data.category_id, categories),
+                versions: [],
+                reviewNote: data.review_note ?? null,
+              };
+              
+              // Add to documents state
+              setDocuments(prev => prev.some(d => d.id === mappedDoc.id) ? prev : [...prev, mappedDoc]);
+              setSelectedDocId(mappedDoc.id);
+              setActiveCategoryId(mappedDoc.categoryId || null);
+              
               if (params.action === 'editar') {
                 setCurrentView('DOCUMENT_EDIT');
               } else {
@@ -187,13 +211,44 @@ const AppContent = () => {
           } catch (e) {
             console.error('Failed to fetch document:', e);
             // Redirect to home if document not found
-            navigateToHome();
+            navigate('/');
           }
         };
         fetchDocument();
       }
     }
-  }, [params.categoryId, params.docId, params.action, isAuthenticated, categories, documents]);
+
+    // Handle root path
+    if (!params.categoryId && !params.docId) {
+      setCurrentView('HOME');
+      setActiveCategoryId(null);
+      setSelectedDocId(null);
+    }
+
+    // Handle /novo
+    if (window.location.pathname === '/novo' || window.location.pathname.startsWith('/novo')) {
+      setCurrentView('DOCUMENT_CREATE');
+      const catParam = searchParams.get('categoria');
+      if (catParam) setActiveCategoryId(catParam);
+    }
+
+    // Handle /analytics
+    if (window.location.pathname === '/analytics' || window.location.pathname.startsWith('/analytics')) {
+      setCurrentView('ANALYTICS');
+    }
+
+    // Handle /admin
+    if (window.location.pathname === '/admin' || window.location.pathname.startsWith('/admin')) {
+      setCurrentView('ADMIN_SETTINGS');
+    }
+
+    // Handle /revisoes
+    if (window.location.pathname === '/revisoes' || window.location.pathname.startsWith('/revisoes')) {
+      const m = window.location.pathname.match(/^\/revisoes\/([^/?#]+)$/);
+      if (m) setReviewCenterDocId(m[1]);
+      setCurrentView('REVIEW_CENTER');
+    }
+  }, [params.categoryId, params.docId, params.action, isAuthenticated, categories, documents, defaultCategoryId, searchParams]);
 
   // Helper functions for navigation
   const navigateToCategory = useCallback((categoryId: string | null) => {
