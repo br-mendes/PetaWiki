@@ -28,6 +28,9 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
 
 export const FullPageLoader: React.FC<{ text?: string }> = ({ text = 'Carregando...' }) => (
   <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
-    <LoadingSpinner size="lg" text={text} />
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+      <p className="animate-pulse text-gray-600 dark:text-gray-400">{text}</p>
+    </div>
   </div>
 );

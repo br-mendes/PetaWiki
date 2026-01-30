@@ -26,6 +26,7 @@ import { Button } from './components/Button';
 import { AlertTriangle, FileText } from 'lucide-react';
 import { sanitizeHtml } from './lib/sanitize';
 import { createTemplate as dbCreateTemplate, listTemplates as dbListTemplates, incrementTemplateUsage } from './lib/templates';
+import { FullPageLoader } from './components/LoadingSpinner';
 
 type ViewState =
   | 'HOME'
@@ -1612,12 +1613,7 @@ const targetCategoryId =
   };
 
    if (isLoading) {
-     return (
-         <div className="flex flex-col h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 text-blue-600 gap-4">
-             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-             <p className="animate-pulse">Carregando dados...</p>
-         </div>
-     );
+     return <FullPageLoader text="Inicializando sistema..." />;
    }
 
   if (!isAuthenticated || !currentUser) {

@@ -1,30 +1,26 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { ConfigError } from "./components/ConfigError";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import "./index.css";
 
 const rootElement = document.getElementById("root");
 if (!rootElement) throw new Error("Could not find root element");
 
-const missing: string[] = [];
-if (!import.meta.env.VITE_SUPABASE_URL) missing.push("VITE_SUPABASE_URL");
-if (!import.meta.env.VITE_SUPABASE_ANON_KEY) missing.push("VITE_SUPABASE_ANON_KEY");
-
 const root = ReactDOM.createRoot(rootElement);
 
-if (missing.length) {
+// Importar App diretamente sem validação de ambiente para evitar problemas no Vercel
+import("./App").then(({ default: App }) => {
   root.render(
-    <React.StrictMode>
-      <ConfigError missing={missing} />
-    </React.StrictMode>
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   );
-} else {
-  // Importa o App somente depois de validar env
-  import("./App").then(({ default: App }) => {
-    root.render(
-      <React.StrictMode>
-        <App />
-      </React.StrictMode>
-    );
-  });
-}
+}).catch(error => {
+  console.error("Failed to load App:", error);
+  root.render(
+    <div style={{ padding: 24, fontFamily: "system-ui", color: "red" }}>
+      <h1>Erro ao carregar aplicação</h1>
+      <p>Verifique o console para mais detalhes.</p>
+    </div>
+  );
+});
