@@ -133,7 +133,50 @@ const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
   layoutMode: 'SIDEBAR'
 };
 
-const AUTH_MODE = 'mock' as const;
+// Main App component
+const App = () => {
+  // State variables for LazyComponents
+  const [selectedDocId] = useState<string | null>(null);
+  const [reviewCenterDocId, setReviewCenterDocId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResultDocs, setSearchResultDocs] = useState<Document[] | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [categoryModalParentId, setCategoryModalParentId] = useState<string | null>(null);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [settingsReturnView, setSettingsReturnView] = useState<string>('HOME');
+
+  const {
+    AnalyticsDashboard,
+    ReviewCenter,
+    TemplateSelector,
+    CategoryModal,
+    AdminSettings,
+    UserProfile,
+    NotificationsPage,
+  } = LazyComponents;
+
+  // Main app layout
+  return (
+    <ToastProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<AppContent />} />
+          <Route path="/categoria/:categoryId" element={<AppContent />} />
+          <Route path="/documento/:docId" element={<AppContent />} />
+          <Route path="/documento/:docId/editar" element={<AppContent />} />
+          <Route path="/novo" element={<AppContent />} />
+          <Route path="/analytics" element={<AppContent />} />
+          <Route path="/admin" element={<AppContent />} />
+          <Route path="/notificacoes" element={<AppContent />} />
+          <Route path="/revisoes" element={<AppContent />} />
+          <Route path="/revisoes/:docId" element={<AppContent />} />
+          <Route path="*" element={<AppContent />} />
+        </Routes>
+      </BrowserRouter>
+    </ToastProvider>
+  );
+};
 
 // Simple AppContent component
 const AppContent = () => {
@@ -299,7 +342,7 @@ const AppContent = () => {
   const categoryTree = useMemo(() => {
     const buildTree = (categories: Category[]): any[] => {
       const categoryMap = new Map<string, any>();
-      categories.forEach(cat => categoryMap.set(cat.id, { ...cat, children: [] });
+      categories.forEach(cat => categoryMap.set(cat.id, { ...cat, children: [] }));
       
       const rootCategories = categories.filter(c => !c.parentId);
       
@@ -354,7 +397,7 @@ const AppContent = () => {
 
   // State variables for LazyComponents
   const [selectedDocId] = useState<string | null>(null);
-  const [reviewCenterDocId] = setReviewCenterDocId] = useState<string | null>(null);
+  const [reviewCenterDocId, setReviewCenterDocId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResultDocs, setSearchResultDocs] = useState<Document[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -384,7 +427,7 @@ const AppContent = () => {
           <Route path="/documento/:docId/editar" element={<AppContent />} />
           <Route path="/novo" element={<AppContent />} />
           <Route path="/analytics" element={<AppContent />} />
-          <route path="/admin" element={<AppContent />} />
+          <Route path="/admin" element={<AppContent />} />
           <Route path="/notificacoes" element={<AppContent />} />
           <Route path="/revisoes" element={<AppContent />} />
           <Route path="/revisoes/:docId" element={<AppContent />} />
