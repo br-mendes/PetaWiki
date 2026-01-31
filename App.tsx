@@ -17,60 +17,7 @@ const LazyAdminSettings = React.lazy(() => import('./components/AdminSettings').
 const LazyUserProfile = React.lazy(() => import('./components/UserProfile').then(module => ({ default: module.UserProfile })));
 const LazyCategoryModal = React.lazy(() => import('./components/CategoryModal').then(module => ({ default: module.CategoryModal })));
 
-// Types
-interface User {
-  id: string;
-  username: string;
-  email: string;
-  name: string;
-  role: string;
-  avatar?: string;
-  department?: string;
-  themePreference?: 'light' | 'dark';
-  isMock?: boolean;
-}
-
-interface Category {
-  id: string;
-  name: string;
-  parentId: string | null;
-  description: string | null;
-  icon: string | null;
-  order: number;
-}
-
-interface Document {
-  id: string;
-  title: string;
-  content: string;
-  categoryId: string;
-  status: string;
-  authorId: string;
-  createdAt: string;
-  updatedAt: string;
-  tags: string[];
-}
-
-interface SystemSettings {
-  appName: string;
-  logoCollapsedUrl: string;
-  logoExpandedUrl: string;
-  layoutMode: 'SIDEBAR' | 'NAVBAR';
-  [key: string]: any;
-}
-
-const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
-  appName: 'Peta Wiki',
-  logoCollapsedUrl: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Ccircle cx="50" cy="50" r="50" fill="%232563eb"/%3E%3Ctext x="50" y="50" dy=".35em" text-anchor="middle" fill="white" font-size="40" font-weight="bold"%3EPW%3C/text%3E%3C/svg%3E',
-  logoExpandedUrl: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 90"%3E%3Crect width="160" height="90" fill="%232563eb"/%3E%3Ctext x="50%" y="50%" dy=".35em" text-anchor="middle" fill="white" font-size="24" font-weight="bold"%3EPeta Wiki%3C/text%3E%3C/svg%3E',
-  layoutMode: 'SIDEBAR',
-  allowedDomains: [],
-  homeTitle: 'Bem-vindo ao Peta Wiki',
-  homeDescription: 'Selecione uma categoria na barra lateral para navegar pela documentação.',
-  showWelcomeCard: true,
-  homeContent: ''
-};
-
+// Mock data
 const MOCK_USERS: User[] = [
   {
     id: 'mock_admin',
@@ -488,20 +435,36 @@ const AppContent = () => {
         );
 
       default:
-        return null;
-     }
+      return null;
+      }
      };
 
      restoreSession();
   }, []);
 
-   // Simple handlers
-   const handleLogin = (username: string, password: string) => {
+  // Mock data
+  const MOCK_USERS: User[] = [
+    {
+      id: 'mock_admin',
+      username: 'admin',
+      email: 'admin@petawiki.com',
+      password: 'admin',
+      name: 'Admin',
+      role: 'ADMIN',
+      avatar: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Ccircle cx="50" cy="50" r="50" fill="%23111827"/%3E%3Ctext x="50" y="50" dy=".35em" text-anchor="middle" fill="white" font-size="40" font-weight="bold"%3EA%3C/text%3E%3C/svg%3E',
+      department: 'Gestão'
+    }
+  ];
+
+  // Simple handlers
+  const handleLogin = (username: string, password: string) => {
     console.log('handleLogin called with:', username);
     
     // Mock authentication
     if (username === 'admin' && password === 'admin') {
-      const admin = { ...MOCK_USERS[0], isMock: true, themePreference: 'light' as const };
+      const admin = MOCK_USERS[0];
+      admin.isMock = true;
+      admin.themePreference = 'light';
       setCurrentUser(admin);
       setIsAuthenticated(true);
       setIsDarkMode(false);
