@@ -47,7 +47,6 @@ interface SidebarProps {
   isDarkMode: boolean;
   onNavigateToAnalytics: () => void;
   onNavigateToReviewCenter?: () => void;
-  onNavigateToNotifications?: () => void;
   onOpenDocumentById?: (docId: string) => void | Promise<void>;
   onOpenReviewCenterByDocId?: (docId: string) => void | Promise<void>;
   // Search Context
@@ -124,9 +123,9 @@ const CategoryItem: React.FC<{
   return (
     <div className="relative group">
       {/* Category Row */}
-      <div
-        className={`flex items-center px-2 py-1.5 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-xs sm:text-sm text-gray-700 dark:text-gray-300 select-none justify-between pr-1 transition-all duration-200 border border-transparent hover:border-gray-200 dark:hover:border-gray-700`}
-        style={{ paddingLeft: `${depth * 10 + 6}px` }}
+      <div 
+        className={`flex items-center px-2 py-1.5 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm text-gray-700 dark:text-gray-300 select-none justify-between pr-1 transition-all duration-200 border border-transparent hover:border-gray-200 dark:hover:border-gray-700`}
+        style={{ paddingLeft: `${depth * 12 + 8}px` }}
         onMouseEnter={() => setShowActions(true)}
         onMouseLeave={() => setShowActions(false)}
         onClick={() => {
@@ -209,10 +208,10 @@ const CategoryItem: React.FC<{
                 e.dataTransfer.effectAllowed = "move";
               }}
               onClick={(e) => { e.stopPropagation(); onSelectDocument(doc); }}
-              className="flex items-center px-2 py-1.5 cursor-pointer cursor-move hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md text-xs sm:text-sm text-gray-600 dark:text-gray-400 select-none group/doc transition-colors ml-1"
-              style={{ paddingLeft: `${(depth + 1) * 10 + 18}px` }}
+              className="flex items-center px-2 py-1.5 cursor-pointer cursor-move hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md text-sm text-gray-600 dark:text-gray-400 select-none group/doc transition-colors ml-1"
+              style={{ paddingLeft: `${(depth + 1) * 12 + 24}px` }}
             >
-              <FileText size={12} className="mr-1.5 sm:mr-2 text-gray-400 group-hover/doc:text-blue-500 shrink-0" />
+              <FileText size={14} className="mr-2 text-gray-400 group-hover/doc:text-blue-500 shrink-0" />
               <span className="truncate hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                 {doc.title}
               </span>
@@ -245,7 +244,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isDarkMode,
   onNavigateToAnalytics,
   onNavigateToReviewCenter,
-  onNavigateToNotifications,
   onOpenDocumentById,
   onOpenReviewCenterByDocId,
   searchQuery,
@@ -278,18 +276,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
   }, []);
 
   // Base classes differ based on variant
-  const containerClasses = isDropdown
-    ? "w-full h-full flex flex-col bg-gradient-to-b from-white to-gray-50 dark:from-gray-800 dark:to-gray-900"
-    : "w-64 sm:w-72 lg:w-80 xl:w-72 bg-gradient-to-b from-white via-white to-gray-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 border-r border-gray-200 dark:border-gray-700 h-full flex flex-col transition-all duration-300 z-20 shadow-xl shadow-blue-100/20 dark:shadow-gray-900/50 relative";
+  const containerClasses = isDropdown 
+    ? "w-full h-full flex flex-col bg-white dark:bg-gray-800" 
+    : "w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 h-full flex flex-col transition-colors z-20 shadow-xl relative";
 
   return (
     <div className={containerClasses}>
       {/* 1. Header Area with Logo (Hidden in Dropdown mode) */}
       {!isDropdown && (
-        <div className="p-3 sm:p-5 border-b border-gray-100 dark:border-gray-800 shrink-0 bg-gradient-to-r from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
-          <div
+        <div className="p-4 border-b border-gray-100 dark:border-gray-800 shrink-0">
+          <div 
             onClick={onNavigateHome}
-            className="flex items-center gap-2 sm:gap-3 cursor-pointer group transition-all duration-200 hover:scale-105"
+            className="flex items-center gap-3 cursor-pointer group"
           >
             {showExpandedLogo ? (
               <img 
@@ -318,51 +316,51 @@ export const Sidebar: React.FC<SidebarProps> = ({
         
         {/* Admin Analytics Link - Always visible here if Admin */}
         {user.role === 'ADMIN' && (
-            <div className="mb-3 sm:mb-4 mt-2 px-1">
-                <button
+            <div className="mb-4 mt-2 px-1">
+                <button 
                   onClick={onNavigateToAnalytics}
-                  className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl transition-all duration-200 shadow-lg shadow-purple-500/30 hover:shadow-xl hover:shadow-purple-500/40 hover:-translate-y-0.5 group border border-purple-400/20"
+                  className="w-full flex items-center gap-3 px-3 py-2.5 bg-purple-50 dark:bg-purple-900/10 hover:bg-purple-100 dark:hover:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-lg transition-all shadow-sm group border border-purple-100 dark:border-purple-800/50"
                 >
-                  <Activity size={18} className="text-white group-hover:scale-110 transition-transform" />
+                  <Activity size={18} className="text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform" />
                   <div className="flex flex-col items-start">
-                    <span className="font-bold text-xs sm:text-sm leading-none">Analytics</span>
-                    <span className="text-[9px] sm:text-[10px] opacity-80 mt-0.5">Dashboard de Gestão</span>
+                    <span className="font-bold text-sm leading-none">Analytics</span>
+                    <span className="text-[10px] opacity-70 mt-0.5">Dashboard de Gestão</span>
                   </div>
                 </button>
             </div>
         )}
 
         {user.role === 'ADMIN' && (typeof onNavigateToReviewCenter === 'function') && (
-          <div className="mb-2 sm:mb-3 px-1">
+          <div className="mb-3 px-1">
             <button
               onClick={onNavigateToReviewCenter}
-              className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl transition-all duration-200 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:-translate-y-0.5 group border border-blue-400/20"
+              className="w-full flex items-center gap-3 px-3 py-2.5 bg-blue-50 dark:bg-blue-900/10 hover:bg-blue-100 dark:hover:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg transition-all shadow-sm group border border-blue-100 dark:border-blue-800/50"
             >
-              <Activity size={18} className="text-white group-hover:scale-110 transition-transform" />
+              <span className="text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform"></span>
               <div className="flex flex-col items-start">
-                <span className="font-bold text-xs sm:text-sm leading-none">Revisões</span>
-                <span className="text-[9px] sm:text-[10px] opacity-80 mt-0.5">Pendências para aprovar</span>
+                <span className="font-bold text-sm leading-none">Revisões</span>
+                <span className="text-[10px] opacity-70 mt-0.5">Pendências para aprovar</span>
               </div>
             </button>
           </div>
         )}
 
         {onToggleFavorites && (
-          <div className="mb-3 sm:mb-4 mt-2 px-1">
+          <div className="mb-4 mt-2 px-1">
             <button
               onClick={onToggleFavorites}
-              className={`w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl transition-all duration-200 shadow-md border
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all shadow-sm border
         ${docFilter === 'FAVORITES'
-          ? 'bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white border-pink-400/30 shadow-lg shadow-pink-500/30 hover:shadow-xl hover:shadow-pink-500/40 hover:-translate-y-0.5'
-          : 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 hover:from-gray-100 hover:to-gray-200 dark:hover:from-gray-700 dark:hover:to-gray-600 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-700'
+          ? 'bg-pink-50 dark:bg-pink-900/10 hover:bg-pink-100 dark:hover:bg-pink-900/20 text-pink-700 dark:text-pink-300 border-pink-100 dark:border-pink-800/50'
+          : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-100 dark:border-gray-700'
         }`}
             >
-              <Heart size={18} className={`${docFilter === 'FAVORITES' ? 'text-white' : 'text-gray-500 dark:text-gray-400'}`} />
+              <Heart size={18} className={`${docFilter === 'FAVORITES' ? 'text-pink-600 dark:text-pink-400' : 'text-gray-500 dark:text-gray-400'}`} />
               <div className="flex flex-col items-start">
-                <span className="font-bold text-xs sm:text-sm leading-none">Favoritos</span>
-                <span className="text-[9px] sm:text-[10px] opacity-80 mt-0.5">Seus documentos marcados</span>
+                <span className="font-bold text-sm leading-none">Favoritos</span>
+                <span className="text-[10px] opacity-70 mt-0.5">Seus documentos marcados</span>
               </div>
-              <span className="ml-auto text-[10px] sm:text-xs opacity-80 font-bold bg-white/20 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg">({favoriteCount})</span>
+              <span className="ml-auto text-xs opacity-70">({favoriteCount})</span>
             </button>
           </div>
         )}
@@ -399,12 +397,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Botão Principal de Adicionar Raiz */}
           {isAdminOrEditor && (
-            <button
+            <button 
               onClick={() => onCreateCategory(null)}
-              className="w-full flex items-center justify-center gap-1.5 sm:gap-2 mb-3 sm:mb-4 px-3 sm:px-4 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-xl transition-all duration-200 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 hover:-translate-y-0.5 group border border-blue-400/20"
+              className="w-full flex items-center justify-center gap-2 mb-4 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all shadow-sm group"
             >
               <PlusCircle size={16} className="group-hover:scale-110 transition-transform" />
-              <span className="font-semibold text-xs sm:text-sm">Nova Categoria Raiz</span>
+              <span className="font-medium text-sm">Nova Categoria Raiz</span>
             </button>
           )}
           
@@ -446,30 +444,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* 3. Footer Area with User Controls (Hidden in Dropdown mode) */}
       {!isDropdown && (
-        <div className="p-3 sm:p-4 border-t border-gray-200 dark:border-gray-700 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700/50 shrink-0">
-          <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3 px-1">
-              <img src={user.avatar} alt={user.name} className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-white dark:border-gray-600 shadow-lg" />
+        <div className="p-3 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 shrink-0">
+          <div className="flex items-center gap-3 mb-3 px-1">
+              <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full border border-gray-300 dark:border-gray-600" />
               <div className="flex-1 min-w-0">
-                  <p className="text-xs sm:text-sm font-bold text-gray-800 dark:text-gray-200 truncate">{user.name}</p>
-                  <p className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 truncate capitalize">{user.department || user.role.toLowerCase()}</p>
+                  <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">{user.name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate capitalize">{user.department || user.role.toLowerCase()}</p>
               </div>
           </div>
           
-          <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
-              <button
-                  onClick={onOpenProfile}
+          <div className="grid grid-cols-5 gap-1">
+              <button 
+                  onClick={onOpenProfile} 
                   title="Meu Perfil"
-                  className="flex items-center justify-center p-2 sm:p-2.5 rounded-xl hover:bg-white dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 transition-all duration-200 hover:shadow-md hover:scale-105"
+                  className="flex items-center justify-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
               >
-                  <UserCircle size={16} />
+                  <UserCircle size={18} />
               </button>
-
-              <button
-                  onClick={toggleTheme}
+              
+              <button 
+                  onClick={toggleTheme} 
                   title="Alternar Tema"
-                  className="flex items-center justify-center p-2 sm:p-2.5 rounded-xl hover:bg-white dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 transition-all duration-200 hover:shadow-md hover:scale-105"
+                  className="flex items-center justify-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
               >
-                  {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
+                  {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
               </button>
 
               <div className="flex items-center justify-center">
@@ -477,29 +475,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   userId={user.id}
                   onOpenDocumentById={onOpenDocumentById}
                   onOpenReviewCenterByDocId={onOpenReviewCenterByDocId}
-                  onNavigateToNotifications={onNavigateToNotifications}
                   placement="top"
                 />
               </div>
 
               {user.role === 'ADMIN' ? (
-                  <button
-                      onClick={onOpenSettings}
+                  <button 
+                      onClick={onOpenSettings} 
                       title="Configurações Admin"
-                      className="flex items-center justify-center p-2 sm:p-2.5 rounded-xl hover:bg-white dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 transition-all duration-200 hover:shadow-md hover:scale-105"
+                      className="flex items-center justify-center p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
                   >
-                      <Settings size={16} />
+                      <Settings size={18} />
                   </button>
               ) : (
-                  <div />
+                  <div /> /* Spacer */
               )}
 
-              <button
-                  onClick={onLogout}
+              <button 
+                  onClick={onLogout} 
                   title="Sair"
-                  className="flex items-center justify-center p-2 sm:p-2.5 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 transition-all duration-200 hover:shadow-md hover:scale-105"
+                  className="flex items-center justify-center p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 transition-colors"
               >
-                  <LogOut size={16} />
+                  <LogOut size={18} />
               </button>
           </div>
         </div>

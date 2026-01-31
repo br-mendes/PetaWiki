@@ -1,49 +1,30 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { ConfigError } from "./components/ConfigError";
 import "./index.css";
 
-console.log("index.tsx: Starting app initialization");
-
 const rootElement = document.getElementById("root");
-if (!rootElement) {
-  console.error("Root element not found");
-  throw new Error("Could not find root element");
-}
+if (!rootElement) throw new Error("Could not find root element");
 
-console.log("index.tsx: Root element found");
+const missing: string[] = [];
+if (!import.meta.env.VITE_SUPABASE_URL) missing.push("VITE_SUPABASE_URL");
+if (!import.meta.env.VITE_SUPABASE_ANON_KEY) missing.push("VITE_SUPABASE_ANON_KEY");
 
-// Use the refactored App
-try {
-  console.log("index.tsx: Attempting to import refactored App");
+const root = ReactDOM.createRoot(rootElement);
+
+if (missing.length) {
+  root.render(
+    <React.StrictMode>
+      <ConfigError missing={missing} />
+    </React.StrictMode>
+  );
+} else {
+  // Importa o App somente depois de validar env
   import("./App").then(({ default: App }) => {
-    console.log("index.tsx: App imported successfully");
-    console.log("index.tsx: Creating React root");
-    const root = ReactDOM.createRoot(rootElement);
-    
-    console.log("index.tsx: Rendering App");
     root.render(
       <React.StrictMode>
         <App />
       </React.StrictMode>
     );
-    
-    console.log("index.tsx: App rendered successfully");
-  }).catch(error => {
-    console.error("index.tsx: Failed to import or render App:", error);
-    rootElement.innerHTML = `
-      <div style="padding:20px;font-family:system-ui;color:red;">
-        <h1>Erro ao importar App</h1>
-        <pre>${error.message}</pre>
-        <p>Verifique o console para mais detalhes.</p>
-      </div>
-    `;
   });
-} catch (error) {
-  console.error("index.tsx: Critical error:", error);
-  rootElement.innerHTML = `
-    <div style="padding:20px;font-family:system-ui;color:red;">
-      <h1>Erro Crítico</h1>
-      <pre>${error.message}</pre>
-    </div>
-  `;
 }

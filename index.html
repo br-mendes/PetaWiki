@@ -1,47 +1,14 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Peta Wiki</title>
-    <script>
-      window.PETA_DEBUG = true;
-      window.onerror = function(msg, url, line, col, error) {
-        console.error('Global error:', {msg, url, line, col, error});
-        const root = document.getElementById('root');
-        if (root) {
-          root.innerHTML = '<div style="padding:20px;font-family:system-ui;color:red;"><h1>JavaScript Error</h1><p>Erro: ' + msg + '</p><p>Linha: ' + line + '</p><p>Arquivo: ' + url + '</p></div>';
-        }
-        return false;
-      };
-      window.onunhandledrejection = function(e) {
-        console.error('Unhandled promise rejection:', e);
-        const root = document.getElementById('root');
-        if (root) {
-          root.innerHTML = '<div style="padding:20px;font-family:system-ui;color:red;"><h1>Promise Error</h1><p>Erro: ' + e.reason + '</p></div>';
-        }
-      };
-      console.log('index.html: Scripts loaded');
-    </script>
-  </head>
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" />
+ </head>
   <body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-    <div id="root">
-      <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui;">
-        <div style="text-align:center;">
-          <div style="font-size:2rem;margin-bottom:1rem;">Peta Wiki</div>
-          <div>Carregando aplicação...</div>
-        </div>
-      </div>
-    </div>
-    <script type="module">
-      console.log('index.html: Starting module loading');
-      import('/index.tsx').then(() => {
-        console.log('index.html: Module loaded successfully');
-      }).catch(error => {
-        console.error('index.html: Module loading failed:', error);
-        document.getElementById('root').innerHTML = '<div style="padding:20px;font-family:system-ui;color:red;"><h1>Module Error</h1><p>Failed to load main module: ' + error.message + '</p></div>';
-      });
-    </script>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>
-

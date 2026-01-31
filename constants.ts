@@ -3,8 +3,8 @@ import { Category, Document, User, DailyStat, AnalyticsMetric, DocumentTemplate,
 
 export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
   appName: 'Peta Wiki',
-  logoCollapsedUrl: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Ccircle cx="50" cy="50" r="50" fill="%232563eb"/%3E%3Ctext x="50" y="50" dy=".35em" text-anchor="middle" fill="white" font-size="40" font-weight="bold"%3EPW%3C/text%3E%3C/svg%3E', // 1:1
-  logoExpandedUrl: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 90"%3E%3Crect width="160" height="90" fill="%232563eb"/%3E%3Ctext x="50%" y="50%" dy=".35em" text-anchor="middle" fill="white" font-size="24" font-weight="bold"%3EPeta Wiki%3C/text%3E%3C/svg%3E', // 16:9 placeholder
+  logoCollapsedUrl: 'https://ui-avatars.com/api/?name=PW&background=2563eb&color=fff&size=128&bold=true', // 1:1
+  logoExpandedUrl: 'https://ui-avatars.com/api/?name=Peta+Wiki+Corp&background=2563eb&color=fff&size=256&bold=true&length=3', // 16:9 placeholder
   allowedDomains: ['petacorp.com.br', 'gmxtecnologia.com.br'],
   
   layoutMode: 'SIDEBAR',
@@ -66,7 +66,7 @@ export const MOCK_USERS: User[] = [
     password: 'admin',
     name: 'Admin',
     role: 'ADMIN',
-    avatar: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Ccircle cx="50" cy="50" r="50" fill="%23111827"/%3E%3Ctext x="50" y="50" dy=".35em" text-anchor="middle" fill="white" font-size="40" font-weight="bold"%3EA%3C/text%3E%3C/svg%3E',
+    avatar: 'https://ui-avatars.com/api/?name=Admin&background=111827&color=fff',
     department: 'Gestão'
   }
 ];

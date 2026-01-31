@@ -18,4 +18,3 @@ export const LazyComponents = {
   TemplateSelector,
   CategoryModal,
 };
-
