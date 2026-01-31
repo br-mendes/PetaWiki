@@ -235,8 +235,8 @@ setUserReactions(newReactions);
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6 md:p-8" onClick={() => { if(isExportMenuOpen) setIsExportMenuOpen(false); }}>
-      <nav className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-4 sm:mb-6 flex items-center gap-2">
+    <div className="max-w-4xl mx-auto p-8" onClick={() => { if(isExportMenuOpen) setIsExportMenuOpen(false); }}>
+      <nav className="text-sm text-gray-500 dark:text-gray-400 mb-6 flex items-center gap-2">
         <span>Wiki</span>
         <span>/</span>
         <span className="text-gray-900 dark:text-gray-200 font-medium">{document.categoryPath}</span>

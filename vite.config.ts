@@ -1,24 +1,28 @@
 
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
-export default defineConfig({
-  plugins: [react()],
-  build: {
-    outDir: 'dist',
-    sourcemap: true,
-    target: 'es2015',
-    rollupOptions: {
-      output: {
-        manualChunks: undefined
+export default defineConfig(({ mode }) => {
+  // Carrega variáveis de ambiente
+  const env = loadEnv(mode, '.', '');
+
+  return {
+    plugins: [react()],
+    // Removed 'define: { process.env: {} }' to prevent blocking access to real env vars in Node context
+    build: {
+      outDir: 'dist',
+      sourcemap: false,
+      rollupOptions: {
+        output: {
+          // Avoid manual chunk cycles; let Rollup split app code naturally.
+          manualChunks(id) {
+            if (id.includes('node_modules')) return 'vendor';
+          }
+        }
       }
     },
-    chunkSizeWarningLimit: 1000
-  },
-  server: {
-    port: 3000,
-  },
-  optimizeDeps: {
-    include: ['react', 'react-dom']
-  }
+    server: {
+      port: 3000,
+    }
+  };
 });
