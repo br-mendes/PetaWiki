@@ -489,14 +489,14 @@ const AppContent = () => {
 
       default:
         return null;
-    }
-  };
+     }
+     };
 
-    restoreSession();
+     restoreSession();
   }, []);
 
-  // Simple handlers
-  const handleLogin = (username: string, password: string) => {
+   // Simple handlers
+   const handleLogin = (username: string, password: string) => {
     console.log('handleLogin called with:', username);
     
     // Mock authentication
