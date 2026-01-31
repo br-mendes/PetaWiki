@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, memo, useCallback, useMemo } from 'react';
 import { 
   ChevronRight, Plus, Trash2, 
   Book, Folder, FolderOpen, FileText, 
@@ -76,7 +76,7 @@ const CategoryItem: React.FC<{
   onDelete: (id: string) => void;
   user: User;
   depth?: number 
-}> = ({ 
+}> = memo(({ 
   category, 
   categoryDocuments,
   allDocuments,
@@ -224,7 +224,7 @@ const CategoryItem: React.FC<{
       )}
     </div>
   );
-};
+});
 
 export const Sidebar: React.FC<SidebarProps> = ({ 
   categories, 

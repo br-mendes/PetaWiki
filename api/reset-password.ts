@@ -29,8 +29,8 @@ export default async function handler(req: any, res: any) {
 
   const secret = process.env.RESET_TOKEN_SECRET || '';
   const tokenHash = crypto
-    .createHash('sha256')
-    .update(`${String(token)}:${secret}`)
+    .createHmac('sha256', secret)
+    .update(String(token))
     .digest('hex');
 
   try {
@@ -51,6 +51,19 @@ export default async function handler(req: any, res: any) {
 
     if (tokenRow.expires_at && new Date(tokenRow.expires_at).getTime() < Date.now()) {
       return res.status(400).json({ error: 'Token expirado.' });
+    }
+
+    // Validate password strength
+    if (!password || typeof password !== 'string') {
+      return res.status(400).json({ error: 'Senha é obrigatória.' });
+    }
+    
+    if (password.length < 8) {
+      return res.status(400).json({ error: 'Senha deve ter pelo menos 8 caracteres.' });
+    }
+    
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+      return res.status(400).json({ error: 'Senha deve conter letras maiúsculas, minúsculas e números.' });
     }
 
     // Atualiza a senha usando a chave de serviço (ignora RLS)

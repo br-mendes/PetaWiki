@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, memo } from 'react';
 import { Edit2, Eye, Download, ThumbsUp, ThumbsDown, Heart, FileText, FileType, History, RotateCcw, Trash2, File, Bookmark } from 'lucide-react';
 import { Document, User, SystemSettings, DocumentVersion } from '../types';
 import { Button } from './Button';
@@ -24,7 +24,7 @@ interface DocumentViewProps {
 
 type ReactionType = 'THUMBS_UP' | 'THUMBS_DOWN' | 'HEART';
 
-export const DocumentView: React.FC<DocumentViewProps> = ({ 
+const DocumentViewInternal: React.FC<DocumentViewProps> = ({ 
   document, 
   user, 
   onEdit,
@@ -511,3 +511,5 @@ setUserReactions(newReactions);
     </div>
   );
 };
+
+export const DocumentView = memo(DocumentViewInternal);

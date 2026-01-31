@@ -117,8 +117,8 @@ export default async function handler(req: any, res: any) {
   }
 
   const toEmail = email.trim().toLowerCase();
-  if (!/^\S+@\S+\.\S+$/.test(toEmail)) {
-    return res.status(200).json({ success: true });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(toEmail)) {
+    return res.status(400).json({ error: "Invalid email format" });
   }
 
   const sb = createClient(supabaseUrl, serviceKey);

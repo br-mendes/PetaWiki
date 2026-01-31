@@ -42,7 +42,15 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   };
 
   const exec = (command: string, value: string | undefined = undefined) => {
-    document.execCommand(command, false, value);
+    // Fallback for deprecated execCommand - consider modernizing to a proper rich text library
+    try {
+      if (document.execCommand) {
+        document.execCommand(command, false, value);
+      }
+    } catch (error) {
+      console.warn('execCommand is deprecated and failed:', error);
+      // Consider implementing modern alternatives
+    }
     if (contentRef.current) {
       contentRef.current.focus();
     }

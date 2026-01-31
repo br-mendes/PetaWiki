@@ -26,8 +26,28 @@ export default async function handler(req: any, res: any) {
   }
 
   const { to, subject, html } = req.body || {};
+  
+  // Enhanced input validation
   if (!to || !subject || !html) {
     return res.status(400).json({ error: 'Missing fields: to, subject, html' });
+  }
+  
+  if (typeof to !== 'string' || typeof subject !== 'string' || typeof html !== 'string') {
+    return res.status(400).json({ error: 'Invalid field types' });
+  }
+  
+  // Email validation
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to.trim())) {
+    return res.status(400).json({ error: 'Invalid email format' });
+  }
+  
+  // Length limits
+  if (subject.length > 200) {
+    return res.status(400).json({ error: 'Subject too long (max 200 characters)' });
+  }
+  
+  if (html.length > 100000) { // 100KB limit
+    return res.status(400).json({ error: 'HTML content too large' });
   }
 
   // Nome do remetente = appName do painel Admin (system_settings.settings.appName)

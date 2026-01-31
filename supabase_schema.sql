@@ -171,33 +171,7 @@ RETURNS TABLE (
   metadata JSONB,
   created_at TIMESTAMP WITH TIME ZONE
 ) AS $$
-DECLARE
-  where_clause TEXT := '';
 BEGIN
-  IF p_user_id IS NOT NULL THEN
-    where_clause := where_clause || ' AND user_id = ''' || p_user_id || '''';
-  END IF;
-  
-  IF p_action IS NOT NULL THEN
-    where_clause := where_clause || ' AND action = ''' || p_action || '''';
-  END IF;
-  
-  IF p_target_type IS NOT NULL THEN
-    where_clause := where_clause || ' AND target_type = ''' || p_target_type || '''';
-  END IF;
-  
-  IF p_date_from IS NOT NULL THEN
-    where_clause := where_clause || ' AND created_at >= ''' || p_date_from || '''';
-  END IF;
-  
-  IF p_date_to IS NOT NULL THEN
-    where_clause := where_clause || ' AND created_at <= ''' || p_date_to || '''';
-  END IF;
-  
-  IF p_search_query IS NOT NULL AND p_search_query != '' THEN
-    where_clause := where_clause || ' AND (target_title ILIKE '' || p_search_query || '' OR metadata::text ILIKE '' || p_search_query || '')';
-  END IF;
-  
   RETURN QUERY
     SELECT 
       id,
@@ -213,10 +187,17 @@ BEGIN
       metadata,
       created_at
     FROM activity_logs 
-    WHERE 1=1 ' || where_clause || '
+    WHERE 
+      (p_user_id IS NULL OR user_id = p_user_id) AND
+      (p_action IS NULL OR action = p_action) AND
+      (p_target_type IS NULL OR target_type = p_target_type) AND
+      (p_date_from IS NULL OR created_at >= p_date_from) AND
+      (p_date_to IS NULL OR created_at <= p_date_to) AND
+      (p_search_query IS NULL OR p_search_query = '' OR 
+       (target_title ILIKE '%' || p_search_query || '%' OR metadata::text ILIKE '%' || p_search_query || '%'))
     ORDER BY created_at DESC
-    LIMIT ' || p_limit || ' 
-    OFFSET ' || p_offset;
+    LIMIT p_limit 
+    OFFSET p_offset;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -297,3 +278,12 @@ BEGIN
     LIMIT 10;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Performance optimization indexes
+CREATE INDEX IF NOT EXISTS idx_activity_logs_user_created ON activity_logs(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_activity_logs_target_type_created ON activity_logs(target_type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_documents_category_status ON documents(category_id, status);
+CREATE INDEX IF NOT EXISTS idx_documents_author_created ON documents(author_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_password_resets_email_action_used ON password_resets(email, action, used_at, expires_at);
+CREATE INDEX IF NOT EXISTS idx_document_favorites_user_doc ON document_favorites(user_id, document_id);
+CREATE INDEX IF NOT EXISTS idx_categories_parent_order ON categories(parent_id, sort_order);
