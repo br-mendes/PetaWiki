@@ -436,10 +436,10 @@ const AppContent = () => {
 
       default:
       return null;
-      }
-     };
+       }
+      };
 
-     restoreSession();
+      restoreSession();
   }, []);
 
   // Mock data
