@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback, memo } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useParams, useSearchParams, Navigate } from 'react-router-dom';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { listCategories, createCategory, renameCategory, deleteCategory, type Category } from "./lib/categories";
 import { CategoryTree } from "./components/CategoryTree";
 import { Sidebar } from './components/Sidebar';
@@ -44,7 +45,7 @@ const CATEGORY_STORAGE_KEY = 'PETA_ACTIVE_CATEGORY_ID';
 const AUTH_MODE = (import.meta.env.VITE_AUTH_MODE === 'mock' ? 'mock' : 'db') as 'mock' | 'db';
 const isMockUser = (u: any) => !!u && (String(u.id || '').startsWith('mock_') || u.isMock);
 
-const AppContent = () => {
+const AppContent = memo(() => {
   const toast = useToast();
 
   const {
@@ -54,6 +55,7 @@ const AppContent = () => {
     CategoryModal,
     AdminSettings,
     UserProfile,
+    LazyWrapper,
   } = LazyComponents;
 
   // Auth & System State
@@ -142,13 +144,12 @@ const AppContent = () => {
   const params = useParams<{ categoryId?: string; docId?: string; action?: string }>();
   const [searchParams] = useSearchParams();
 
-  // Single unified useEffect for all URL handling
+  // Single unified useEffect for all URL handling - optimized and simplified
   useEffect(() => {
     if (!isAuthenticated || !params) return;
 
     const processUrl = async () => {
       const path = window.location.pathname;
-      console.log('Processing URL:', path, 'params:', params);
 
       // Handle special routes first
       if (path === '/novo' || path.startsWith('/novo')) {
@@ -179,7 +180,6 @@ const AppContent = () => {
       if (params.categoryId && categories.length > 0) {
         const cat = findCategoryById(categories, params.categoryId);
         if (cat) {
-          console.log('Found category:', cat);
           setActiveCategoryId(cat.id);
           setCurrentView('CATEGORY_VIEW');
           setSelectedDocId(null);
@@ -193,7 +193,6 @@ const AppContent = () => {
         
         const doc = documents.find(d => d.id === params.docId);
         if (doc) {
-          console.log('Found document in state:', doc);
           setSelectedDocId(doc.id);
           setActiveCategoryId(doc.categoryId || null);
           setCurrentView(params.action === 'editar' ? 'DOCUMENT_EDIT' : 'DOCUMENT_VIEW');
@@ -203,7 +202,6 @@ const AppContent = () => {
         // Fetch document from DB - wait for categories to load
         if (categories.length > 0) {
           try {
-            console.log('Fetching document from DB:', params.docId);
             const { data, error } = await supabase
               .from("documents")
               .select("*")
@@ -211,12 +209,10 @@ const AppContent = () => {
               .single();
             
             if (error) {
-              console.error('DB error:', error);
               throw error;
             }
             
             if (data) {
-              console.log('Fetched document:', data);
               const fallbackCatId = defaultCategoryId || categories[0]?.id || null;
               const mappedDoc = {
                 id: data.id,
@@ -253,7 +249,6 @@ const AppContent = () => {
 
       // Handle root path (/)
       if (!params.categoryId && !params.docId && (path === '/' || path === '')) {
-        console.log('Setting to HOME');
         setCurrentView('HOME');
         setActiveCategoryId(null);
         setSelectedDocId(null);
@@ -270,7 +265,6 @@ const AppContent = () => {
   useEffect(() => {
     const doc = documents.find(d => d.id === selectedDocId) || null;
     if (params.docId && selectedDocId && doc) {
-      console.log('Document found and selectedDocument is available, updating view');
       setCurrentView(params.action === 'editar' ? 'DOCUMENT_EDIT' : 'DOCUMENT_VIEW');
     }
   }, [params.docId, params.action, selectedDocId, documents]);
@@ -457,7 +451,9 @@ const AppContent = () => {
                             ...user, 
                             ...freshData,
                             themePreference: freshData.theme_preference 
-                        };
+};
+
+export default App;
                         setCurrentUser(finalUser);
                     }
 
@@ -1933,26 +1929,19 @@ const toggleFavorites = () => {
 
     </div>
   );
-};
+});
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <ToastProvider>
-        <Routes>
-          <Route path="/" element={<AppContent />} />
-          <Route path="/categoria/:categoryId" element={<AppContent />} />
-          <Route path="/documento/:docId" element={<AppContent />} />
-          <Route path="/documento/:docId/editar" element={<AppContent />} />
-          <Route path="/novo" element={<AppContent />} />
-          <Route path="/analytics" element={<AppContent />} />
-          <Route path="/admin" element={<AppContent />} />
-          <Route path="/revisoes" element={<AppContent />} />
-          <Route path="/revisoes/:docId" element={<AppContent />} />
-          <Route path="*" element={<AppContent />} />
-        </Routes>
-      </ToastProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <ToastProvider>
+          <Routes>
+            <Route path="*" element={<AppContent />} />
+          </Routes>
+        </ToastProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 };
 

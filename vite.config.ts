@@ -8,21 +8,42 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react()],
-    // Removed 'define: { process.env: {} }' to prevent blocking access to real env vars in Node context
+    // Optimize build for production
     build: {
       outDir: 'dist',
-      sourcemap: false,
+      sourcemap: mode === 'development',
+      minify: mode === 'production',
       rollupOptions: {
         output: {
-          // Avoid manual chunk cycles; let Rollup split app code naturally.
+          // Improved chunk splitting strategy
           manualChunks(id) {
-            if (id.includes('node_modules')) return 'vendor';
+            if (id.includes('node_modules')) {
+              if (id.includes('@supabase')) return 'supabase';
+              if (id.includes('react')) return 'react-vendor';
+              if (id.includes('lucide')) return 'icons';
+              return 'vendor';
+            }
+            
+            // Split large app components
+            if (id.includes('App')) return 'app';
+            if (id.includes('components')) return 'components';
           }
         }
-      }
+      },
+      // Improve build performance
+      treeshake: mode === 'production',
+      target: 'es2020'
     },
     server: {
       port: 3000,
+      // Improve HMR performance
+      hmr: {
+        overlay: false
+      }
+    },
+    // Optimize dependency pre-bundling
+    optimizeDeps: {
+      include: ['react', 'react-dom', '@supabase/supabase-js']
     }
   };
 });

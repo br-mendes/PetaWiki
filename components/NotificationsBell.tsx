@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Bell, Check, FileText, X } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import { useToast } from "./Toast";
@@ -21,10 +21,10 @@ export const NotificationsBell: React.FC<{
   placement?: 'top' | 'bottom';
 }> = ({ userId, onOpenDocumentById, onOpenReviewCenterByDocId, limit = 30, placement = 'bottom' }) => {
   const toast = useToast();
-  const [open, setOpen] = React.useState(false);
-  const [loading, setLoading] = React.useState(false);
-  const [items, setItems] = React.useState<NotificationItem[]>([]);
-  const ref = React.useRef<HTMLDivElement | null>(null);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [items, setItems] = useState<NotificationItem[]>([]);
+  const ref = useRef<HTMLDivElement | null>(null);
 
   const unreadCount = React.useMemo(
     () => items.filter((n) => !n.is_read).length,
@@ -50,30 +50,33 @@ export const NotificationsBell: React.FC<{
     return "bg-blue-500";
   };
 
-  const load = React.useCallback(
+  const load = useCallback(
     async (opts?: { silent?: boolean }) => {
       if (!userId) return;
       if (!opts?.silent) setLoading(true);
 
-      const { data, error } = await supabase.rpc("list_notifications", {
-        p_user_id: userId,
-        p_limit: limit,
-      });
+      try {
+        const { data, error } = await supabase.rpc("list_notifications", {
+          p_user_id: userId,
+          p_limit: limit,
+        });
 
-      if (error) {
+        if (error) {
+          throw error;
+        }
+
+        setItems((data || []) as NotificationItem[]);
+      } catch (error) {
         console.error(error);
         if (!opts?.silent) toast.error("Erro ao carregar notificacoes.");
+      } finally {
         if (!opts?.silent) setLoading(false);
-        return;
       }
-
-      setItems((data || []) as NotificationItem[]);
-      if (!opts?.silent) setLoading(false);
     },
-    [userId, limit]
+    [userId, limit, toast]
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     load({ silent: true });
   }, [load]);
 
