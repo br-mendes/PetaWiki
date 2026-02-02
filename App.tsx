@@ -29,6 +29,14 @@ import { NewDocumentRoute } from './routes/NewDocumentRoute';
 import { AnalyticsRoute } from './routes/AnalyticsRoute';
 import { AdminRoute } from './routes/AdminRoute';
 import { ReviewRoute } from './routes/ReviewRoute';
+import { DepartmentsRoute, DepartmentViewRoute } from './routes/DepartmentsRoute';
+import { AreasRoute, AreaViewRoute } from './routes/AreasRoute';
+import { FavoritesRoute } from './routes/FavoritesRoute';
+import { NotificationsRoute } from './routes/NotificationsRoute';
+import { TemplatesRoute, TemplateViewRoute } from './routes/TemplatesRoute';
+import { ProfileRoute, UserProfileRoute } from './routes/ProfileRoute';
+import { DocumentCommentsRoute } from './routes/DocumentCommentsRoute';
+import { DocumentExportRoute, ExportsRoute } from './routes/ExportsRoute';
 import { AlertTriangle, FileText } from 'lucide-react';
 import { sanitizeHtml } from './lib/sanitize';
 import { createTemplate as dbCreateTemplate, listTemplates as dbListTemplates, incrementTemplateUsage } from './lib/templates';
@@ -1949,15 +1957,40 @@ const App = () => {
     <BrowserRouter>
       <ToastProvider>
         <Routes>
+          {/* Core Routes */}
           <Route path="/" element={<AppContent />} />
           <Route path="/categoria/:categoryId" element={<CategoryViewRoute />} />
           <Route path="/documento/:docId" element={<DocumentViewRoute />} />
           <Route path="/documento/:docId/:action" element={<DocumentViewRoute />} />
+          <Route path="/documento/:docId/comentarios" element={<DocumentCommentsRoute />} />
+          <Route path="/documento/:docId/exportar" element={<DocumentExportRoute />} />
+          <Route path="/documento/:docId/exportar/:format" element={<DocumentExportRoute />} />
           <Route path="/novo" element={<NewDocumentRoute />} />
+          
+          {/* Organization Structure */}
+          <Route path="/departamentos" element={<DepartmentsRoute />} />
+          <Route path="/departamento/:id" element={<DepartmentViewRoute />} />
+          <Route path="/areas" element={<AreasRoute />} />
+          <Route path="/area/:id" element={<AreaViewRoute />} />
+          
+          {/* User Features */}
+          <Route path="/favoritos" element={<FavoritesRoute />} />
+          <Route path="/notificacoes" element={<NotificationsRoute />} />
+          <Route path="/perfil" element={<ProfileRoute />} />
+          <Route path="/perfil/:id" element={<UserProfileRoute />} />
+          
+          {/* Templates */}
+          <Route path="/templates" element={<TemplatesRoute />} />
+          <Route path="/template/:id" element={<TemplateViewRoute />} />
+          
+          {/* Admin & Analytics */}
           <Route path="/analytics" element={<AnalyticsRoute />} />
           <Route path="/admin" element={<AdminRoute />} />
           <Route path="/revisoes" element={<ReviewRoute />} />
           <Route path="/revisoes/:docId" element={<ReviewRoute />} />
+          <Route path="/exports" element={<ExportsRoute />} />
+          
+          {/* 404 */}
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </ToastProvider>
