@@ -22,29 +22,39 @@ BEGIN
     END IF;
 END $$;
 
--- Adicionar coluna UUID para department em users
+-- Adicionar coluna UUID para department em users (mantendo compatibilidade)
 ALTER TABLE users 
-ADD COLUMN department_id uuid;
+ADD COLUMN department_id_uuid uuid;
 
--- Criar constraint FK
+-- Criar constraint FK para nova coluna
 ALTER TABLE users 
-ADD CONSTRAINT users_department_id_fkey 
-FOREIGN KEY (department_id) REFERENCES departments(id);
+ADD CONSTRAINT users_department_id_uuid_fkey 
+FOREIGN KEY (department_id_uuid) REFERENCES departments(id);
+
+-- Nota: Mantivemos users.department (text) para compatibilidade com dados existentes
+-- Migração manual pode ser necessária dependendo dos dados atuais
 
 -- Corrigir document_templates.department_id para UUID
+-- NOTA: Mantivemos coluna original para compatibilidade
 ALTER TABLE document_templates
 ADD COLUMN department_id_uuid uuid;
 
--- Migrar dados se existirem
+-- Migrar dados se existirem (baseado em slug matching)
 UPDATE document_templates 
-SET department_id_uuid = (id::uuid)::uuid 
+SET department_id_uuid = departments.id
 FROM departments 
 WHERE departments.slug = document_templates.department_id AND document_templates.department_id IS NOT NULL;
 
--- Adicionar constraint
+-- Adicionar constraint para nova coluna
 ALTER TABLE document_templates
-ADD CONSTRAINT document_templates_department_id_fkey 
+ADD CONSTRAINT document_templates_department_id_uuid_fkey 
 FOREIGN KEY (department_id_uuid) REFERENCES departments(id);
+
+-- Alternativamente, se quiser substituir completamente:
+-- Remover antiga coluna após migração verificada
+-- ALTER TABLE document_templates DROP COLUMN department_id;
+-- Renomear nova coluna
+-- ALTER TABLE document_templates RENAME COLUMN department_id_uuid TO department_id;
 
 -- ========================================
 -- 2. MELHORIAS NAS CONEXÕES DE DOCUMENTOS
