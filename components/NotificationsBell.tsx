@@ -1,5 +1,6 @@
 import React from "react";
 import { Bell, Check, FileText, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useToast } from "./Toast";
 
@@ -20,8 +21,9 @@ export const NotificationsBell: React.FC<{
   limit?: number;
   placement?: 'top' | 'bottom';
 }> = ({ userId, onOpenDocumentById, onOpenReviewCenterByDocId, limit = 30, placement = 'bottom' }) => {
+  const navigate = useNavigate();
   const toast = useToast();
-  const [open, setOpen] = React.useState(false);
+  // Removed open state since popup is disabled
   const [loading, setLoading] = React.useState(false);
   const [items, setItems] = React.useState<NotificationItem[]>([]);
   const ref = React.useRef<HTMLDivElement | null>(null);
@@ -74,32 +76,15 @@ export const NotificationsBell: React.FC<{
   );
 
   React.useEffect(() => {
+    // Keep loading for unread count but no popup
     load({ silent: true });
   }, [load]);
 
   React.useEffect(() => {
+    // Keep polling for unread count
     const id = setInterval(() => load({ silent: true }), 30000);
     return () => clearInterval(id);
   }, [load]);
-
-  React.useEffect(() => {
-    if (!open) return;
-
-    const onDocClick = (e: MouseEvent) => {
-      if (!ref.current) return;
-      if (!ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    const onEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-
-    document.addEventListener("mousedown", onDocClick);
-    document.addEventListener("keydown", onEsc);
-    return () => {
-      document.removeEventListener("mousedown", onDocClick);
-      document.removeEventListener("keydown", onEsc);
-    };
-  }, [open]);
 
   const markRead = async (id: string) => {
     setItems((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
@@ -158,10 +143,8 @@ export const NotificationsBell: React.FC<{
     <div ref={ref} className="relative">
       <button
         type="button"
-        onClick={async () => {
-          const next = !open;
-          setOpen(next);
-          if (next) await load({ silent: true });
+        onClick={() => {
+          navigate('/notificacoes');
         }}
         className="relative p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-600 dark:text-gray-300"
         title="Notificacoes"
@@ -175,29 +158,7 @@ export const NotificationsBell: React.FC<{
         )}
       </button>
 
-        {open && (
-          <div
-            className={`absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-80 md:w-96 max-w-[90vw] rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl overflow-hidden z-[100]`}
-          >
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 w-3 h-3 border-l border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 transform rotate-45 mb-[-6px]"></div>
-           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-            <div className="font-semibold text-gray-900 dark:text-gray-100">
-              Notificacoes
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={markAll}
-                className="text-xs px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200"
-                title="Marcar todas como lidas"
-              >
-                Marcar todas
-              </button>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300"
-                title="Fechar"
+        {/* Popup removed - now redirects to /notificacoes page */}
               >
                 <X size={16} />
               </button>
