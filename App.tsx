@@ -22,6 +22,13 @@ import {
 import { ToastProvider, useToast } from './components/Toast';
 import { Modal } from './components/Modal';
 import { Button } from './components/Button';
+import { NotFoundPage } from './components/NotFoundPage';
+import { DocumentViewRoute } from './routes/DocumentViewRoute';
+import { CategoryViewRoute } from './routes/CategoryViewRoute';
+import { NewDocumentRoute } from './routes/NewDocumentRoute';
+import { AnalyticsRoute } from './routes/AnalyticsRoute';
+import { AdminRoute } from './routes/AdminRoute';
+import { ReviewRoute } from './routes/ReviewRoute';
 import { AlertTriangle, FileText } from 'lucide-react';
 import { sanitizeHtml } from './lib/sanitize';
 import { createTemplate as dbCreateTemplate, listTemplates as dbListTemplates, incrementTemplateUsage } from './lib/templates';
@@ -261,9 +268,8 @@ const AppContent = () => {
       }
     };
 
-    // Small delay to ensure state is ready
-    const timeoutId = setTimeout(processUrl, 100);
-    return () => clearTimeout(timeoutId);
+    // Process immediately
+    processUrl();
   }, [params, isAuthenticated, categories.length, documents.length]); // Include documents.length to refetch if needed
 
   // Force document view update when document is found
@@ -358,41 +364,44 @@ const AppContent = () => {
     navigateToCategory(category.id);
   }, [navigateToCategory]);
 
-  // Sync internal state -> URL
+  // Simplified sync internal state -> URL
   useEffect(() => {
-    // Build path based on currentView and state
-    let newPath = '/';
+    // Only update URL if current state doesn't match URL
+    const path = window.location.pathname;
+    let expectedPath = '/';
 
     switch (currentView) {
       case 'HOME':
-        newPath = '/';
+        expectedPath = '/';
         break;
       case 'CATEGORY_VIEW':
-        if (activeCategoryId) newPath = `/categoria/${activeCategoryId}`;
+        if (activeCategoryId) expectedPath = `/categoria/${activeCategoryId}`;
         break;
       case 'DOCUMENT_VIEW':
-        if (selectedDocId) newPath = `/documento/${selectedDocId}`;
+        if (selectedDocId) expectedPath = `/documento/${selectedDocId}`;
         break;
       case 'DOCUMENT_EDIT':
-        if (selectedDocId) newPath = `/documento/${selectedDocId}/editar`;
+        if (selectedDocId) expectedPath = `/documento/${selectedDocId}/editar`;
         break;
       case 'DOCUMENT_CREATE':
-        newPath = '/novo';
-        if (activeCategoryId) newPath += `?categoria=${encodeURIComponent(activeCategoryId)}`;
+        expectedPath = '/novo';
         break;
       case 'ANALYTICS':
-        newPath = '/analytics';
+        expectedPath = '/analytics';
         break;
       case 'ADMIN_SETTINGS':
-        newPath = '/admin';
+        expectedPath = '/admin';
         break;
       case 'REVIEW_CENTER':
-        if (reviewCenterDocId) newPath = `/revisoes/${reviewCenterDocId}`;
-        else newPath = '/revisoes';
+        if (reviewCenterDocId) expectedPath = `/revisoes/${reviewCenterDocId}`;
+        else expectedPath = '/revisoes';
         break;
     }
 
-    updatePath(newPath);
+    // Only navigate if paths don't match
+    if (path !== expectedPath) {
+      updatePath(expectedPath);
+    }
   }, [
     currentView,
     activeCategoryId,
@@ -1941,15 +1950,15 @@ const App = () => {
       <ToastProvider>
         <Routes>
           <Route path="/" element={<AppContent />} />
-          <Route path="/categoria/:categoryId" element={<AppContent />} />
-          <Route path="/documento/:docId" element={<AppContent />} />
-          <Route path="/documento/:docId/editar" element={<AppContent />} />
-          <Route path="/novo" element={<AppContent />} />
-          <Route path="/analytics" element={<AppContent />} />
-          <Route path="/admin" element={<AppContent />} />
-          <Route path="/revisoes" element={<AppContent />} />
-          <Route path="/revisoes/:docId" element={<AppContent />} />
-          <Route path="*" element={<AppContent />} />
+          <Route path="/categoria/:categoryId" element={<CategoryViewRoute />} />
+          <Route path="/documento/:docId" element={<DocumentViewRoute />} />
+          <Route path="/documento/:docId/:action" element={<DocumentViewRoute />} />
+          <Route path="/novo" element={<NewDocumentRoute />} />
+          <Route path="/analytics" element={<AnalyticsRoute />} />
+          <Route path="/admin" element={<AdminRoute />} />
+          <Route path="/revisoes" element={<ReviewRoute />} />
+          <Route path="/revisoes/:docId" element={<ReviewRoute />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </ToastProvider>
     </BrowserRouter>
