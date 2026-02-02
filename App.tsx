@@ -23,6 +23,7 @@ import { ToastProvider, useToast } from './components/Toast';
 import { Modal } from './components/Modal';
 import { Button } from './components/Button';
 import { NotFoundPage } from './components/NotFoundPage';
+import { NotificationCenter } from './components/NotificationCenter';
 import { DocumentViewRoute } from './routes/DocumentViewRoute';
 import { CategoryViewRoute } from './routes/CategoryViewRoute';
 import { NewDocumentRoute } from './routes/NewDocumentRoute';
@@ -33,10 +34,10 @@ import { DepartmentsRoute, DepartmentViewRoute } from './routes/DepartmentsRoute
 import { AreasRoute, AreaViewRoute } from './routes/AreasRoute';
 import { FavoritesRoute } from './routes/FavoritesRoute';
 import { NotificationsRoute } from './routes/NotificationsRoute';
-import { TemplatesRoute, TemplateViewRoute } from './routes/TemplatesRoute';
 import { ProfileRoute, UserProfileRoute } from './routes/ProfileRoute';
 import { DocumentCommentsRoute } from './routes/DocumentCommentsRoute';
 import { DocumentExportRoute, ExportsRoute } from './routes/ExportsRoute';
+import { TemplatesRoute, TemplateViewRoute } from './routes/TemplatesRoute';
 import { AlertTriangle, FileText } from 'lucide-react';
 import { sanitizeHtml } from './lib/sanitize';
 import { createTemplate as dbCreateTemplate, listTemplates as dbListTemplates, incrementTemplateUsage } from './lib/templates';
@@ -152,6 +153,9 @@ const AppContent = () => {
   const [categoryModalParentId, setCategoryModalParentId] = useState<string | null>(null);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [settingsReturnView, setSettingsReturnView] = useState<ViewState>('HOME');
+
+  // Notifications State
+  const [notifications, setNotifications] = useState([]);
 
   // ========== ROUTING HOOKS ==========
   const navigate = useNavigate();
@@ -333,6 +337,22 @@ const AppContent = () => {
   const handleSelectCategoryWithNavigate = useCallback((category: Category) => {
     navigateToCategory(category.id);
   }, [navigateToCategory]);
+
+  // Notification handlers
+  const handleMarkNotificationAsRead = useCallback((id: string) => {
+    setNotifications(prev => prev.map(n => 
+      n.id === id ? { ...n, is_read: true } : n
+    ));
+  }, []);
+
+  const handleMarkAllNotificationsAsRead = useCallback(() => {
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+  }, []);
+
+  const handleRefreshNotifications = useCallback(async () => {
+    // TODO: Load fresh notifications from database
+    console.log('Refreshing notifications...');
+  }, []);
    
   // Confirmation Modal
   const [confirmModal, setConfirmModal] = useState<{
@@ -1773,6 +1793,17 @@ const toggleFavorites = () => {
             </LazyWrapper>
           )}
 
+          {currentView === 'NOTIFICATIONS' && (
+            <LazyWrapper>
+              <NotificationCenter 
+                notifications={notifications}
+                onMarkAsRead={handleMarkNotificationAsRead}
+                onMarkAllAsRead={handleMarkAllNotificationsAsRead}
+                onRefresh={handleRefreshNotifications}
+              />
+            </LazyWrapper>
+          )}
+
           {currentView === 'TEMPLATE_SELECTION' && (
             <LazyWrapper>
               <TemplateSelector 
@@ -1914,5 +1945,5 @@ const App = () => {
   );
 };
 
-export { AppContent };
+export { AppContent, NotificationsRoute };
 export default App;

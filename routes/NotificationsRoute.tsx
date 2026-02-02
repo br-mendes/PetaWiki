@@ -1,3 +1,1 @@
-import { NotificationsPage } from '../pages/NotificationsPage';
-
-export const NotificationsRoute = NotificationsPage;
+export { NotificationsRoute } from '../App';
