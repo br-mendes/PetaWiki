@@ -159,13 +159,6 @@ export const NotificationsBell: React.FC<{
       </button>
 
         {/* Popup removed - now redirects to /notificacoes page */}
-              >
-                <X size={16} />
-              </button>
-            </div>
-          </div>
-
-          <div className="max-h-[420px] overflow-y-auto">
             {loading ? (
               <div className="p-6 text-sm text-gray-500 dark:text-gray-400">
                 Carregando...
