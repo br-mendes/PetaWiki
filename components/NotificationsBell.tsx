@@ -1,5 +1,5 @@
 import React from "react";
-import { Bell, Check, FileText, X } from "lucide-react";
+import { Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import { useToast } from "./Toast";
@@ -23,57 +23,32 @@ export const NotificationsBell: React.FC<{
 }> = ({ userId, onOpenDocumentById, onOpenReviewCenterByDocId, limit = 30, placement = 'bottom' }) => {
   const navigate = useNavigate();
   const toast = useToast();
-  // Removed open state since popup is disabled
-  const [loading, setLoading] = React.useState(false);
   const [items, setItems] = React.useState<NotificationItem[]>([]);
-  const ref = React.useRef<HTMLDivElement | null>(null);
 
   const unreadCount = React.useMemo(
     () => items.filter((n) => !n.is_read).length,
     [items]
   );
 
-  const formatDate = (iso: string) => {
-    try {
-      return new Intl.DateTimeFormat("pt-BR", {
-        day: "2-digit",
-        month: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(new Date(iso));
-    } catch {
-      return "";
-    }
-  };
+  const load = React.useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
+    if (!silent) setLoading(true);
+    
+    const { data, error } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("to_user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
 
-  const typeDotClass = (t: string) => {
-    if (t === "REVIEW") return "bg-purple-500";
-    if (t === "STATUS") return "bg-green-500";
-    return "bg-blue-500";
-  };
-
-  const load = React.useCallback(
-    async (opts?: { silent?: boolean }) => {
-      if (!userId) return;
-      if (!opts?.silent) setLoading(true);
-
-      const { data, error } = await supabase.rpc("list_notifications", {
-        p_user_id: userId,
-        p_limit: limit,
-      });
-
-      if (error) {
-        console.error(error);
-        if (!opts?.silent) toast.error("Erro ao carregar notificacoes.");
-        if (!opts?.silent) setLoading(false);
-        return;
-      }
-
+    if (error) {
+      console.error(error);
+      if (!silent) toast.error("Falha ao carregar notificações.");
+    } else {
       setItems((data || []) as NotificationItem[]);
-      if (!opts?.silent) setLoading(false);
-    },
-    [userId, limit]
-  );
+    }
+    
+    if (!silent) setLoading(false);
+  }, [userId, limit, toast]);
 
   React.useEffect(() => {
     // Keep loading for unread count but no popup
@@ -86,61 +61,8 @@ export const NotificationsBell: React.FC<{
     return () => clearInterval(id);
   }, [load]);
 
-  const markRead = async (id: string) => {
-    setItems((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)));
-
-    const { error } = await supabase.rpc("mark_notification_read", {
-      p_notification_id: id,
-    });
-
-    if (error) {
-      console.error(error);
-      setItems((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: false } : n)));
-      toast.error("Falha ao marcar como lida.");
-    }
-  };
-
-  const markAll = async () => {
-    const unread = items.filter((n) => !n.is_read).map((n) => n.id);
-    if (unread.length === 0) return;
-
-    setItems((prev) => prev.map((n) => ({ ...n, is_read: true })));
-
-    const results = await Promise.all(
-      unread.map((id) =>
-        supabase.rpc("mark_notification_read", { p_notification_id: id })
-      )
-    );
-
-    const anyError = results.some((r) => (r as any).error);
-    if (anyError) {
-      toast.error("Algumas notificacoes nao puderam ser marcadas.");
-      load({ silent: true });
-      return;
-    }
-
-    toast.success("Tudo marcado como lido.");
-  };
-
-  const handleOpen = async (n: NotificationItem) => {
-    if (!n.is_read) await markRead(n.id);
-
-    setOpen(false);
-
-    if (!n.document_id) return;
-
-    if (n.type === "REVIEW" && onOpenReviewCenterByDocId) {
-      await onOpenReviewCenterByDocId(n.document_id);
-      return;
-    }
-
-    if (onOpenDocumentById) {
-      await onOpenDocumentById(n.document_id);
-    }
-  };
-
   return (
-    <div ref={ref} className="relative">
+    <div className="relative">
       <button
         type="button"
         onClick={() => {
@@ -157,95 +79,6 @@ export const NotificationsBell: React.FC<{
           </span>
         )}
       </button>
-
-        {/* Popup removed - now redirects to /notificacoes page */}
-            {loading ? (
-              <div className="p-6 text-sm text-gray-500 dark:text-gray-400">
-                Carregando...
-              </div>
-            ) : items.length === 0 ? (
-              <div className="p-8 text-center text-sm text-gray-500 dark:text-gray-400">
-                Nenhuma notificacao por aqui.
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                {items.map((n) => (
-                  <div
-                    key={n.id}
-                    className={`px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-all ${
-                      n.is_read ? "" : "bg-blue-50/40 dark:bg-blue-900/10 border-l-2 border-blue-500"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <span
-                        className={`mt-1 w-2.5 h-2.5 rounded-full ${typeDotClass(
-                          n.type
-                        )} shrink-0`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleOpen(n)}
-                        className="flex-1 text-left min-w-0"
-                        title={n.document_id ? "Abrir documento" : "Abrir"}
-                      >
-                        <div className="flex items-center gap-2">
-                          {n.document_id ? (
-                            <>
-                              <div className="p-1.5 bg-blue-100 dark:bg-blue-900/40 rounded-lg">
-                                <FileText size={16} className="text-blue-600 dark:text-blue-400 shrink-0" />
-                              </div>
-                              <div className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate flex items-center gap-1">
-                                {n.title}
-                                <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded-full shrink-0">
-                                  Documento
-                                </span>
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <FileText size={16} className="text-gray-400 shrink-0" />
-                              <div className="font-medium text-sm text-gray-900 dark:text-gray-100 truncate">
-                                {n.title}
-                              </div>
-                            </>
-                          )}
-                        </div>
-                        {n.body && (
-                          <div className="text-xs text-gray-600 dark:text-gray-300 mt-1.5 line-clamp-2 ml-9">
-                            {n.body}
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2 mt-1.5 ml-9">
-                          <div className="text-[11px] text-gray-400 dark:text-gray-500">
-                            {formatDate(n.created_at)}
-                          </div>
-                          {n.document_id && (
-                            <span className="text-[10px] text-blue-600 dark:text-blue-400 flex items-center gap-1">
-                              <FileText size={10} />
-                              Clique para abrir
-                            </span>
-                          )}
-                        </div>
-                      </button>
-
-                      {!n.is_read && (
-                        <button
-                          type="button"
-                          onClick={() => markRead(n.id)}
-                          className="p-1.5 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/40 text-blue-600 dark:text-blue-400 shrink-0"
-                          title="Marcar como lida"
-                        >
-                          <Check size={16} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
