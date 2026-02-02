@@ -50,7 +50,8 @@ type ViewState =
   | 'TEMPLATE_SELECTION'
   | 'ANALYTICS'
   | 'REVIEW_CENTER'
-  | 'ADMIN_SETTINGS';
+  | 'ADMIN_SETTINGS'
+  | 'NOTIFICATIONS';
 
 const SESSION_KEY = 'peta_wiki_session';
 const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutos em milissegundos
@@ -203,7 +204,7 @@ const AppContent = () => {
           setCurrentView('CATEGORY_VIEW');
           
           // Fetch documents for this category
-          const docs = await listDocuments();
+          const docs = documents; // Use existing documents state
           const categoryDocs = docs.filter(doc => {
             const docCatId = doc.categoryId || '';
             return docCatId === params.categoryId;
@@ -223,26 +224,22 @@ const AppContent = () => {
         // Check if document is in cache
         const existingDoc = documents.find(d => d.id === params.docId);
         
-        if (!existingDoc) {
-          console.log('Document not in cache, fetching from DB');
-          const doc = await getDocument(params.docId);
-          if (doc) {
-            const mappedDoc = mapDocument(doc);
-            
-            setDocuments(prev => prev.some(d => d.id === mappedDoc.id) ? prev : [...prev, mappedDoc]);
-            setSelectedDocId(mappedDoc.id);
-            setActiveCategoryId(mappedDoc.categoryId || null);
-            setCurrentView(params.action === 'editar' ? 'DOCUMENT_EDIT' : 'DOCUMENT_VIEW');
-          } else {
-            console.log('Document not found in DB');
+          if (!existingDoc) {
+            console.log('Document not found, redirecting to home');
             navigate('/');
-          }
+            return;
         } else {
           console.log('Document found in cache');
           setSelectedDocId(params.docId);
           setActiveCategoryId(existingDoc.categoryId || null);
           setCurrentView(params.action === 'editar' ? 'DOCUMENT_EDIT' : 'DOCUMENT_VIEW');
         }
+        return;
+      }
+
+      // Handle notifications route
+      if (path === '/notificacoes' || path.startsWith('/notificacoes')) {
+        setCurrentView('NOTIFICATIONS');
         return;
       }
 
@@ -258,7 +255,7 @@ const AppContent = () => {
 
     // Process immediately
     processUrl();
-  }, [params, isAuthenticated, categories.length, documents.length]); // Include documents.length to refetch if needed
+  }, [params, isAuthenticated]); // Simplified dependencies to prevent race conditions
 
   // Removed redundant useEffect to prevent race conditions
   // Document view is now handled in the main URL processing effect
@@ -376,6 +373,9 @@ const AppContent = () => {
       case 'REVIEW_CENTER':
         if (reviewCenterDocId) expectedPath = `/revisoes/${reviewCenterDocId}`;
         else expectedPath = '/revisoes';
+        break;
+      case 'NOTIFICATIONS':
+        expectedPath = '/notificacoes';
         break;
     }
 
