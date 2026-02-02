@@ -61,6 +61,7 @@ const isMockUser = (u: any) => !!u && (String(u.id || '').startsWith('mock_') ||
 
 const AppContent = () => {
   const toast = useToast();
+  const isNavigatingFromState = useRef(false);
 
   const {
     AnalyticsDashboard,
@@ -162,93 +163,74 @@ const AppContent = () => {
     if (!isAuthenticated || !params) return;
 
     const processUrl = async () => {
+      isNavigatingFromState.current = true; // Prevent reverse sync during URL processing
       const path = window.location.pathname;
       console.log('Processing URL:', path, 'params:', params);
 
-      // Handle special routes first
-      if (path === '/novo' || path.startsWith('/novo')) {
-        setCurrentView('DOCUMENT_CREATE');
-        const catParam = searchParams.get('categoria');
-        if (catParam) setActiveCategoryId(catParam);
-        return;
-      }
-
-      if (path === '/analytics' || path.startsWith('/analytics')) {
-        setCurrentView('ANALYTICS');
-        return;
-      }
-
-      if (path === '/admin' || path.startsWith('/admin')) {
-        setCurrentView('ADMIN_SETTINGS');
-        return;
-      }
-
-      if (path === '/revisoes' || path.startsWith('/revisoes')) {
-        const m = path.match(/^\/revisoes\/([^/?#]+)$/);
-        if (m) setReviewCenterDocId(m[1]);
-        setCurrentView('REVIEW_CENTER');
-        return;
-      }
-
-      // Handle category from URL
-      if (params.categoryId && categories.length > 0) {
-        const cat = findCategoryById(categories, params.categoryId);
-        if (cat) {
-          console.log('Found category:', cat);
-          setActiveCategoryId(cat.id);
-          setCurrentView('CATEGORY_VIEW');
-          setSelectedDocId(null);
-          return;
-        }
-      }
-
-      // Handle document from URL
-      if (params.docId) {
-        console.log('Looking for document:', params.docId);
-        
-        const doc = documents.find(d => d.id === params.docId);
-        if (doc) {
-          console.log('Found document in state:', doc);
-          setSelectedDocId(doc.id);
-          setActiveCategoryId(doc.categoryId || null);
-          setCurrentView(params.action === 'editar' ? 'DOCUMENT_EDIT' : 'DOCUMENT_VIEW');
+      try {
+        // Handle special routes first
+        if (path === '/novo' || path.startsWith('/novo')) {
+          setCurrentView('DOCUMENT_CREATE');
+          const catParam = searchParams.get('categoria');
+          if (catParam) setActiveCategoryId(catParam);
           return;
         }
 
-        // Fetch document from DB - wait for categories to load
-        if (categories.length > 0) {
-          try {
-            console.log('Fetching document from DB:', params.docId);
-            const { data, error } = await supabase
-              .from("documents")
-              .select("*")
-              .eq("id", params.docId)
-              .single();
+        if (path === '/analytics' || path.startsWith('/analytics')) {
+          setCurrentView('ANALYTICS');
+          return;
+        }
+
+        if (path === '/admin' || path.startsWith('/admin')) {
+          setCurrentView('ADMIN_SETTINGS');
+          return;
+        }
+
+        if (path === '/revisoes' || path.startsWith('/revisoes')) {
+          setCurrentView('REVIEW_CENTER');
+          if (params.docId) {
+            setReviewCenterDocId(params.docId);
+          }
+          return;
+        }
+
+        // Handle category view
+        if (params.categoryId) {
+          console.log('Category ID from URL:', params.categoryId);
+          const category = findCategoryById(categories, params.categoryId);
+          console.log('Found category:', category);
+          
+          if (category) {
+            console.log('Setting active category and fetching documents');
+            setActiveCategoryId(params.categoryId);
+            setCurrentView('CATEGORY_VIEW');
             
-            if (error) {
-              console.error('DB error:', error);
-              throw error;
-            }
-            
-            if (data) {
-              console.log('Fetched document:', data);
-              const fallbackCatId = defaultCategoryId || categories[0]?.id || null;
-              const mappedDoc = {
-                id: data.id,
-                title: data.title,
-                content: data.content,
-                categoryId: data.category_id || fallbackCatId || "",
-                status: data.status,
-                authorId: data.author_id,
-                createdAt: data.created_at,
-                updatedAt: data.updated_at,
-                deletedAt: data.deleted_at,
-                views: data.views,
-                tags: data.tags || [],
-                categoryPath: getCategoryPath(data.category_id, categories),
-                versions: [],
-                reviewNote: data.review_note ?? null,
-              };
+            // Fetch documents for this category
+            const docs = await listDocuments();
+            const categoryDocs = docs.filter(doc => {
+              const docCatId = doc.categoryId || '';
+              return docCatId === params.categoryId;
+            });
+            setDocuments(categoryDocs);
+          } else {
+            console.log('Category not found, redirecting to home');
+            navigate('/');
+          }
+          return;
+        }
+
+        // Handle document view/edit
+        if (params.docId) {
+          console.log('Document ID from URL:', params.docId);
+          
+          // Check if document is in cache
+          const existingDoc = documents.find(d => d.id === params.docId);
+          
+          if (!existingDoc) {
+            console.log('Document not in cache, fetching from DB');
+            const doc = await getDocument(params.docId);
+            if (doc) {
+              const mappedDoc = mapDocument(doc);
               
               setDocuments(prev => prev.some(d => d.id === mappedDoc.id) ? prev : [...prev, mappedDoc]);
               setSelectedDocId(mappedDoc.id);
@@ -258,21 +240,28 @@ const AppContent = () => {
               console.log('Document not found in DB');
               navigate('/');
             }
-          } catch (e) {
-            console.error('Failed to fetch document:', e);
-            navigate('/');
+          } else {
+            console.log('Document found in cache');
+            setSelectedDocId(params.docId);
+            setActiveCategoryId(existingDoc.categoryId || null);
+            setCurrentView(params.action === 'editar' ? 'DOCUMENT_EDIT' : 'DOCUMENT_VIEW');
           }
+          return;
         }
-        return;
-      }
 
-      // Handle root path (/)
-      if (!params.categoryId && !params.docId && (path === '/' || path === '')) {
-        console.log('Setting to HOME');
-        setCurrentView('HOME');
-        setActiveCategoryId(null);
-        setSelectedDocId(null);
-        return;
+        // Handle root path (/)
+        if (!params.categoryId && !params.docId && (path === '/' || path === '')) {
+          console.log('Setting to HOME');
+          setCurrentView('HOME');
+          setActiveCategoryId(null);
+          setSelectedDocId(null);
+          return;
+        }
+      } finally {
+        // Reset flag after processing
+        setTimeout(() => {
+          isNavigatingFromState.current = false;
+        }, 0);
       }
     };
 
@@ -280,30 +269,32 @@ const AppContent = () => {
     processUrl();
   }, [params, isAuthenticated, categories.length, documents.length]); // Include documents.length to refetch if needed
 
-  // Force document view update when document is found
-  useEffect(() => {
-    const doc = documents.find(d => d.id === selectedDocId) || null;
-    if (params.docId && selectedDocId && doc) {
-      console.log('Document found and selectedDocument is available, updating view');
-      setCurrentView(params.action === 'editar' ? 'DOCUMENT_EDIT' : 'DOCUMENT_VIEW');
-    }
-  }, [params.docId, params.action, selectedDocId, documents]);
+  // Removed redundant useEffect to prevent race conditions
+  // Document view is now handled in the main URL processing effect
 
   // Helper functions for navigation
   const navigateToCategory = useCallback((categoryId: string | null) => {
+    isNavigatingFromState.current = true;
     if (categoryId) {
       navigate(`/categoria/${categoryId}`);
     } else {
       navigate('/');
     }
+    setTimeout(() => {
+      isNavigatingFromState.current = false;
+    }, 100);
   }, [navigate]);
 
   const navigateToDocument = useCallback((docId: string, action?: 'editar') => {
+    isNavigatingFromState.current = true;
     if (action === 'editar') {
       navigate(`/documento/${docId}/editar`);
     } else {
       navigate(`/documento/${docId}`);
     }
+    setTimeout(() => {
+      isNavigatingFromState.current = false;
+    }, 100);
   }, [navigate]);
 
   const navigateToCreate = useCallback((categoryId?: string) => {
@@ -372,9 +363,11 @@ const AppContent = () => {
     navigateToCategory(category.id);
   }, [navigateToCategory]);
 
-  // Simplified sync internal state -> URL
+  // Simplified sync internal state -> URL (reduced dependency to prevent loops)
   useEffect(() => {
-    // Only update URL if current state doesn't match URL
+    // Only update URL if current state doesn't match URL and navigation wasn't from URL
+    if (isNavigatingFromState.current) return;
+    
     const path = window.location.pathname;
     let expectedPath = '/';
 
@@ -406,8 +399,8 @@ const AppContent = () => {
         break;
     }
 
-    // Only navigate if paths don't match
-    if (path !== expectedPath) {
+    // Only navigate if paths don't match and not currently processing URL
+    if (path !== expectedPath && !isNavigatingFromState.current) {
       updatePath(expectedPath);
     }
   }, [
