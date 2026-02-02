@@ -141,8 +141,9 @@ module.exports = {
     },
   },
   plugins: [
+    // Core plugins for enhanced functionality  
     require('@tailwindcss/aspect-ratio'),
-    require('@tailwindcss/forms'),
+    require('@tailwindcss/forms'), 
     require('@tailwindcss/typography'),
   ],
 };
