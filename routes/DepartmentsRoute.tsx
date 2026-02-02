@@ -23,7 +23,7 @@ export const DepartmentViewRoute: React.FC = () => {
       return;
     }
 
-    // Validate department ID format
+    // Validate department ID format (departments use UUID)
     if (!/^[a-f0-9-]{36}$/i.test(id)) {
       navigate('/404');
       return;

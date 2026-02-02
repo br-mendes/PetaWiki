@@ -23,7 +23,7 @@ export const AreaViewRoute: React.FC = () => {
       return;
     }
 
-    // Validate area ID format
+    // Validate area ID format (areas use UUID)
     if (!/^[a-f0-9-]{36}$/i.test(id)) {
       navigate('/404');
       return;

@@ -13,8 +13,8 @@ export const DocumentExportRoute: React.FC = () => {
       return;
     }
 
-    // Validate document ID format
-    if (!/^[a-f0-9-]{36}$/i.test(docId)) {
+    // Validate document ID format (documents use text IDs)
+    if (!docId || docId.length < 1) {
       navigate('/404');
       return;
     }

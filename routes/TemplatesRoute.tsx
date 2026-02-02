@@ -23,8 +23,8 @@ export const TemplateViewRoute: React.FC = () => {
       return;
     }
 
-    // Validate template ID format
-    if (!/^[a-f0-9-]{36}$/i.test(id)) {
+    // Validate template ID format (templates use text IDs)
+    if (!id || id.length < 1) {
       navigate('/404');
       return;
     }

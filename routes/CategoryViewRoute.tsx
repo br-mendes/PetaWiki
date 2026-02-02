@@ -12,8 +12,8 @@ export const CategoryViewRoute: React.FC = () => {
       return;
     }
 
-    // Validate categoryId format
-    if (!/^[a-f0-9-]{36}$/i.test(categoryId)) {
+    // Validate categoryId format (categories use text IDs)
+    if (!categoryId || categoryId.length < 1) {
       navigate('/404');
       return;
     }

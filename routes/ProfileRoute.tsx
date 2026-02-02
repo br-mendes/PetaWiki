@@ -23,8 +23,8 @@ export const UserProfileRoute: React.FC = () => {
       return;
     }
 
-    // Validate user ID format
-    if (!/^[a-f0-9-]{36}$/i.test(id)) {
+    // Validate user ID format (users use text IDs)
+    if (!id || id.length < 1) {
       navigate('/404');
       return;
     }

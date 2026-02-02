@@ -16,8 +16,9 @@ export const DocumentViewRoute: React.FC<DocumentViewRouteProps> = () => {
       return;
     }
 
-    // Validate docId format (UUID or similar)
-    if (!/^[a-f0-9-]{36}$/i.test(docId)) {
+    // Validate docId format (accept both UUID and text IDs)
+    // Documents use text IDs in current schema
+    if (!docId || docId.length < 1) {
       navigate('/404');
       return;
     }
