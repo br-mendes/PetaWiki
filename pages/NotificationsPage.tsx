@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/Button';
-import { Bell, Check, X, FileText, Settings } from 'lucide-react';
+import { Bell, Check, FileText, Home, ArrowLeft } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import { supabase } from '../lib/supabase';
 
@@ -123,6 +123,29 @@ export const NotificationsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Navigation Header */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-4xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <Button
+              onClick={() => navigate('/')}
+              variant="ghost"
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Voltar
+            </Button>
+            
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <Home className="w-4 h-4" />
+              <span>Início</span>
+              <span>/</span>
+              <span>Notificações</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="max-w-4xl mx-auto p-6">
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6">
