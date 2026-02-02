@@ -325,71 +325,14 @@ const AppContent = () => {
     navigateToAdmin();
   }, [currentView, navigateToAdmin]);
 
-  // Update URL when internal state changes (guard to prevent loops)
-  const updatePath = useCallback((target: string) => {
-    if (window.location.pathname !== target) {
-      window.history.pushState({}, '', target);
-      window.dispatchEvent(new Event('routechange'));
-    }
-  }, []);
-
-  // Override handleSelectDocument to update URL
+  // Simple navigation handlers - let React Router handle everything
   const handleSelectDocumentWithNavigate = useCallback((doc: Document) => {
     navigateToDocument(doc.id);
   }, [navigateToDocument]);
 
   const handleSelectCategoryWithNavigate = useCallback((category: Category) => {
-    setActiveCategoryId(category.id);
     navigateToCategory(category.id);
   }, [navigateToCategory]);
-
-  // Simplified sync internal state -> URL - removed flag system
-  useEffect(() => {
-    const path = window.location.pathname;
-    let expectedPath = '/';
-
-    switch (currentView) {
-      case 'HOME':
-        expectedPath = '/';
-        break;
-      case 'CATEGORY_VIEW':
-        if (activeCategoryId) expectedPath = `/categoria/${activeCategoryId}`;
-        break;
-      case 'DOCUMENT_VIEW':
-        if (selectedDocId) expectedPath = `/documento/${selectedDocId}`;
-        break;
-      case 'DOCUMENT_EDIT':
-        if (selectedDocId) expectedPath = `/documento/${selectedDocId}/editar`;
-        break;
-      case 'DOCUMENT_CREATE':
-        expectedPath = '/novo';
-        break;
-      case 'ANALYTICS':
-        expectedPath = '/analytics';
-        break;
-      case 'ADMIN_SETTINGS':
-        expectedPath = '/admin';
-        break;
-      case 'REVIEW_CENTER':
-        if (reviewCenterDocId) expectedPath = `/revisoes/${reviewCenterDocId}`;
-        else expectedPath = '/revisoes';
-        break;
-      case 'NOTIFICATIONS':
-        expectedPath = '/notificacoes';
-        break;
-    }
-
-    // Only navigate if paths don't match and we're not already on the right path
-    if (path !== expectedPath) {
-      updatePath(expectedPath);
-    }
-  }, [
-    currentView,
-    activeCategoryId,
-    selectedDocId,
-    reviewCenterDocId,
-    updatePath
-  ]);
    
   // Confirmation Modal
   const [confirmModal, setConfirmModal] = useState<{
