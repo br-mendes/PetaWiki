@@ -138,6 +138,12 @@ module.exports = {
         'bounce': 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
         'smooth': 'cubic-bezier(0.4, 0, 0.2, 1)',
       },
+      // Border utilities for consistent styling
+      borderColor: {
+        DEFAULT: "#e5e7eb",
+        light: "#f3f4f6",
+        dark: "#374151",
+      },
     },
   },
   plugins: [
