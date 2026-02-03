@@ -617,14 +617,19 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                             <div className="space-y-2">
                                 {heroTags.map((tag, idx) => (
                                     <div key={idx} className="flex items-center gap-2">
-                                        <select
-                                            value={tag.icon}
-                                            onChange={(e) => handleUpdateHeroTag(idx, 'icon', e.target.value)}
-                                            className="w-32 px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-sm"
-                                        >
-                                            {AVAILABLE_ICONS.map(ic => <option key={ic} value={ic}>{ic}</option>)}
-                                        </select>
-                                        <input 
+                                        <div className="flex items-center gap-2">
+                                            <select
+                                                value={tag.icon}
+                                                onChange={(e) => handleUpdateHeroTag(idx, 'icon', e.target.value)}
+                                                className="w-24 px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-sm"
+                                            >
+                                                {AVAILABLE_ICONS.map(ic => <option key={ic} value={ic}>{ic}</option>)}
+                                            </select>
+                                            <div className="text-blue-600 dark:text-blue-400">
+                                                <IconRenderer iconName={tag.icon} size={20} />
+                                            </div>
+                                        </div>
+                                        <input
                                             type="text" 
                                             value={tag.text}
                                             onChange={(e) => handleUpdateHeroTag(idx, 'text', e.target.value)}
