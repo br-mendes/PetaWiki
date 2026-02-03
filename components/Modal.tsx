@@ -40,7 +40,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
         aria-modal="true"
       >
         <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white">{title}</h2>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h2>
           <button 
             onClick={onClose}
             className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"

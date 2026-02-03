@@ -110,7 +110,7 @@ export const NotificationCenter: React.FC<{
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                   Notificações
                 </h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
                   {unreadCount} não lida{unreadCount !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -136,7 +136,7 @@ export const NotificationCenter: React.FC<{
               <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full mb-4">
                 <Bell className="w-8 h-8 text-gray-400" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+              <h3 className="text-base font-medium text-gray-900 dark:text-gray-100 mb-2">
                 Nenhuma notificação
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
@@ -164,14 +164,14 @@ export const NotificationCenter: React.FC<{
                             {notification.title}
                           </h3>
                           {notification.body && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                               {notification.body}
                             </p>
                           )}
                         </div>
                         
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                          <span className="text-[10px] text-gray-500 dark:text-gray-400">
                             {formatDate(notification.created_at)}
                           </span>
                           

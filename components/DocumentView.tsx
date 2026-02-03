@@ -236,7 +236,7 @@ setUserReactions(newReactions);
 
   return (
     <div className="max-w-4xl mx-auto p-8" onClick={() => { if(isExportMenuOpen) setIsExportMenuOpen(false); }}>
-      <nav className="text-sm text-gray-500 dark:text-gray-400 mb-6 flex items-center gap-2">
+      <nav className="text-xs text-gray-500 dark:text-gray-400 mb-6 flex items-center gap-2">
         <span>Wiki</span>
         <span>/</span>
         <span className="text-gray-900 dark:text-gray-200 font-medium">{document.categoryPath}</span>
@@ -247,7 +247,7 @@ setUserReactions(newReactions);
         
         {/* Título e Status */}
         <div className="flex items-start justify-between gap-4">
-            <h1 className="text-4xl font-bold text-gray-900 dark:text-white leading-tight flex-1">
+            <h1 className="text-3xl font-semibold text-gray-900 dark:text-white leading-tight flex-1">
               {document.title}
             </h1>
             <div className="pt-2">
@@ -256,7 +256,7 @@ setUserReactions(newReactions);
         </div>
 
         {/* Metadados */}
-        <div className="flex items-center flex-wrap gap-x-6 gap-y-2 text-sm text-gray-500 dark:text-gray-400">
+        <div className="flex items-center flex-wrap gap-x-6 gap-y-2 text-xs text-gray-500 dark:text-gray-400">
             <span className="flex items-center gap-1">
                Atualizado {new Date(document.updatedAt).toLocaleDateString()}
             </span>
@@ -404,7 +404,7 @@ setUserReactions(newReactions);
         />
         
         <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Este artigo foi útil?</h3>
+          <h3 className="text-base font-semibold mb-4 text-gray-900 dark:text-white">Este artigo foi útil?</h3>
           <div className="flex flex-wrap gap-3">
             {/* THUMBS UP */}
             <button 

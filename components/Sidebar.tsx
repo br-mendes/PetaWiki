@@ -124,7 +124,7 @@ const CategoryItem: React.FC<{
     <div className="relative group">
       {/* Category Row */}
       <div 
-        className={`flex items-center px-2 py-1.5 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-sm text-gray-700 dark:text-gray-300 select-none justify-between pr-1 transition-all duration-200 border border-transparent hover:border-gray-200 dark:hover:border-gray-700`}
+        className={`flex items-center px-2 py-1.5 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md text-xs text-gray-700 dark:text-gray-300 select-none justify-between pr-1 transition-all duration-200 border border-transparent hover:border-gray-200 dark:hover:border-gray-700`}
         style={{ paddingLeft: `${depth * 12 + 8}px` }}
         onMouseEnter={() => setShowActions(true)}
         onMouseLeave={() => setShowActions(false)}
@@ -145,7 +145,7 @@ const CategoryItem: React.FC<{
           {renderIcon()}
           
           <span className={`truncate ${depth === 0 ? 'font-semibold' : ''}`}>{category.name}</span>
-          {category.docCount > 0 && <span className="text-xs text-gray-400 ml-2 shrink-0">({category.docCount})</span>}
+          {category.docCount > 0 && <span className="text-[10px] text-gray-400 ml-2 shrink-0">({category.docCount})</span>}
         </div>
 
         {/* Hover Actions */}
@@ -302,7 +302,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   alt="Logo" 
                   className="w-8 h-8 object-contain rounded shrink-0" 
                 />
-                <span className="font-bold text-lg text-blue-900 dark:text-blue-400 leading-tight truncate">
+                <span className="font-semibold text-base text-blue-900 dark:text-blue-400 leading-tight truncate">
                   {systemSettings.appName}
                 </span>
               </>
@@ -323,7 +323,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 >
                   <Activity size={18} className="text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform" />
                   <div className="flex flex-col items-start">
-                    <span className="font-bold text-sm leading-none">Analytics</span>
+                    <span className="font-semibold text-xs leading-none">Analytics</span>
                     <span className="text-[10px] opacity-70 mt-0.5">Dashboard de Gestão</span>
                   </div>
                 </button>
@@ -338,7 +338,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             >
               <span className="text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform"></span>
               <div className="flex flex-col items-start">
-                <span className="font-bold text-sm leading-none">Revisões</span>
+                <span className="font-semibold text-xs leading-none">Revisões</span>
                 <span className="text-[10px] opacity-70 mt-0.5">Pendências para aprovar</span>
               </div>
             </button>
@@ -357,10 +357,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             >
               <Heart size={18} className={`${docFilter === 'FAVORITES' ? 'text-pink-600 dark:text-pink-400' : 'text-gray-500 dark:text-gray-400'}`} />
               <div className="flex flex-col items-start">
-                <span className="font-bold text-sm leading-none">Favoritos</span>
+                <span className="font-semibold text-xs leading-none">Favoritos</span>
                 <span className="text-[10px] opacity-70 mt-0.5">Seus documentos marcados</span>
               </div>
-              <span className="ml-auto text-xs opacity-70">({favoriteCount})</span>
+              <span className="ml-auto text-[10px] opacity-70">({favoriteCount})</span>
             </button>
           </div>
         )}

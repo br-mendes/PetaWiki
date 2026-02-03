@@ -151,8 +151,8 @@ export const UserProfile: React.FC<UserProfileProps> = ({
           </div>
           
           <div className="flex-1">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white leading-none mb-1">{user.name}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">{user.email || user.username}</p>
+            <h3 className="text-base font-semibold text-gray-900 dark:text-white leading-none mb-1">{user.name}</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{user.email || user.username}</p>
             
             <div className="flex flex-wrap gap-2">
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border border-blue-200 dark:border-blue-800 uppercase">

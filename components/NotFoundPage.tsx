@@ -42,7 +42,7 @@ export const NotFoundPage: React.FC = () => {
         </div>
 
         <div className="mt-8 pt-8 border-t border-gray-200">
-          <p className="text-sm text-gray-500">
+          <p className="text-xs text-gray-500">
             Se você acredita que isso é um erro, entre em contato com o suporte.
           </p>
         </div>

@@ -82,7 +82,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             {toast.type === 'info' && <Info size={20} />}
             {toast.type === 'warning' && <AlertTriangle size={20} />}
             
-            <p className="text-sm font-medium">{toast.message}</p>
+            <p className="text-xs font-medium">{toast.message}</p>
             
             <button 
               onClick={() => removeToast(toast.id)}
