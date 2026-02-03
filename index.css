@@ -8,7 +8,7 @@
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-gray-300 dark:border-gray-700;
   }
   
   html {
