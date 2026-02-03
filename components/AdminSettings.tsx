@@ -48,7 +48,10 @@ const GRADIENT_OPTIONS = [
 
 const AVAILABLE_ICONS = Object.keys(ICON_MAP).sort();
 
-export const AdminSettings: React.FC<AdminSettingsProps> = ({
+export   const AdminSettings: React.FC<AdminSettingsProps> = ({ useResponsive = false, showOnlyIcons = false, ...props }) => {
+  const [isMobile, setIsMobile] = useState(false);
+const [isTablet, setIsTablet] = useState(false);
+  const [isIconOnly, setIsIconOnly] = useState(showOnlyIcons || false);
   mode = 'modal',
   isOpen,
   onClose,
@@ -68,12 +71,16 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   trashDocuments,
   onRestoreDocument,
   onPermanentDeleteDocument,
+  categories,
+  onUpdateCategory,
+  onDeleteCategory,
+  onAddCategory,
+  trashDocuments,
+  onRestoreDocument,
+  onPermanentDeleteDocument,
   useResponsive = false,
   showOnlyIcons = false,
 }) => {
-  const [isMobile, setIsMobile] = useState(false);
-  const [isTablet, setIsTablet] = useState(false);
-  const [isIconOnly, setIsIconOnly] = useState(showOnlyIcons || false);
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<'BRANDING' | 'FOOTER' | 'SECURITY' | 'USERS' | 'APPROVAL' | 'CATEGORIES' | 'TRASH'>('BRANDING');
 
