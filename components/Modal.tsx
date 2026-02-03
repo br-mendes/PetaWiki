@@ -35,7 +35,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div 
-        className={`bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full ${maxWidths[size]} flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200 border dark:border-gray-700`}
+        className={`bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full ${maxWidths[size]} flex flex-col max-h-[95vh] animate-in fade-in zoom-in duration-200 border dark:border-gray-700`}
         role="dialog"
         aria-modal="true"
       >
@@ -48,7 +48,7 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
             <X size={20} />
           </button>
         </div>
-        <div className="p-6 overflow-y-auto">
+        <div className="p-6 overflow-y-auto flex-1 min-h-[60vh]">
           {children}
         </div>
       </div>
