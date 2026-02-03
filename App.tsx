@@ -203,17 +203,10 @@ const AppContent = () => {
         console.log('Found category:', category);
         
         if (category) {
-          console.log('Setting active category and fetching documents');
+          console.log('Setting active category');
           setActiveCategoryId(params.categoryId);
           setCurrentView('CATEGORY_VIEW');
-          
-          // Fetch documents for this category
-          const docs = documents; // Use existing documents state
-          const categoryDocs = docs.filter(doc => {
-            const docCatId = doc.categoryId || '';
-            return docCatId === params.categoryId;
-          });
-          setDocuments(categoryDocs);
+          // Documents will be filtered by activeCategoryId in useMemo
         } else {
           console.log('Category not found, redirecting to home');
           navigate('/');
