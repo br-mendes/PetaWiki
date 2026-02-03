@@ -48,10 +48,7 @@ const GRADIENT_OPTIONS = [
 
 const AVAILABLE_ICONS = Object.keys(ICON_MAP).sort();
 
-export   const AdminSettings: React.FC<AdminSettingsProps> = ({ useResponsive = false, showOnlyIcons = false, ...props }) => {
-  const [isMobile, setIsMobile] = useState(false);
-const [isTablet, setIsTablet] = useState(false);
-  const [isIconOnly, setIsIconOnly] = useState(showOnlyIcons || false);
+export const AdminSettings: React.FC<AdminSettingsProps> = ({
   mode = 'modal',
   isOpen,
   onClose,
@@ -70,16 +67,7 @@ const [isTablet, setIsTablet] = useState(false);
   onAddCategory,
   trashDocuments,
   onRestoreDocument,
-  onPermanentDeleteDocument,
-  categories,
-  onUpdateCategory,
-  onDeleteCategory,
-  onAddCategory,
-  trashDocuments,
-  onRestoreDocument,
-  onPermanentDeleteDocument,
-  useResponsive = false,
-  showOnlyIcons = false,
+  onPermanentDeleteDocument
 }) => {
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<'BRANDING' | 'FOOTER' | 'SECURITY' | 'USERS' | 'APPROVAL' | 'CATEGORIES' | 'TRASH'>('BRANDING');
@@ -394,61 +382,9 @@ const [isTablet, setIsTablet] = useState(false);
            <button
             onClick={() => setActiveTab('FOOTER')}
             className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'FOOTER' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
-        >
-          <Button
-            onClick={() => setActiveTab('FOOTER')}
-            variant={activeTab === 'FOOTER' ? 'primary' : 'ghost'}
-            className="w-full"
-            title="Rodapé"
           >
-            <Columns size={16} />
-            <span className="hidden sm:inline ml-2">Rodapé</span>
-          </Button>
-        <Button
-            onClick={() => setActiveTab('SECURITY')}
-            variant={activeTab === 'SECURITY' ? 'primary' : 'ghost'}
-            className="w-full"
-            title="Segurança"
-          >
-            <ShieldCheck size={16} />
-            <span className="hidden sm:inline ml-2">Segurança</span>
-          </Button>
-        <Button
-            onClick={() => setActiveTab('USERS')}
-            variant={activeTab === 'USERS' ? 'primary' : 'ghost'}
-            className="w-full"
-            title="Usuários"
-          >
-            <UserCog size={16} />
-            <span className="hidden sm:inline ml-2">Usuários</span>
-          </Button>
-        <Button
-            onClick={() => setActiveTab('APPROVAL')}
-            variant={activeTab === 'APPROVAL' ? 'primary' : 'ghost'}
-            className="w-full"
-            title="Aprovação"
-          >
-            <ShieldCheck size={16} />
-            <span className="hidden sm:inline ml-2">Aprovação</span>
-          </Button>
-        <Button
-            onClick={() => setActiveTab('CATEGORIES')}
-            variant={activeTab === 'CATEGORIES' ? 'primary' : 'ghost'}
-            className="w-full"
-            title="Categorias"
-          >
-            <FolderTree size={16} />
-            <span className="hidden sm:inline ml-2">Categorias</span>
-          </Button>
-        <Button
-            onClick={() => setActiveTab('TRASH')}
-            variant="danger"
-            className="w-full"
-            title="Lixeira"
-          >
-            <Trash2 size={16} />
-            <span className="hidden sm:inline ml-2">Lixeira</span>
-          </Button>
+            <Columns size={16} /> Rodapé
+          </button>
           <button
             onClick={() => setActiveTab('SECURITY')}
             className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'SECURITY' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
@@ -482,7 +418,7 @@ const [isTablet, setIsTablet] = useState(false);
         </div>
 
         {/* Content */}
-        <div className={`flex-1 ${isFullscreen ? 'overflow-y-auto' : 'overflow-y-auto pr-2'}`}>
+        <div className="flex-1 overflow-y-auto max-h-[600px] pr-2">
           {activeTab === 'BRANDING' && (
             <div className="space-y-6">
               {/* Branding Content */}
@@ -1130,61 +1066,7 @@ const [isTablet, setIsTablet] = useState(false);
                               {/* Visual indent line */}
                               {depth > 0 && (
                                 <div style={{ width: depth * 24 }} className="flex justify-end mr-2">
-                  {/* Icon-only edit button - shown on hover/focus */}
-                  {!isIconOnly && (isEditingCategory === cat.id) ? (
-                    <div className="flex items-center gap-2">
-                      <input 
-                        type="text"
-                        value={cat.name}
-                        onChange={(e) => onUpdateCategory(cat.id, { name: e.target.value })}
-                        className="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none text-gray-900 dark:text-white text-sm font-medium"
-                        autoFocus
-                        onFocus={() => setIsEditingCategory(cat.id)}
-                      />
-                      <button 
-                        onClick={() => {
-                          setIsEditingCategory(cat.id);
-                          onUpdateCategory(cat.id, { name: cat.name });
-                        }}
-                        className="p-1 text-green-600 hover:bg-green-100 dark:text-green-400 dark:hover:bg-green-900/20 rounded"
-                        title="Salvar nome"
-                      >
-                        <Check size={14} />
-                      </button>
-                      <button 
-                        onClick={() => setIsEditingCategory(null)}
-                        className="p-1 text-gray-400 hover:bg-gray-100 dark:text-gray-500 dark:hover:bg-gray-700 rounded"
-                        title="Cancelar"
-                      >
-                        <X size={14} />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <input 
-                          type="text"
-                          value={cat.name}
-                          onChange={(e) => onUpdateCategory(cat.id, { name: e.target.value })}
-                          className="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none text-gray-900 dark:text-white text-sm font-medium"
-                          readOnly
-                        />
-                      </div>
-                      {isIconOnly ? (
-                        <div className="p-1 text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded">
-                          <Edit size={14} />
-                        </div>
-                      ) : (
-                        <button 
-                          onClick={() => setIsEditingCategory(cat.id)}
-                          className="p-1 text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded"
-                          title="Editar nome"
-                        >
-                          <Edit size={14} />
-                        </button>
-                      )}
-                    </div>
-                  )}
+                                  <CornerDownRight size={14} className="text-gray-300" />
                                 </div>
                               )}
                               <input 
