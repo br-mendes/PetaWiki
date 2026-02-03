@@ -208,6 +208,20 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
     loadPending();
   }, [isOpen]);
 
+  // Close icon dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.icon-dropdown-container')) {
+        document.querySelectorAll('.icon-dropdown-menu').forEach(el => {
+          el.classList.add('hidden');
+        });
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   // Handlers for Hero Tags
   const handleUpdateHeroTag = (index: number, field: keyof HeroTag, value: string) => {
     const newTags = [...heroTags];
@@ -617,16 +631,35 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                             <div className="space-y-2">
                                 {heroTags.map((tag, idx) => (
                                     <div key={idx} className="flex items-center gap-2">
-                                        <div className="flex items-center gap-2">
-                                            <select
-                                                value={tag.icon}
-                                                onChange={(e) => handleUpdateHeroTag(idx, 'icon', e.target.value)}
-                                                className="w-24 px-2 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-sm"
+                                        <div className="relative icon-dropdown-container">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    const dropdown = e.currentTarget.nextElementSibling as HTMLElement;
+                                                    dropdown?.classList.toggle('hidden');
+                                                }}
+                                                className="w-12 h-10 flex items-center justify-center border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
                                             >
-                                                {AVAILABLE_ICONS.map(ic => <option key={ic} value={ic}>{ic}</option>)}
-                                            </select>
-                                            <div className="text-blue-600 dark:text-blue-400">
                                                 <IconRenderer iconName={tag.icon} size={20} />
+                                            </button>
+                                            <div className="hidden icon-dropdown-menu absolute z-50 mt-1 w-48 max-h-48 overflow-y-auto bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg">
+                                                <div className="grid grid-cols-4 gap-1 p-2">
+                                                    {AVAILABLE_ICONS.map(ic => (
+                                                        <button
+                                                            key={ic}
+                                                            type="button"
+                                                            onClick={() => {
+                                                                handleUpdateHeroTag(idx, 'icon', ic);
+                                                                const dropdown = document.activeElement?.parentElement?.parentElement;
+                                                                dropdown?.classList.add('hidden');
+                                                            }}
+                                                            className={`p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center ${tag.icon === ic ? 'bg-blue-100 dark:bg-blue-900/30' : ''}`}
+                                                            title={ic}
+                                                        >
+                                                            <IconRenderer iconName={ic} size={18} />
+                                                        </button>
+                                                    ))}
+                                                </div>
                                             </div>
                                         </div>
                                         <input
@@ -658,19 +691,38 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                         <button onClick={() => handleRemoveFeature(idx)} className="absolute top-2 right-2 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <X size={16} />
                                         </button>
-                                        <div className="flex gap-3 items-start">
-                                             <div className="shrink-0 pt-1">
-                                                <select
-                                                    value={feat.icon}
-                                                    onChange={(e) => handleUpdateFeature(idx, 'icon', e.target.value)}
-                                                    className="w-24 px-1 py-1 border border-gray-300 dark:border-gray-600 rounded text-xs bg-gray-50 dark:bg-gray-800"
+                                         <div className="flex gap-3 items-start">
+                                              <div className="shrink-0 pt-1 relative icon-dropdown-container">
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        const dropdown = e.currentTarget.nextElementSibling as HTMLElement;
+                                                        dropdown?.classList.toggle('hidden');
+                                                    }}
+                                                    className="w-12 h-10 flex items-center justify-center border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800"
                                                 >
-                                                    {AVAILABLE_ICONS.map(ic => <option key={ic} value={ic}>{ic}</option>)}
-                                                </select>
-                                                <div className="mt-2 flex justify-center text-blue-600 dark:text-blue-400">
                                                     <IconRenderer iconName={feat.icon} size={24} />
+                                                </button>
+                                                <div className="hidden icon-dropdown-menu absolute z-50 mt-1 w-48 max-h-48 overflow-y-auto bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg">
+                                                    <div className="grid grid-cols-4 gap-1 p-2">
+                                                        {AVAILABLE_ICONS.map(ic => (
+                                                            <button
+                                                                key={ic}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    handleUpdateFeature(idx, 'icon', ic);
+                                                                    const dropdown = document.activeElement?.parentElement?.parentElement;
+                                                                    dropdown?.classList.add('hidden');
+                                                                }}
+                                                                className={`p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 flex items-center justify-center ${feat.icon === ic ? 'bg-blue-100 dark:bg-blue-900/30' : ''}`}
+                                                                title={ic}
+                                                            >
+                                                                <IconRenderer iconName={ic} size={20} />
+                                                            </button>
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                             </div>
+                                              </div>
                                              <div className="flex-1 space-y-2">
                                                 <input 
                                                     type="text" 
