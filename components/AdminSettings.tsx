@@ -384,7 +384,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   };
 
   const body = (
-      <div className="flex flex-col md:flex-row gap-6 h-full">
+      <div className="flex flex-col md:flex-row gap-6 h-full overflow-hidden">
         {/* Sidebar */}
         <div className="w-full md:w-48 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 pr-0 md:pr-4 space-y-1 mb-4 md:mb-0 shrink-0 md:overflow-y-auto">
           <button
@@ -432,7 +432,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden pr-2">
+        <div className="flex-1 pr-2">
           {activeTab === 'BRANDING' && (
             <div className="space-y-6">
               {/* Branding Content */}
@@ -1244,22 +1244,26 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
 
   return (
     <>
-      {mode === 'page' ? (
-        <div className="max-w-6xl mx-auto p-4 md:p-8">
-          <div className="flex items-center justify-between gap-4 mb-6">
+    {mode === 'page' ? (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+        <div className="max-w-7xl mx-auto h-[calc(100vh-3rem)]">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Configurações de Admin</h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Branding, segurança, usuários, revisões, categorias e lixeira</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Configurações de Admin</h1>
+              <p className="text-gray-600 dark:text-gray-400">Gerencie as configurações do sistema</p>
             </div>
             <Button variant="secondary" onClick={onClose}>Fechar</Button>
           </div>
-          {body}
+          <div className="h-[calc(100%-6rem)]">
+            {body}
+          </div>
         </div>
-      ) : (
-        <Modal isOpen={isOpen} onClose={onClose} title="Configurações de Admin" size="lg">
-          {body}
-        </Modal>
-      )}
+      </div>
+    ) : (
+      <Modal isOpen={isOpen} onClose={onClose} title="Configurações de Admin" size="lg">
+        {body}
+      </Modal>
+    )}
 
     {/* User Edit Modal */}
     <Modal isOpen={!!editingUser} onClose={() => setEditingUser(null)} title="Editar Usuário" size="sm">
