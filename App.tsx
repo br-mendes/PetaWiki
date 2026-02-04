@@ -823,9 +823,7 @@ const searchParams: any = {
 
   const refreshTemplates = useCallback(async () => {
     try {
-      console.log('Carregando templates do banco...');
       const t = await dbListTemplates();
-      console.log('Templates carregados:', t.length);
       setTemplates(t);
     } catch (e) {
       console.error('Erro ao carregar templates do banco, usando mock:', e);
@@ -836,20 +834,14 @@ const searchParams: any = {
 
   const seedTemplatesIfEmpty = useCallback(async () => {
     try {
-      console.log('Verificando se existem templates...');
       const { count, error } = await supabase
         .from('document_templates')
         .select('*', { count: 'exact', head: true });
 
-      if (error) {
-        console.error('Erro ao verificar templates:', error);
-        throw error;
-      }
-      
-      console.log('Quantidade de templates no banco:', count);
+      if (error) throw error;
       
       if (count === 0) {
-        console.log('Nenhum template encontrado, fazendo seed...');
+        console.log('Iniciando seed de templates - nenhum template encontrado no banco...');
         for (const template of MOCK_TEMPLATES) {
           const { error } = await supabase
             .from('document_templates')
@@ -864,8 +856,7 @@ const searchParams: any = {
               is_global: template.isGlobal,
               department_id: null,
               usage_count: template.usageCount,
-              is_active: true,
-              created_by: null
+              is_active: true
             }, {
               onConflict: 'id'
             });
@@ -877,7 +868,6 @@ const searchParams: any = {
           }
         }
         // Recarregar templates após o seed
-        console.log('Recarregando templates após seed...');
         await refreshTemplates();
       }
     } catch (e) {
@@ -1312,10 +1302,6 @@ const handleUpdateAvatar = async (base64: string) => {
   }, [activeCategoryId, visibleDocumentsFiltered]);
 
   const availableTemplates = useMemo(() => {
-    console.log('availableTemplates - currentUser:', currentUser?.role);
-    console.log('availableTemplates - templates:', templates);
-    console.log('availableTemplates - templates.length:', templates?.length);
-    
     if (!currentUser) return [];
     if (currentUser.role === 'ADMIN') return templates;
     if (currentUser.role === 'EDITOR') {
@@ -1878,11 +1864,29 @@ const toggleFavorites = () => {
 
           {currentView === 'TEMPLATE_SELECTION' && (
             <LazyWrapper>
-              <TemplateSelector 
-                templates={availableTemplates}
-                onSelect={handleTemplateSelect}
-                onCancel={() => activeCategoryId ? navigateToCategory(activeCategoryId) : navigateToHome()}
-              />
+              <div className="p-6 max-w-6xl mx-auto">
+                <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <h3 className="font-bold text-yellow-800 mb-2">🔍 Debug - Informações dos Templates</h3>
+                  <div className="text-sm space-y-1">
+                    <p><strong>Usuário logado:</strong> {currentUser?.name} ({currentUser?.role})</p>
+                    <p><strong>Total de templates carregados:</strong> {templates.length}</p>
+                    <p><strong>Templates disponíveis para este usuário:</strong> {availableTemplates.length}</p>
+                    <p><strong>Mock templates disponíveis:</strong> {MOCK_TEMPLATES.length}</p>
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-blue-600">Ver detalhes dos templates</summary>
+                      <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto max-h-40">
+                        {JSON.stringify(availableTemplates, null, 2)}
+                      </pre>
+                    </details>
+                  </div>
+                </div>
+                
+                <TemplateSelector 
+                  templates={availableTemplates}
+                  onSelect={handleTemplateSelect}
+                  onCancel={() => activeCategoryId ? navigateToCategory(activeCategoryId) : navigateToHome()}
+                />
+              </div>
             </LazyWrapper>
           )}
 

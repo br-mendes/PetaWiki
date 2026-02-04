@@ -1172,42 +1172,247 @@ INSERT INTO public.document_templates (
   'Documentação técnica e artigos de conhecimento.',
   'book-open',
   '<h1>Artigo de Conhecimento</h1>
-<h2>Resumo</h2>
-<p>[Breve resumo do conteúdo deste artigo]</p>
 
-<h2>Introdução</h2>
-<p>[Contexto e importância do tema abordado]</p>
+<div style="background: #f0f8ff; border-left: 4px solid #2196f3; padding: 15px; margin: 20px 0;">
+  <h2 style="margin-top: 0; color: #1976d2;">📋 Resumo Executivo</h2>
+  <p>Este artigo aborda [tema principal] de forma detalhada, fornecendo [benefício principal]. Ao final desta leitura, você será capaz de [habilidade específica] e [outra habilidade específica]. Ideal para [público-alvo] e profissionais que atuam em [área de atuação].</p>
+</div>
 
-<h2>Pré-requisitos</h2>
+<h2>🎯 Objetivos de Aprendizagem</h2>
+<p>Ao concluir este artigo, você compreenderá:</p>
 <ul>
-<li>[Conhecimento necessário 1]</li>
-<li>[Ferramenta/software necessário]</li>
-<li>[Acesso/permissão requerida]</li>
+<li>✅ [Objetivo 1 - claro e mensurável]</li>
+<li>✅ [Objetivo 2 - claro e mensurável]</li>
+<li>✅ [Objetivo 3 - claro e mensurável]</li>
+<li>✅ [Objetivo 4 - claro e mensurável]</li>
 </ul>
 
-<h2>Procedimento Detalhado</h2>
-<h3>Passo 1: [Título do passo]</h3>
-<p>[Descrição detalhada do primeiro passo]</p>
-<p><strong>Dica:</strong> [Dica importante ou observação]</p>
+<h2>📚 Introdução</h2>
+<p>O tema [tema principal] tornou-se essencial no contexto atual de [contexto]. Segundo pesquisas recentes, [estatística relevante] dos profissionais enfrentam desafios relacionados a [problema que o artigo resolve]. Este artigo foi desenvolvido para fornecer soluções práticas e baseadas em evidências para [propósito principal].</p>
 
-<h3>Passo 2: [Título do passo]</h3>
-<p>[Descrição detalhada do segundo passo]</p>
-<p><strong>Atenção:</strong> [Ponto crítico ou cuidado necessário]</p>
+<p>Importante destacar que [contexto histórico ou relevância do tema]. A compreensão adequada deste conceito impacta diretamente [áreas impactadas], resultando em [benefícios diretos e indiretos].</p>
 
-<h2>Troubleshooting</h2>
-<p><strong>Problema:</strong> [Descrição do problema comum]</p>
-<p><strong>Solução:</strong> [Como resolver]</p>
+<h2>🔧 Pré-requisitos Necessários</h2>
+<div style="background: #f9f9f9; border: 1px solid #ddd; padding: 15px; border-radius: 5px;">
+  <h3>Conhecimentos Essenciais</h3>
+  <ul>
+    <li><strong>[Conhecimento 1]:</strong> [Descrição detalhada do conhecimento necessário]</li>
+    <li><strong>[Conhecimento 2]:</strong> [Descrição detalhada do conhecimento necessário]</li>
+    <li><strong>[Conhecimento 3]:</strong> [Descrição detalhada do conhecimento necessário]</li>
+  </ul>
 
-<h2>Referências</h2>
+  <h3>Ferramentas e Recursos</h3>
+  <ul>
+    <li><strong>[Ferramenta 1]:</strong> Versão mínima [X] - [Finalidade]</li>
+    <li><strong>[Ferramenta 2]:</strong> Licença [gratuita/paga] - [Finalidade]</li>
+    <li><strong>[Ferramenta 3]:</strong> Acesso necessário - [Finalidade]</li>
+  </ul>
+
+  <h3>Permissões e Acessos</h3>
+  <ul>
+    <li>Acesso ao [sistema/plataforma]</li>
+    <li>Permissão de [tipo de acesso]</li>
+    <li>Credenciais de [serviço específico]</li>
+  </ul>
+</div>
+
+<h2>🏗️ Fundamentação Teórica</h2>
+
+<h3>📖 Conceitos Fundamentais</h3>
+<p><strong>[Conceito 1]:</strong> [Definição clara e detalhada do primeiro conceito fundamental]. Este conceito é importante porque [razão da importância].</p>
+
+<p><strong>[Conceito 2]:</strong> [Definição clara e detalhada do segundo conceito fundamental]. A aplicação correta deste conceito permite [benefício direto].</p>
+
+<h3>🔬 Princípios e Boas Práticas</h3>
+<p>Baseando-se em [fonte/autoridade], os seguintes princípios devem ser considerados:</p>
+<ol>
+  <li><strong>Princípio 1:</strong> [Nome e descrição detalhada]</li>
+  <li><strong>Princípio 2:</strong> [Nome e descrição detalhada]</li>
+  <li><strong>Princípio 3:</strong> [Nome e descrição detalhada]</li>
+</ol>
+
+<h2>📝 Procedimento Detalhado</h2>
+
+<h3>🚀 Etapa 1: [Nome da primeira etapa principal]</h3>
+<div style="background: #e8f5e8; border-left: 4px solid #4caf50; padding: 15px; margin: 10px 0;">
+  <h4 style="margin-top: 0;">✅ Checklist Inicial</h4>
+  <ul>
+    <li>[ ] Verificar [item de verificação 1]</li>
+    <li>[ ] Confirmar [item de verificação 2]</li>
+    <li>[ ] Validar [item de verificação 3]</li>
+  </ul>
+</div>
+
+<p><strong>Ação Principal:</strong> Descreva detalhadamente a primeira ação principal. Use linguagem clara e objetiva.</p>
+
+<p><strong>Sub-passo 1.1:</strong> [Descrição detalhada do primeiro sub-passo]</p>
 <ul>
-<li><a href="[link]">[Título do documento de referência]</a></li>
-<li><a href="[link]">[Outro material complementar]</a></li>
+  <li><strong>Ponto crítico:</strong> [Observação importante sobre este sub-passo]</li>
+  <li><strong>Duração estimada:</strong> [X minutos/horas]</li>
+  <li><strong>Materiais necessários:</strong> [Lista de materiais]</li>
 </ul>
 
-<h2>Atualizações</h2>
+<p><strong>Sub-passo 1.2:</strong> [Descrição detalhada do segundo sub-passo]</p>
 <ul>
-<li>[Data] - [Descrição da atualização]</li>
-</ul>',
+  <li><strong>Ponto crítico:</strong> [Observação importante sobre este sub-passo]</li>
+  <li><strong>Duração estimada:</strong> [X minutos/horas]</li>
+  <li><strong>Materiais necessários:</strong> [Lista de materiais]</li>
+</ul>
+
+<div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 10px 0;">
+  <h4 style="margin-top: 0;">💡 Dica Especial</h4>
+  <p>[Dica valiosa ou atalho que pode otimizar o processo nesta etapa]</p>
+</div>
+
+<h3>🔄 Etapa 2: [Nome da segunda etapa principal]</h3>
+<p><strong>Ação Principal:</strong> [Descrição detalhada da segunda ação principal]</p>
+
+<p><strong>Sub-passo 2.1:</strong> [Descrição detalhada]</p>
+<ul>
+  <li><strong>Validação necessária:</strong> [O que precisa ser verificado]</li>
+  <li><strong>Risco de erro:</strong> [Possíveis problemas e como evitá-los]</li>
+</ul>
+
+<p><strong>Sub-passo 2.2:</strong> [Descrição detalhada]</p>
+<ul>
+  <li><strong>Validação necessária:</strong> [O que precisa ser verificado]</li>
+  <li><strong>Risco de erro:</strong> [Possíveis problemas e como evitá-los]</li>
+</ul>
+
+<h3>🎯 Etapa 3: [Nome da terceira etapa principal]</h3>
+<p><strong>Ação Principal:</strong> [Descrição detalhada da terceira ação principal]</p>
+
+<div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 10px 0;">
+  <h4 style="margin-top: 0;">⚠️ Ponto de Atenção</h4>
+  <p>[Aviso importante sobre riscos ou cuidados especiais nesta etapa]</p>
+</div>
+
+<h2>🔧 Validação e Testes</h2>
+<p>Após concluir os procedimentos principais, execute as seguintes validações:</p>
+
+<h3>✅ Lista de Verificação Final</h3>
+<table>
+  <tr><th>Item</th><th>Status</th><th>Observações</th></tr>
+  <tr><td>[Item de verificação 1]</td><td>[ ] Concluído</td><td>[Espaço para anotações]</td></tr>
+  <tr><td>[Item de verificação 2]</td><td>[ ] Concluído</td><td>[Espaço para anotações]</td></tr>
+  <tr><td>[Item de verificação 3]</td><td>[ ] Concluído</td><td>[Espaço para anotações]</td></tr>
+  <tr><td>[Item de verificação 4]</td><td>[ ] Concluído</td><td>[Espaço para anotações]</td></tr>
+</table>
+
+<h3>🧪 Teste de Funcionalidade</h3>
+<p>Para garantir que tudo funciona corretamente:</p>
+<ol>
+  <li><strong>Teste 1:</strong> [Descrição do primeiro teste]</li>
+  <li><strong>Teste 2:</strong> [Descrição do segundo teste]</li>
+  <li><strong>Teste 3:</strong> [Descrição do terceiro teste]</li>
+</ol>
+
+<h2>🛠️ Troubleshooting (Resolução de Problemas)</h2>
+
+<h3>❓ Problemas Comuns e Soluções</h3>
+<div style="background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 5px;">
+  <p><strong>🚨 Problema 1: [Nome do problema comum]</strong></p>
+  <p><strong>Sintomas:</strong> [Como o problema se manifesta]</p>
+  <p><strong>Causas prováveis:</strong></p>
+  <ul>
+    <li>[Causa 1]</li>
+    <li>[Causa 2]</li>
+  </ul>
+  <p><strong>Solução:</strong> [Passo a passo para resolver]</p>
+  <p><strong>Prevenção:</strong> [Como evitar que ocorra novamente]</p>
+</div>
+
+<div style="background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; border-radius: 5px;">
+  <p><strong>🚨 Problema 2: [Nome do segundo problema comum]</strong></p>
+  <p><strong>Sintomas:</strong> [Como o problema se manifesta]</p>
+  <p><strong>Causas prováveis:</strong></p>
+  <ul>
+    <li>[Causa 1]</li>
+    <li>[Causa 2]</li>
+  </ul>
+  <p><strong>Solução:</strong> [Passo a passo para resolver]</p>
+  <p><strong>Prevenção:</strong> [Como evitar que ocorra novamente]</p>
+</div>
+
+<h3>📞 Quando Buscar Ajuda</h3>
+<p>Procure suporte especializado quando:</p>
+<ul>
+  <li>Os problemas persistirem após tentar as soluções acima</li>
+  <li>Encontrar mensagens de erro desconhecidas</li>
+  <li>O sistema apresentar comportamento anormal</li>
+  <li>Segurança dos dados estiver comprometida</li>
+</ul>
+
+<h2>📊 Métricas e Indicadores</h2>
+<p>Para medir o sucesso da implementação:</p>
+
+<h3>📈 KPIs (Indicadores-Chave de Performance)</h3>
+<table>
+  <tr><th>Métrica</th><th>Meta</th><th>Como Medir</th><th>Frequência</th></tr>
+  <tr><td>[Métrica 1]</td><td>[Valor da meta]</td><td>[Método de medição]</td><td>[Frequência]</td></tr>
+  <tr><td>[Métrica 2]</td><td>[Valor da meta]</td><td>[Método de medição]</td><td>[Frequência]</td></tr>
+  <tr><td>[Métrica 3]</td><td>[Valor da meta]</td><td>[Método de medição]</td><td>[Frequência]</td></tr>
+</table>
+
+<h2>📚 Referências e Recursos Adicionais</h2>
+
+<h3>📖 Bibliografia Recomendada</h3>
+<ul>
+  <li><strong>[Livro 1]:</strong> [Autor]. <em>[Título]</em>. [Editora], [Ano].</li>
+  <li><strong>[Livro 2]:</strong> [Autor]. <em>[Título]</em>. [Editora], [Ano].</li>
+</ul>
+
+<h3>🔗 Recursos Online</h3>
+<ul>
+  <li><strong>[Recurso 1]:</strong> <a href="[URL]" target="_blank">[Título do link]</a> - [Breve descrição]</li>
+  <li><strong>[Recurso 2]:</strong> <a href="[URL]" target="_blank">[Título do link]</a> - [Breve descrição]</li>
+  <li><strong>[Recurso 3]:</strong> <a href="[URL]" target="_blank">[Título do link]</a> - [Breve descrição]</li>
+</ul>
+
+<h3>📄 Documentos Internos</h3>
+<ul>
+  <li><strong>[Documento 1]:</strong> [Código/Nome] - [Descrição]</li>
+  <li><strong>[Documento 2]:</strong> [Código/Nome] - [Descrição]</li>
+</ul>
+
+<h2>🔄 Histórico de Atualizações</h2>
+<table>
+  <tr><th>Versão</th><th>Data</th><th>Alterações</th><th>Autor</th></tr>
+  <tr><td>1.0</td><td>[Data inicial]</td><td>Versão inicial do artigo</td><td>[Nome do autor]</td></tr>
+  <tr><td>1.1</td><td>[Data]</td><td>[Descrição das alterações]</td><td>[Nome do autor]</td></tr>
+  <tr><td>1.2</td><td>[Data]</td><td>[Descrição das alterações]</td><td>[Nome do autor]</td></tr>
+</table>
+
+<h2>💬 Feedback e Contribuições</h2>
+<div style="background: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin: 20px 0;">
+  <h3 style="margin-top: 0;">📝 Como Contribuir</h3>
+  <p>Este artigo é um documento vivo e pode ser aprimorado. Para contribuir:</p>
+  <ul>
+    <li>Envie sugestões para [e-mail de feedback]</li>
+    <li>Abra uma issue no repositório [se aplicável]</li>
+    <li>Participe das discussões na comunidade [link]</li>
+  </ul>
+</div>
+
+<h3>🤔 Questões para Reflexão</h3>
+<p>Para aplicar melhor o conhecimento adquirido:</p>
+<ol>
+  <li>Como [pergunta reflexiva 1]?</li>
+  <li>De que forma [pergunta reflexiva 2]?</li>
+  <li>Quais obstáculos podem surgir ao [pergunta reflexiva 3]?</li>
+</ol>
+
+<h2>📋 Conclusão</h2>
+<p>Neste artigo, abordamos de forma detalhada [resumo dos pontos principais]. A implementação correta destes procedimentos resultará em [benefícios principais]. Lembre-se de que [mensagem final motivacional ou de precaução].</p>
+
+<p>Para mais informações ou dúvidas, consulte os recursos adicionais ou entre em contato com [contato/equipe responsável].</p>
+
+<hr>
+
+<div style="text-align: center; font-style: italic; color: #666;">
+  <p>Este artigo faz parte do Programa de Desenvolvimento de Competências [Nome do programa].</p>
+  <p>Última atualização: [Data de hoje]</p>
+</div>',
   ARRAY['conhecimento', 'documentação', 'técnico'],
   true,
   null,
@@ -1232,66 +1437,344 @@ INSERT INTO public.document_templates (
   'ONBOARDING',
   'Guia de integração para novos colaboradores.',
   'user-plus',
-  '<h1>Guia de Onboarding</h1>
-<h2>Bem-vindo(a)!</h2>
-<p>Seja bem-vindo(a) à equipe! Este guia vai ajudar na sua integração.</p>
+  '<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; margin: 20px 0; border-radius: 10px;">
+  <h1 style="margin: 0; font-size: 2.5em;">🎉 Bem-vindo(a) à Equipe!</h1>
+  <p style="font-size: 1.2em; margin: 10px 0;">Estamos muito felizes em ter você conosco!</p>
+  <p><strong>[Nome do Colaborador]</strong> | <strong>[Cargo]</strong> | <strong>[Departamento]</strong></p>
+</div>
 
-<h2>Dia 1: Primeiros Passos</h2>
-<h3>Manhã</h3>
+<h2>📅 Cronograma de Integração</h2>
+<p>Seu processo de onboarding foi cuidadosamente planejado para garantir sua adaptação e sucesso. Este programa tem duração de 30 dias e é dividido em fases progressivas.</p>
+
+<h3>📋 Objetivos do Programa</h3>
 <ul>
-<li>Reunião de boas-vindas com o gestor</li>
-<li>Apresentação da equipe</li>
-<li>Entrega de material de trabalho</li>
-<li>Configuração de acessos e sistemas</li>
+<li>✅ Integração cultural com valores e missão da empresa</li>
+<li>✅ Domínio dos sistemas e ferramentas essenciais</li>
+<li>✅ Compreensão dos processos e políticas internas</li>
+<li>✅ Desenvolvimento das competências técnicas necessárias</li>
+<li>✅ Construção de relacionamentos interpessoais</li>
+<li>✅ Alinhamento com metas e expectativas do cargo</li>
 </ul>
 
-<h3>Tarde</h3>
+<hr>
+
+<h2>🌟 DIA 1: Primeiros Passos Fundamentais</h2>
+
+<div style="background: #e8f5e8; border: 1px solid #c3e6c3; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #2e7d32; margin-top: 0;">🌅 Manhã (8:00 - 12:00)</h3>
+  
+  <h4>8:00 - 8:30 | Recepção e Boas-vindas</h4>
+  <ul>
+    <li>Check-in com RH na recepção</li>
+    <li>Entrega do kit de boas-vindas</li>
+    <li>Apresentação do espaço físico</li>
+    <li>Configuração do crachá e acessos</li>
+  </ul>
+
+  <h4>8:30 - 9:30 | Reunião com Gestor</h4>
+  <ul>
+    <li>Apresentação formal e objetivos do cargo</li>
+    <li>Alinhamento sobre expectativas mútuas</li>
+    <li>Entrega do plano de integração personalizado</li>
+    <li>Agendamento das reuniões de acompanhamento</li>
+  </ul>
+
+  <h4>9:30 - 11:00 | Apresentação da Equipe</h4>
+  <ul>
+    <li>Reunião com todos os membros da equipe</li>
+    <li>Apresentação individual com funções e responsabilidades</li>
+    <li>Estabelecimento de canais de comunicação</li>
+    <li>Tour pelo ambiente de trabalho</li>
+  </ul>
+
+  <h4>11:00 - 12:00 | Setup Técnico Inicial</h4>
+  <ul>
+    <li>Configuração da estação de trabalho</li>
+    <li>Instalação e ativação de softwares essenciais</li>
+    <li>Criação e verificação de contas de acesso</li>
+    <li>Teste de conectividade e periféricos</li>
+  </ul>
+</div>
+
+<div style="background: #e3f2fd; border: 1px solid #bbdefb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #1565c0; margin-top: 0;">🌇️ Tarde (13:00 - 18:00)</h3>
+  
+  <h4>13:00 - 14:30 | Sistemas e Ferramentas</h4>
+  <ul>
+    <li>Treinamento inicial nos sistemas corporativos</li>
+    <li>Configuração de e-mail e perfil no Teams/Slack</li>
+    <li>Acesso ao sistema de gestão e intranet</li>
+    <li>Exploração dos principais aplicativos</li>
+  </ul>
+
+  <h4>14:30 - 16:00 | Políticas e Cultura</h4>
+  <ul>
+    <li>Apresentação do Manual do Colaborador</li>
+    <li>Diretrizes de segurança da informação</li>
+    <li>Códigos de conduta e ética</li>
+    <li>Benefícios e programas corporativos</li>
+  </ul>
+
+  <h4>16:00 - 17:30 | Primeira Atividade Prática</h4>
+  <ul>
+    <li>Acompanhamento com mentor designado</li>
+    <li>Observação de processos em execução</li>
+    <li>Pequenas tarefas supervisionadas</li>
+    <li>Resolução de dúvidas iniciais</li>
+  </ul>
+
+  <h4>17:30 - 18:00 | Encerramento e Feedback</h4>
+  <ul>
+    <li>Checkpoint diário com o gestor</li>
+    <li>Registro de aprendizados e dificuldades</li>
+    <li>Planejamento do Dia 2</li>
+    <li>Verificação de tarefas pendentes</li>
+  </ul>
+</div>
+
+<hr>
+
+<h2>📚 SEMANA 1: Imersão Cultural e Processual</h2>
+
+<div style="background: #fff3e0; border: 1px solid #ffe0b2; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #e65100; margin-top: 0;">📖 Dias 2-3 | Fundamentos Corporativos</h3>
+  
+  <h4>Conteúdo Programático</h4>
+  <ul>
+    <li><strong>História e Valores:</strong> Missão, Visão e Valores da empresa</li>
+    <li><strong>Estrutura Organizacional:</strong> Departamentos e hierarquia</li>
+    <li><strong>Políticas Internas:</strong> RH, TI, Comunicação e Segurança</li>
+    <li><strong>Processos Básicos:</strong> Solicitações, aprovações e reports</li>
+  </ul>
+
+  <h4>Atividades de Integração</h4>
+  <ul>
+    <li>Participação em reuniões de equipe</li>
+    <li>Almoço com diferentes grupos de colegas</li>
+    <li>Exploração da intranet e portais internos</li>
+    <li>Complementação de formulários de perfil</li>
+  </ul>
+</div>
+
+<div style="background: #f3e5f5; border: 1px solid #e1bee7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #6a1b9a; margin-top: 0;">💻 Dias 4-5 | Capacitação Técnica</h3>
+  
+  <h4>Sistemas Especializados</h4>
+  <ul>
+    <li><strong>[Sistema 1]:</strong> Módulos básicos e operação essencial</li>
+    <li><strong>[Sistema 2]:</strong> Funcionalidades do seu departamento</li>
+    <li><strong>[Ferramenta 1]:</strong> Comunicação e colaboração</li>
+    <li><strong>[Ferramenta 2]:</strong> Produtividade e gestão</li>
+  </ul>
+
+  <h4>Prática Supervisionada</h4>
+  <ul>
+    <li>Execução de tarefas com acompanhamento</li>
+    <li>Simulações de cenários reais</li>
+    <li>Resolução de exercícios práticos</li>
+    <li>Avaliação formativa de aprendizado</li>
+  </ul>
+</div>
+
+<hr>
+
+<h2>🚀 SEMANAS 2-3: Desenvolvimento de Competências</h2>
+
+<h3>🎯 Metas da Fase</h3>
+<table>
+  <tr><th>Área</th><th>Competência</th><th>Nível Esperado</th><th>Como Avaliar</th></tr>
+  <tr><td>Técnica</td><td>[Competência técnica 1]</td><td>Básico/Intermediário</td><td>[Método de avaliação]</td></tr>
+  <tr><td>Interpessoal</td><td>Comunicação</td><td>Efetiva</td><td>[Método de avaliação]</td></tr>
+  <tr><td>Processos</td><td>[Processo específico]</td><td>Autônomo</td><td>[Método de avaliação]</td></tr>
+</table>
+
+<div style="background: #e8f5e8; border: 1px solid #c3e6c3; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #2e7d32; margin-top: 0;">📈 Semana 2 | Imersão Profissional</h3>
+  
+  <h4>Planejamento Semanal</h4>
+  <ul>
+    <li><strong>Segunda:</strong> Foco em [área específica]</li>
+    <li><strong>Terça:</strong> Treinamento avançado em [tópico]</li>
+    <li><strong>Quarta:</strong> Prática em projeto real supervisionado</li>
+    <li><strong>Quinta:</strong> Reunião de feedback e ajustes</li>
+    <li><strong>Sexta:</strong> Avaliação semanal e planejamento</li>
+  </ul>
+
+  <h4>Atividades Específicas</h4>
+  <ul>
+    <li>Participação em [tipo de reunião]</li>
+    <li>Colaboração em [nome do projeto]</li>
+    <li>Desenvolvimento de [entregável específico]</li>
+    <li>Apresentação para [stakeholder específico]</li>
+  </ul>
+</div>
+
+<div style="background: #e3f2fd; border: 1px solid #bbdefb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #1565c0; margin-top: 0;">⚡ Semana 3 | Autonomia Gradual</h3>
+  
+  <h4>Progressão de Responsabilidades</h4>
+  <ul>
+    <li><strong>Dia 1-2:</strong> Execução com apoio constante</li>
+    <li><strong>Dia 3-4:</strong> Execução com supervisão pontual</li>
+    <li><strong>Dia 5:</strong> Tarefas mais complexas com verificação</li>
+  </ul>
+
+  <h4>Desenvolvimento de Soft Skills</h4>
+  <ul>
+    <li>Comunicação eficaz em reuniões virtuais</li>
+    <li>Gerenciamento de tempo e prioridades</li>
+    <li>Resolução de problemas básicos</li>
+    <li>Trabalho em equipe interdepartamental</li>
+  </ul>
+</div>
+
+<hr>
+
+<h2>🏆 SEMANA 4: Consolidação e Avaliação</h2>
+
+<div style="background: #fff3e0; border: 1px solid #ffe0b2; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #e65100; margin-top: 0;">📊 Avaliação de Desempenho</h3>
+  
+  <h4>Métricas de Sucesso</h4>
+  <table>
+    <tr><th>Indicador</th><th>Meta</th><th>Resultado</th><th>Status</th></tr>
+    <tr><td>Conclusão de tarefas básicas</td><td>90%</td><td>[Preencher]</td><td>[Avaliar]</td></tr>
+    <tr><td>Autonomia em sistemas essenciais</td><td>80%</td><td>[Preencher]</td><td>[Avaliar]</td></tr>
+    <tr><td>Integração com equipe</td><td>Excelente</td><td>[Preencher]</td><td>[Avaliar]</td></tr>
+  </table>
+
+  <h4>Feedback 360°</h4>
+  <ul>
+    <li>Avaliação do gestor direto</li>
+    <li>Feedback do mentor/parceiro</li>
+    <li>Opinião da equipe</li>
+    <li>Aautoavaliação do colaborador</li>
+  </ul>
+</div>
+
+<h3>🎉 Celebração e Reconhecimento</h3>
+<div style="background: #fce4ec; border: 1px solid #f8bbd9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h4 style="color: #c2185b; margin-top: 0;">Atividades de Encerramento</h4>
+  <ul>
+    <li>Apresentação de resultados preliminares</li>
+    <li>Compartilhamento de aprendizados e experiências</li>
+    <li>Reconhecimento público das conquistas</li>
+    <li>Planejamento dos próximos 90 dias</li>
+  </ul>
+</div>
+
+<hr>
+
+<h2>🛠️ Recursos e Ferramentas Essenciais</h2>
+
+<div style="background: #f5f5f5; border: 1px solid #e0e0e0; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #424242; margin-top: 0;">💻 Sistemas Corporativos</h3>
+  
+  <table>
+    <tr><th>Sistema</th><th>Finalidade</th><th>Acesso</th><th>Suporte</th></tr>
+    <tr><td>[Sistema 1]</td><td>[Descrição]</td><td>[Link/Caminho]</td><td>[Contato]</td></tr>
+    <tr><td>[Sistema 2]</td><td>[Descrição]</td><td>[Link/Caminho]</td><td>[Contato]</td></tr>
+    <tr><td>[Sistema 3]</td><td>[Descrição]</td><td>[Link/Caminho]</td><td>[Contato]</td></tr>
+  </table>
+</div>
+
+<div style="background: #e8f5e8; border: 1px solid #c3e6c3; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #2e7d32; margin-top: 0;">📚 Documentação Importante</h3>
+  
+  <ul>
+    <li><strong>📋 Manual do Colaborador:</strong> <a href="[link]">Acessar manual completo</a></li>
+    <li><strong>🔐 Política de Segurança:</strong> <a href="[link]">Diretrizes de TI</a></li>
+    <li><strong>💰 Guia de Benefícios:</strong> <a href="[link]">Programas e vantagens</a></li>
+    <li><strong>🏢 Código de Conduta:</strong> <a href="[link]">Regras e ética</a></li>
+    <li><strong>📊 Processos do Departamento:</strong> <a href="[link]">Fluxos e procedimentos</a></li>
+  </ul>
+</div>
+
+<div style="background: #e3f2fd; border: 1px solid #bbdefb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #1565c0; margin-top: 0;">👥 Contatos-chave</h3>
+  
+  <table>
+    <tr><th>Função</th><th>Nome</th><th>Contato</th><th>Quando procurar</th></tr>
+    <tr><td>Gestor Direto</td><td>[Nome]</td><td>[E-mail/Telefone]</td><td>Tarefas do dia a dia</td></tr>
+    <tr><td>Mentor</td><td>[Nome]</td><td>[E-mail/Telefone]</td><td>Dúvidas técnicas</td></tr>
+    <tr><td>RH Business Partner</td><td>[Nome]</td><td>[E-mail/Telefone]</td><td>Questões de RH</td></tr>
+    <tr><td>TI Help Desk</td><td>Equipe</td><td>[Contato]</td><td>Problemas técnicos</td></tr>
+    <tr><td>Facilities</td><td>Equipe</td><td>[Contato]</td><td>Infraestrutura física</td></tr>
+  </table>
+</div>
+
+<hr>
+
+<h2>📝 Checklist de Acompanhamento Diário</h2>
+
+<div style="background: #fff9c4; border: 1px solid #fff176; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #f57f17; margin-top: 0;">✅ Verificações Diárias</h3>
+  
+  <p><strong>Data: _____/_____/_____</strong></p>
+  
+  <table>
+    <tr><th>Atividade</th><th>Concluído?</th><th>Observações/Dificuldades</th></tr>
+    <tr><td>Revisar e-mails e mensagens pendentes</td><td>[ ]</td><td></td></tr>
+    <tr><td>Planejar atividades do dia</td><td>[ ]</td><td></td></tr>
+    <tr><td>Participar das reuniões agendadas</td><td>[ ]</td><td></td></tr>
+    <tr><td>Avançar nas tarefas assigned</td><td>[ ]</td><td></td></tr>
+    <tr><td>Registrar aprendizados do dia</td><td>[ ]</td><td></td></tr>
+    <tr><td>Comunicar dificuldades ou bloqueios</td><td>[ ]</td><td></td></tr>
+    <tr><td>Preparar-se para as atividades do dia seguinte</td><td>[ ]</td><td></td></tr>
+  </table>
+</div>
+
+<hr>
+
+<h2>🎯 Plano de Desenvolvimento Individual (PDI)</h2>
+
+<div style="background: #f3e5f5; border: 1px solid #e1bee7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #6a1b9a; margin-top: 0;">📈 Metas de 90 Dias</h3>
+  
+  <table>
+    <tr><th>Objetivo</th><th>Prazo</th><th>Indicadores</th><th>Ações Necessárias</th><th>Responsável</th></tr>
+    <tr><td>[Objetivo 1]</td><td>[Data]</td><td>[Como medir]</td><td>[Ações]</td><td>[Nome]</td></tr>
+    <tr><td>[Objetivo 2]</td><td>[Data]</td><td>[Como medir]</td><td>[Ações]</td><td>[Nome]</td></tr>
+    <tr><td>[Objetivo 3]</td><td>[Data]</td><td>[Como medir]</td><td>[Ações]</td><td>[Nome]</td></tr>
+  </table>
+</div>
+
+<hr>
+
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; margin: 20px 0; border-radius: 10px;">
+  <h2 style="margin: 0;">🎉 Parabéns por Concluir seu Onboarding!</h2>
+  <p style="font-size: 1.1em; margin: 10px 0;">Sua jornada está apenas começando. Estamos aqui para apoiar seu desenvolvimento e sucesso na empresa!</p>
+  
+  <div style="margin: 20px 0;">
+    <h3>📞 Quando Dúvidas Surgirem:</h3>
+    <ul style="text-align: left; display: inline-block;">
+      <li>Seu gestor direto</li>
+      <li>Seu mentor designado</li>
+      <li>Equipe de RH</li>
+      <li>Manual do Colaborador</li>
+    </ul>
+  </div>
+  
+  <p><strong>Bem-vindo(a) à família [Nome da Empresa]! 🚀</strong></p>
+</div>
+
+<h2>📞 Suporte e Ajudas</h2>
+<p><strong>Canais de Suporte:</strong></p>
 <ul>
-<li>Apresentação do ambiente de trabalho</li>
-<li>Leitura dos documentos essenciais</li>
-<li>Configuração do e-mail e ferramentas</li>
+<li><strong>Help Desk de TI:</strong> (xx) xxxx-xxxx | ti@empresa.com</li>
+<li><strong>Business Partner RH:</strong> (xx) xxxx-xxxx | rh@empresa.com</li>
+<li><strong>Facilities:</strong> (xx) xxxx-xxxx | facilities@empresa.com</li>
 </ul>
 
-<h2>Primeira Semana</h2>
-<h3>Dia 2-3: Conhecimento</h3>
-<ul>
-<li>Leitura dos manuais e políticas</li>
-<li>Capacitação inicial em sistemas</li>
-<li>Apresentação dos processos da área</li>
-</ul>
+<p><strong>Horários de Atendimento:</strong> Seg-Sex, 8h às 18h (horário de Brasília)</p>
 
-<h3>Dia 4-5: Prática Inicial</h3>
-<ul>
-<li>Acompanhamento de colegas em atividades</li>
-<li>Execução de tarefas supervisionadas</li>
-<li>Dúvidas e feedback inicial</li>
-</ul>
+<hr>
 
-<h2>Primeiro Mês</h2>
-<h3>Semana 2-3: Desenvolvimento</h3>
-<ul>
-<li>Participação ativa em projetos</li>
-<li>Capacitações específicas</li>
-<li>Reuniões de acompanhamento semanais</li>
-</ul>
-
-<h3>Semana 4: Avaliação</h3>
-<ul>
-<li>Avaliação de desempenho inicial</li>
-<li>Planejamento dos próximos 30 dias</li>
-<li>Feedback mútuo</li>
-</ul>
-
-<h2>Recursos Importantes</h2>
-<ul>
-<li><strong>Manual do Colaborador:</strong> [Link]</li>
-<li><strong>Políticas Internas:</strong> [Link]</li>
-<li><strong>Sistemas:</strong> [Lista de acessos]</li>
-<li><strong>Contatos:</strong> [Pessoas-chave para suporte]</li>
-</ul>
-
-<h2>Seu Plano Individual</h2>
-<p>[Plano personalizado conforme o cargo e área]</p>',
+<div style="text-align: center; color: #666; font-style: italic; margin: 30px 0;">
+  <p>Este documento foi personalizado para <strong>[Nome do Colaborador]</strong></p>
+  <p>Versão: [Versão] | Data: [Data de geração]</p>
+  <p>Confidencial - Uso Interno</p>
+</div>',
   ARRAY['onboarding', 'integração', 'novo', 'colaborador'],
   true,
   null,
