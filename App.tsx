@@ -823,9 +823,12 @@ const searchParams: any = {
 
   const refreshTemplates = useCallback(async () => {
     try {
+      console.log('Carregando templates do banco...');
       const t = await dbListTemplates();
+      console.log('Templates carregados:', t.length);
       setTemplates(t);
     } catch (e) {
+      console.error('Erro ao carregar templates do banco, usando mock:', e);
       // Fallback: keep mock templates if DB isn't ready
       setTemplates(MOCK_TEMPLATES);
     }
@@ -833,11 +836,17 @@ const searchParams: any = {
 
   const seedTemplatesIfEmpty = useCallback(async () => {
     try {
+      console.log('Verificando se existem templates...');
       const { count, error } = await supabase
         .from('document_templates')
         .select('*', { count: 'exact', head: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao verificar templates:', error);
+        throw error;
+      }
+      
+      console.log('Quantidade de templates no banco:', count);
       
       if (count === 0) {
         console.log('Nenhum template encontrado, fazendo seed...');
@@ -868,6 +877,7 @@ const searchParams: any = {
           }
         }
         // Recarregar templates após o seed
+        console.log('Recarregando templates após seed...');
         await refreshTemplates();
       }
     } catch (e) {
@@ -1302,6 +1312,10 @@ const handleUpdateAvatar = async (base64: string) => {
   }, [activeCategoryId, visibleDocumentsFiltered]);
 
   const availableTemplates = useMemo(() => {
+    console.log('availableTemplates - currentUser:', currentUser?.role);
+    console.log('availableTemplates - templates:', templates);
+    console.log('availableTemplates - templates.length:', templates?.length);
+    
     if (!currentUser) return [];
     if (currentUser.role === 'ADMIN') return templates;
     if (currentUser.role === 'EDITOR') {
