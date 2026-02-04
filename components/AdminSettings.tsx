@@ -742,8 +742,8 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                         </div>
                                     </div>
                                 ))}
-                                <Button size="sm" variant="secondary" onClick={handleAddFeature}>
-                                    <Plus size={14} className="mr-1" /> Adicionar Recurso
+                                <Button size="sm" variant="secondary" onClick={handleAddFeature} leftIcon={<Plus size={14} />}>
+                                    Adicionar Recurso
                                 </Button>
                             </div>
                         </div>
@@ -751,11 +751,11 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                      </div>
                    </div>
 
-                   <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                     <Button onClick={handleSaveSettings}>
-                        <Save size={16} className="mr-2" /> Salvar Alterações
-                     </Button>
-                   </div>
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <Button onClick={handleSaveSettings} leftIcon={<Save size={16} />}>
+                         Salvar Alterações
+                      </Button>
+                    </div>
                 </div>
               </div>
             </div>
@@ -1168,11 +1168,11 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                  </table>
               </div>
 
-              <div className="pt-2 border-t border-gray-200 dark:border-gray-700 flex justify-end">
-                 <Button onClick={() => { toast.success('Todas as alterações foram salvas.'); onClose(); }}>
-                    <Save size={16} className="mr-2" /> Salvar Alterações e Fechar
-                 </Button>
-              </div>
+               <div className="pt-2 border-t border-gray-200 dark:border-gray-700 flex justify-end">
+                  <Button onClick={() => { toast.success('Todas as alterações foram salvas.'); onClose(); }} leftIcon={<Save size={16} />}>
+                     Salvar Alterações e Fechar
+                  </Button>
+               </div>
             </div>
           )}
 
