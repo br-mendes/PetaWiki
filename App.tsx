@@ -1963,7 +1963,10 @@ const toggleFavorites = () => {
             </div>
             <div className="flex justify-end gap-2 pt-2">
                 <Button variant="ghost" onClick={() => setConfirmModal({ ...confirmModal, isOpen: false })}>Cancelar</Button>
-                <Button onClick={() => { confirmModal.onConfirm(); setConfirmModal({ ...confirmModal, isOpen: false }); }}>Confirmar</Button>
+                 <Button onClick={() => { 
+                   confirmModal.onConfirm(); 
+                   setConfirmModal({ ...confirmModal, isOpen: false }); 
+                 }}>Confirmar</Button>
             </div>
         </div>
       </Modal>
