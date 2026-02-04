@@ -326,14 +326,13 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   
   const handleAddCategoryClick = () => {
     if(!newCatName.trim()) return;
-    const defaultIcon = newCatParent ? 'folder' : 'library';
-    onAddCategory({
-      name: newCatName,
-      parentId: newCatParent || null,
-      slug: generateSlug(newCatName),
-      description: 'Nova categoria adicionada via admin',
-      icon: defaultIcon
-    });
+     onAddCategory({
+       name: newCatName,
+       parentId: null, // Força ser null para criar categoria raiz
+       slug: generateSlug(newCatName),
+       description: 'Nova categoria adicionada via admin',
+       icon: 'folder' // Usa sempre 'folder' para categorias raiz
+     });
     setNewCatName('');
     toast.success('Categoria incluída na estrutura.');
   };
@@ -1074,9 +1073,9 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
 
               {/* Form de Inclusão no Topo */}
               <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
-                <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
-                  {newCatParent ? 'Adicionar Subcategoria' : 'Adicionar Nova Categoria Raiz'}
-                </h4>
+                  <h4 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                    Adicionar Categoria
+                  </h4>
                 <div className="flex gap-2 items-center">
                   <input 
                     ref={catNameInputRef}

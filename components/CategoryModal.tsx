@@ -4,13 +4,13 @@ import { Modal } from './Modal';
 import { Button } from './Button';
 import { Category, User } from '../types';
 import { generateSlug, isSlugUnique, getCategoryDepth } from '../lib/hierarchy';
-import { ChevronRight, Hash, Type, Folder } from 'lucide-react';
+import { ChevronRight, Type, Folder } from 'lucide-react';
 import { ICON_MAP, IconRenderer } from './IconRenderer';
 
 interface CategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
-  parentId: string | null;
+  parentId: string | null; // Removed - não permite mais criar categoria raiz
   categories: Category[]; // Flat list for validation
   user: User;
   onSave: (categoryData: Partial<Category>) => void;
@@ -29,11 +29,9 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
-  const [isManualSlug, setIsManualSlug] = useState(false);
   const [description, setDescription] = useState('');
   // Padrão 'folder' (Lucide) em vez de emoji para manter consistência
   const [icon, setIcon] = useState('folder');
-  const [departmentId, setDepartmentId] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   // Initialize defaults
@@ -41,20 +39,16 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
     if (isOpen) {
       setName('');
       setSlug('');
-      setIsManualSlug(false);
       setDescription('');
       setIcon('folder');
-      setDepartmentId(user.role === 'ADMIN' ? 'Global' : user.department);
       setError(null);
     }
-  }, [isOpen, user]);
+  }, [isOpen]);
 
-  // Auto-generate slug unless manually edited
+  // Auto-generate slug from name
   useEffect(() => {
-    if (!isManualSlug) {
-      setSlug(generateSlug(name));
-    }
-  }, [name, isManualSlug]);
+    setSlug(generateSlug(name));
+  }, [name]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,13 +74,12 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
       return;
     }
 
-    onSave({
+        onSave({
       name,
       slug: finalSlug,
       description,
-      icon, // Agora salva a string chave do ícone (ex: 'users')
-      parentId,
-      departmentId: user.role === 'ADMIN' && departmentId === 'Global' ? undefined : departmentId,
+      icon, // Salva a string chave do ícone (ex: 'users')
+      parentId, // Agora só permite subcategorias
     });
     onClose();
   };
@@ -106,7 +99,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
   const parentPath = getParentPath(parentId);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={parentId ? "Nova Subcategoria" : "Nova Categoria Raiz"}>
+    <Modal isOpen={isOpen} onClose={onClose} title="Nova Subcategoria">
       <form onSubmit={handleSubmit} className="space-y-5">
         
         {/* Visual Breadcrumb - Hierarquia */}
@@ -160,20 +153,8 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
                     <Type className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 </div>
                 
-                {/* Advanced Slug Toggle */}
-                <div className="flex items-center gap-2 mt-1.5">
-                    <Hash size={12} className="text-gray-400" />
-                    <input 
-                        type="text" 
-                        value={slug}
-                        onChange={(e) => { setSlug(e.target.value); setIsManualSlug(true); }}
-                        className="text-xs text-gray-500 dark:text-gray-400 bg-transparent border-b border-transparent hover:border-gray-300 focus:border-blue-500 focus:text-blue-600 outline-none w-full transition-colors font-mono"
-                        placeholder="url-amigavel-automatica"
-                        title="URL Amigável (Slug)"
-                    />
-                </div>
-            </div>
-        </div>
+             </div>
+         </div>
 
         {/* Lucide Icon Suggestions */}
         <div>
@@ -207,27 +188,6 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
             placeholder="Para que serve esta categoria..."
           />
         </div>
-
-        {/* Department Scope */}
-        {user.role === 'ADMIN' && !parentId && (
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg border border-yellow-100 dark:border-yellow-800">
-            <label className="block text-xs font-bold text-yellow-800 dark:text-yellow-500 uppercase mb-2">Visibilidade</label>
-            <select
-              value={departmentId}
-              onChange={e => setDepartmentId(e.target.value)}
-              className="w-full px-3 py-2 border border-yellow-200 dark:border-yellow-700 rounded-md focus:ring-2 focus:ring-yellow-500 outline-none bg-white dark:bg-gray-900 text-sm cursor-pointer"
-            >
-              <option value="Global">Global (Visível para todos)</option>
-              <option value="Gestão">Restrito: Gestão</option>
-              <option value="RH">Restrito: RH</option>
-              <option value="TI">Restrito: TI</option>
-              <option value="Vendas">Restrito: Vendas</option>
-            </select>
-            <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-2">
-                Categorias Globais são visíveis para toda a empresa. Categorias restritas aparecem apenas para usuários do departamento selecionado.
-            </p>
-          </div>
-        )}
 
         {error && (
           <div className="text-red-600 dark:text-red-400 text-sm bg-red-50 dark:bg-red-900/20 p-3 rounded-lg flex items-center gap-2 border border-red-100 dark:border-red-800 animate-pulse">
