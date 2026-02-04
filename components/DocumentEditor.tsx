@@ -506,11 +506,11 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
                         <span className="text-gray-400 text-sm italic py-2">Nenhuma tag adicionada. Tags ajudam na busca do documento.</span>
                     )}
                     {tags.map(tag => (
-                        <span key={tag} className="inline-flex items-center pl-2.5 pr-1 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800">
+                        <span key={tag} className="badge badge-primary inline-flex items-center gap-1">
                             {tag}
                             <button 
                                 onClick={() => handleRemoveTag(tag)}
-                                className="ml-1.5 p-0.5 hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full transition-colors"
+                                className="p-0.5 hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full transition-colors"
                             >
                                 <X size={12} />
                             </button>

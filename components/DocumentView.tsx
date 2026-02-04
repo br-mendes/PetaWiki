@@ -292,7 +292,7 @@ setUserReactions(newReactions);
                 <span 
                     key={tag} 
                     onClick={() => onSearchTag && onSearchTag(tag)}
-                    className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-white hover:bg-blue-600 dark:hover:bg-blue-500 transition-colors cursor-pointer bg-blue-50 dark:bg-blue-900/20 px-2.5 py-1 rounded-md"
+                    className="badge badge-primary cursor-pointer hover:opacity-80 transition-opacity"
                     title={`Buscar documentos com a tag: ${tag}`}
                 >
                     #{tag}
@@ -310,7 +310,6 @@ setUserReactions(newReactions);
                         setIsHistoryModalOpen(true);
                         await loadVersions();
                       }}
-                      className="dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
                     >
                         <History size={16} className="mr-2" /> Histórico
                     </Button>
@@ -324,11 +323,7 @@ setUserReactions(newReactions);
                 <Button
                   variant="ghost"
                   onClick={() => onToggleFavorite?.(document.id)}
-                  className={`px-3 ${
-                    isFavorite
-                      ? "text-yellow-500 hover:bg-yellow-50 dark:hover:bg-yellow-900/20"
-                      : "text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800"
-                  }`}
+                  className={isFavorite ? "text-yellow-500" : ""}
                   title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
                 >
                   <Bookmark size={20} className={isFavorite ? "fill-current" : ""} />
@@ -337,7 +332,6 @@ setUserReactions(newReactions);
                 <div className="relative">
                     <Button 
                     variant="secondary" 
-                    className="dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
                     onClick={(e) => {
                         e.stopPropagation();
                         setIsExportMenuOpen(!isExportMenuOpen);
@@ -387,7 +381,7 @@ setUserReactions(newReactions);
                     <Button 
                         variant="ghost" 
                         onClick={onDelete} 
-                        className="text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 px-3"
+                        className="text-red-600 dark:text-red-400"
                         title="Mover para lixeira"
                     >
                         <Trash2 size={20} />

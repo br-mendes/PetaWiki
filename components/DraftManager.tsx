@@ -135,7 +135,7 @@ export const DraftManager: React.FC<DraftManagerProps> = ({
                         {draft.tags && draft.tags.length > 0 && (
                           <div className="flex gap-1">
                             {draft.tags.slice(0, 3).map(tag => (
-                              <span key={tag} className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 px-1.5 py-0.5 rounded">
+                              <span key={tag} className="badge badge-primary">
                                 #{tag}
                               </span>
                             ))}
