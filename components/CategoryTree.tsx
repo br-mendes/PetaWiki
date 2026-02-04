@@ -141,13 +141,14 @@ const TreeNode: React.FC<{
               level={level + 1}
               selectedId={selectedId}
               onCategorySelect={onCategorySelect}
-              showControls={showControls}
-              onCreate={onCreate}
-              onRename={onRename}
-              onDelete={onDelete}
-              onDropDocument={onDropDocument}
-              onDropCategory={onDropCategory}
-              onReorderCategory={onReorderCategory}
+               // Controles desabilitados - só via admin
+               // showControls={showControls}
+               // onCreate={onCreate}
+               // onRename={onRename}
+               // onDelete={onDelete}
+               // onDropDocument={onDropDocument}
+               // onDropCategory={onDropCategory}
+               // onReorderCategory={onReorderCategory}
               docsByCatId={docsByCatId}
               onDocumentSelect={onDocumentSelect}
               showDocuments={showDocuments}

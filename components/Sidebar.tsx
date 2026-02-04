@@ -36,7 +36,8 @@ interface SidebarProps {
   onSelectDocument: (document: Document) => void;
   onNavigateHome: () => void;
   user: User;
-  onCreateCategory: (parentId: string | null) => void;
+              // Criar categoria via interface admin desabilitada
+              // onCreateCategory: (parentId: string | null) => void;
   onDeleteCategory: (categoryId: string) => void;
   systemSettings: SystemSettings;
   // User Controls
@@ -397,13 +398,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
           {/* Botão Principal de Adicionar Raiz */}
           {isAdminOrEditor && (
-            <button 
-              onClick={() => onCreateCategory(null)}
-              className="w-full flex items-center justify-center gap-2 mb-4 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-all shadow-sm group"
-            >
-              <PlusCircle size={16} className="group-hover:scale-110 transition-transform" />
-              <span className="font-medium text-sm">Nova Categoria Raiz</span>
-            </button>
+
           )}
           
 {/* Always show Category Tree */}
