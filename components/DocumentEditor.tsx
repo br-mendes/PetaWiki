@@ -37,6 +37,14 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   const toast = useToast();
   const [title, setTitle] = useState(document?.title || '');
   const [content, setContent] = useState(document?.content || initialContent);
+
+  // Debug para templates
+  useEffect(() => {
+    if (initialContent && initialContent.length > 0) {
+      console.log('DocumentEditor - initialContent recebido:', initialContent.substring(0, 200) + '...');
+      console.log('DocumentEditor - content atual após set:', content.substring(0, 200) + '...');
+    }
+  }, [initialContent, content]);
  const [categoryId, setCategoryId] = useState(document?.categoryId || initialCategoryId || '');
 
   const [saveAsTemplate, setSaveAsTemplate] = useState(false);

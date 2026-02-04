@@ -98,9 +98,12 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({ templates, o
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Blank Option */}
+         {/* Blank Option */}
         <div 
-          onClick={() => onSelect(null)}
+          onClick={() => {
+            console.log('TemplateSelector - Clicou em Documento em Branco');
+            onSelect(null);
+          }}
           className="bg-white border-2 border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all group h-64"
         >
           <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4 group-hover:bg-blue-100 transition-colors">
@@ -114,7 +117,12 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({ templates, o
         {filteredTemplates.map(template => (
           <div 
             key={template.id}
-            onClick={() => onSelect(template)}
+            onClick={() => {
+              console.log('TemplateSelector - Clicou no template:', template.name);
+              console.log('TemplateSelector - Content length:', template.content.length);
+              console.log('TemplateSelector - Content preview:', template.content.substring(0, 100) + '...');
+              onSelect(template);
+            }}
             className="bg-white border border-gray-200 rounded-xl p-6 cursor-pointer hover:shadow-lg hover:border-blue-300 transition-all flex flex-col h-64 relative overflow-hidden"
           >
             <div className="absolute top-0 right-0 p-4 opacity-10">
