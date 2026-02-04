@@ -199,6 +199,13 @@ const AppContent = () => {
       // Handle category view
       if (params.categoryId) {
         console.log('Category ID from URL:', params.categoryId);
+        
+        // Wait for data to load before checking
+        if (isLoading) {
+          console.log('Data still loading, waiting...');
+          return;
+        }
+        
         const category = findCategoryById(categories, params.categoryId);
         console.log('Found category:', category);
         
@@ -208,7 +215,7 @@ const AppContent = () => {
           setCurrentView('CATEGORY_VIEW');
           // Documents will be filtered by activeCategoryId in useMemo
         } else {
-          console.log('Category not found, redirecting to home');
+          console.log('Category not found after loading, redirecting to home');
           navigate('/');
         }
         return;
@@ -218,11 +225,17 @@ const AppContent = () => {
       if (params.docId) {
         console.log('Document ID from URL:', params.docId);
         
+        // Wait for data to load before checking
+        if (isLoading) {
+          console.log('Data still loading, waiting...');
+          return;
+        }
+        
         // Check if document is in cache
         const existingDoc = documents.find(d => d.id === params.docId);
         
           if (!existingDoc) {
-            console.log('Document not found, redirecting to home');
+            console.log('Document not found after loading, redirecting to home');
             navigate('/');
             return;
         } else {
@@ -252,7 +265,7 @@ const AppContent = () => {
 
     // Process immediately
     processUrl();
-  }, [params, isAuthenticated, categories, documents]); // Added categories and documents to ensure proper re-rendering when data loads
+  }, [params, isAuthenticated, categories, documents, isLoading]); // Added isLoading to prevent redirects before data is ready
 
   // Removed redundant useEffect to prevent race conditions
   // Document view is now handled in the main URL processing effect
