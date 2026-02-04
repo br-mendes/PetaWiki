@@ -66,12 +66,12 @@ export const Button: React.FC<ButtonProps> = ({
       {loading ? (
         <div className="flex items-center gap-2 whitespace-nowrap">
           <Loader2 className="w-4 h-4 animate-spin" />
-          {loadingText && <span>{loadingText}</span>}
+          {loadingText && <span className="whitespace-nowrap">{loadingText}</span>}
         </div>
       ) : (
-        <div className="flex items-center gap-2 whitespace-nowrap">
+        <div className="flex flex-row items-center gap-2 flex-nowrap whitespace-nowrap">
           {leftIcon && <span className="flex-shrink-0">{leftIcon}</span>}
-          <span>{children}</span>
+          <span className="whitespace-nowrap">{children}</span>
           {rightIcon && <span className="flex-shrink-0">{rightIcon}</span>}
         </div>
       )}
