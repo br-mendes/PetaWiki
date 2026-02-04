@@ -1,10 +1,14 @@
 import React from 'react';
+import { Loader2 } from 'lucide-react';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
-  children: React.ReactNode;
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'success' | 'warning';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
   loading?: boolean;
+  loadingText?: string;
+  fullWidth?: boolean;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
 }
 
 export const Button: React.FC<ButtonProps> = ({ 
@@ -13,37 +17,83 @@ export const Button: React.FC<ButtonProps> = ({
   className = '', 
   children, 
   loading = false,
+  loadingText,
+  fullWidth = false,
+  leftIcon,
+  rightIcon,
+  disabled,
   ...props 
 }) => {
-  const baseStyles = "inline-flex items-center justify-center font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+  // Base styles using CSS classes from design system
+  const baseStyles = "btn";
   
-  const variants = {
-    primary: "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
-    secondary: "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 focus:ring-blue-500",
-    danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
-    ghost: "bg-transparent text-gray-600 hover:bg-gray-100 focus:ring-gray-500"
+  // Variant styles
+  const variantStyles = {
+    primary: "btn-primary",
+    secondary: "btn-secondary",
+    danger: "btn-danger",
+    ghost: "btn-ghost",
+    success: "bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500",
+    warning: "bg-amber-500 text-white hover:bg-amber-600 focus:ring-amber-500"
   };
-
-  const sizes = {
-    sm: "px-3 py-1.5 text-xs",
-    md: "px-4 py-2 text-sm",
-    lg: "px-6 py-3 text-base"
+  
+  // Size styles
+  const sizeStyles = {
+    xs: "px-2 py-1 text-xs h-7 rounded",
+    sm: "btn-sm",
+    md: "btn-md",
+    lg: "btn-lg"
   };
-
+  
+  // Width styles
+  const widthStyles = fullWidth ? "w-full" : "";
+  
+  // Combine all styles
+  const buttonClasses = [
+    baseStyles,
+    variantStyles[variant],
+    sizeStyles[size],
+    widthStyles,
+    className
+  ].filter(Boolean).join(' ');
+  
   return (
     <button 
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
-      disabled={loading || props.disabled}
+      className={buttonClasses}
+      disabled={loading || disabled}
       {...props}
     >
       {loading ? (
         <div className="flex items-center gap-2">
-          <div className="w-4 h-4 border-2 border-gray-300 border-t-transparent animate-spin rounded-full" />
-          <span>Processando...</span>
+          <Loader2 className="w-4 h-4 animate-spin" />
+          {loadingText && <span>{loadingText}</span>}
         </div>
       ) : (
-        children
+        <div className="flex items-center gap-2">
+          {leftIcon && <span className="flex-shrink-0">{leftIcon}</span>}
+          <span>{children}</span>
+          {rightIcon && <span className="flex-shrink-0">{rightIcon}</span>}
+        </div>
       )}
     </button>
   );
 };
+
+// Export individual button variants for convenience
+export const ButtonPrimary: React.FC<Omit<ButtonProps, 'variant'>> = (props) => (
+  <Button variant="primary" {...props} />
+);
+
+export const ButtonSecondary: React.FC<Omit<ButtonProps, 'variant'>> = (props) => (
+  <Button variant="secondary" {...props} />
+);
+
+export const ButtonDanger: React.FC<Omit<ButtonProps, 'variant'>> = (props) => (
+  <Button variant="danger" {...props} />
+);
+
+export const ButtonGhost: React.FC<Omit<ButtonProps, 'variant'>> = (props) => (
+  <Button variant="ghost" {...props} />
+);
+
+export default Button;
