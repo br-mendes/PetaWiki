@@ -252,7 +252,7 @@ const AppContent = () => {
 
     // Process immediately
     processUrl();
-  }, [params, isAuthenticated]); // Simplified dependencies to prevent race conditions
+  }, [params, isAuthenticated, categories, documents]); // Added categories and documents to ensure proper re-rendering when data loads
 
   // Removed redundant useEffect to prevent race conditions
   // Document view is now handled in the main URL processing effect
