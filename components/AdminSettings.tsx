@@ -1054,6 +1054,58 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                           >
                             Revisar
                           </button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const { error } = await supabase
+                                  .from("documents")
+                                  .update({
+                                    status: "PUBLISHED",
+                                    updated_by: actorUserId,
+                                    updated_at: new Date().toISOString(),
+                                  })
+                                  .eq("id", d.id);
+                                
+                                if (error) throw error;
+                                toast.success("Documento aprovado e publicado");
+                                loadPending();
+                              } catch (e: any) {
+                                toast.error("Falha ao aprovar documento");
+                              }
+                            }}
+                            className="text-[10px] px-3 py-1 rounded bg-green-50 text-green-700 hover:bg-green-100"
+                            title="Aprovar documento"
+                          >
+                            Aprovar
+                          </button>
+                          <button
+                            onClick={async () => {
+                              const note = prompt("Motivo da rejeição:");
+                              if (!note) return;
+                              
+                              try {
+                                const { error } = await supabase
+                                  .from("documents")
+                                  .update({
+                                    status: "REJECTED",
+                                    review_note: note,
+                                    updated_by: actorUserId,
+                                    updated_at: new Date().toISOString(),
+                                  })
+                                  .eq("id", d.id);
+                                
+                                if (error) throw error;
+                                toast.success("Documento rejeitado");
+                                loadPending();
+                              } catch (e: any) {
+                                toast.error("Falha ao rejeitar documento");
+                              }
+                            }}
+                            className="text-[10px] px-3 py-1 rounded bg-red-50 text-red-700 hover:bg-red-100"
+                            title="Rejeitar documento"
+                          >
+                            Rejeitar
+                          </button>
                         </div>
                       </div>
                     ))}
