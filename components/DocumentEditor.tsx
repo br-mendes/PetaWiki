@@ -40,10 +40,21 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
 
   // Debug para templates
   useEffect(() => {
+    console.log('DocumentEditor - initialContent mudou:', !!initialContent);
+    console.log('DocumentEditor - initialContent length:', initialContent?.length);
+    console.log('DocumentEditor - content atual length:', content?.length);
+    
     if (initialContent && initialContent.length > 0) {
       console.log('DocumentEditor - initialContent recebido:', initialContent.substring(0, 200) + '...');
       console.log('DocumentEditor - content atual após set:', content.substring(0, 200) + '...');
     }
+    
+    // Verificar se o conteúdo foi atualizado quando o estado muda
+    useEffect(() => {
+      if (content && content.length > 0 && content !== initialContent) {
+        console.log('DocumentEditor - conteúdo atualizado pelo usuário ou pelo template');
+      }
+    }, [content, initialContent]);
   }, [initialContent, content]);
  const [categoryId, setCategoryId] = useState(document?.categoryId || initialCategoryId || '');
 

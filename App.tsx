@@ -1378,15 +1378,30 @@ const handleUpdateAvatar = async (base64: string) => {
   };
 
   const handleTemplateSelect = (template: DocumentTemplate | null) => {
+    console.log('handleTemplateSelect - template selecionado:', template?.name);
+    console.log('handleTemplateSelect - template.content length:', template?.content?.length);
+    
     if (template?.id) {
+      console.log('handleTemplateSelect - incrementando uso do template...');
       void incrementTemplateUsage(template.id);
     }
-    setNewDocTemplate(template ? {
+    
+    const newTemplate = template ? {
         content: template.content,
         tags: template.tags,
         templateId: template.id
-    } : { content: '', tags: [] });
-    navigateToCreate(activeCategoryId || undefined);
+    } : { content: '', tags: [] };
+    
+    console.log('handleTemplateSelect - setNewDocTemplate com conteúdo de:', template?.name || 'nenhum');
+    console.log('handleTemplateSelect - conteúdo preview:', newTemplate.content?.substring(0, 200) + '...');
+    
+    setNewDocTemplate(newTemplate);
+    
+    // Pequeno atraso para garantir que o estado seja atualizado antes da navegação
+    setTimeout(() => {
+      navigateToCreate(activeCategoryId || undefined);
+    }, 100);
+  };
   };
   
   const handleSaveDocument = async (data: Partial<Document> & { saveAsTemplate?: boolean; templateName?: string }) => {
