@@ -1378,11 +1378,11 @@ const handleUpdateAvatar = async (base64: string) => {
   };
 
   const handleTemplateSelect = (template: DocumentTemplate | null) => {
-    console.log('handleTemplateSelect - template selecionado:', template?.name);
-    console.log('handleTemplateSelect - template.content length:', template?.content?.length);
+    console.log('Template selecionado:', template?.name);
+    console.log('Conteúdo template:', template?.content?.substring(0, 100));
     
     if (template?.id) {
-      console.log('handleTemplateSelect - incrementando uso do template...');
+      console.log('Incrementando uso do template...');
       void incrementTemplateUsage(template.id);
     }
     
@@ -1391,9 +1391,6 @@ const handleUpdateAvatar = async (base64: string) => {
         tags: template.tags,
         templateId: template.id
     } : { content: '', tags: [] };
-    
-    console.log('handleTemplateSelect - setNewDocTemplate com conteúdo de:', template?.name || 'nenhum');
-    console.log('handleTemplateSelect - conteúdo preview:', newTemplate.content?.substring(0, 200) + '...');
     
     setNewDocTemplate(newTemplate);
     
