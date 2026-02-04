@@ -33,8 +33,8 @@ export const Button: React.FC<ButtonProps> = ({
     secondary: "btn-secondary",
     danger: "btn-danger",
     ghost: "btn-ghost",
-    success: "bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500",
-    warning: "bg-amber-500 text-white hover:bg-amber-600 focus:ring-amber-500"
+    success: "btn-success",
+    warning: "btn-warning"
   };
   
   // Size styles

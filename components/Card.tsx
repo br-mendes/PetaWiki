@@ -49,7 +49,7 @@ export const CardHeader: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className = '' }) => (
-  <div className={`border-b border-[var(--color-border-primary)] pb-3 mb-4 ${className}`}>
+  <div className={`border-b border-gray-200 dark:border-gray-700 pb-3 mb-4 ${className}`}>
     {children}
   </div>
 );
@@ -59,7 +59,7 @@ export const CardTitle: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className = '' }) => (
-  <h3 className={`text-lg font-semibold text-[var(--color-text-primary)] ${className}`}>
+  <h3 className={`text-lg font-semibold text-gray-900 dark:text-white ${className}`}>
     {children}
   </h3>
 );
@@ -69,7 +69,7 @@ export const CardDescription: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className = '' }) => (
-  <p className={`text-sm text-[var(--color-text-secondary)] mt-1 ${className}`}>
+  <p className={`text-sm text-gray-600 dark:text-gray-400 mt-1 ${className}`}>
     {children}
   </p>
 );
@@ -89,7 +89,7 @@ export const CardFooter: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className = '' }) => (
-  <div className={`border-t border-[var(--color-border-primary)] pt-3 mt-4 flex items-center gap-2 ${className}`}>
+  <div className={`border-t border-gray-200 dark:border-gray-700 pt-3 mt-4 flex items-center gap-2 ${className}`}>
     {children}
   </div>
 );

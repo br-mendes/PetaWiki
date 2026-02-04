@@ -44,7 +44,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         
         <div className="relative">
           {leftIcon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
               {leftIcon}
             </div>
           )}
@@ -56,18 +56,18 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           />
           
           {rightIcon && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500">
               {rightIcon}
             </div>
           )}
         </div>
         
         {error && (
-          <p className="mt-1 text-xs text-[var(--color-error-600)]">{error}</p>
+          <p className="mt-1 text-xs text-red-600 dark:text-red-400">{error}</p>
         )}
         
         {helperText && !error && (
-          <p className="mt-1 text-xs text-[var(--color-text-tertiary)]">{helperText}</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{helperText}</p>
         )}
       </div>
     );
