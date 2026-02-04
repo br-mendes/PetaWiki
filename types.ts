@@ -3,7 +3,7 @@ export type Role = 'ADMIN' | 'EDITOR' | 'READER';
 
 export type DocStatus = 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'REJECTED';
 
-export type TemplateCategory = 'POLICY' | 'SOP' | 'FAQ' | 'MEETING_MINUTES' | 'KB_ARTICLE' | 'ONBOARDING' | 'OTHER';
+export type TemplateCategory = 'POLICY' | 'SOP' | 'FAQ' | 'MEETING_MINUTES' | 'KB_ARTICLE' | 'ONBOARDING' | 'OFFBOARDING' | 'OTHER';
 
 export type SupportedLanguage = 'pt' | 'en' | 'es' | 'fr' | 'de' | 'it';
 

@@ -831,6 +831,50 @@ const searchParams: any = {
     }
   }, []);
 
+  const seedTemplatesIfEmpty = useCallback(async () => {
+    try {
+      const { count, error } = await supabase
+        .from('document_templates')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) throw error;
+      
+      if (count === 0) {
+        console.log('Nenhum template encontrado, fazendo seed...');
+        for (const template of MOCK_TEMPLATES) {
+          const { error } = await supabase
+            .from('document_templates')
+            .upsert({
+              id: template.id,
+              name: template.name,
+              category: template.category,
+              description: template.description,
+              icon: template.icon,
+              content: template.content,
+              tags: template.tags,
+              is_global: template.isGlobal,
+              department_id: null,
+              usage_count: template.usageCount,
+              is_active: true,
+              created_by: null
+            }, {
+              onConflict: 'id'
+            });
+          
+          if (error) {
+            console.error(`Erro ao inserir template ${template.name}:`, error);
+          } else {
+            console.log(`Template ${template.name} inserido com sucesso`);
+          }
+        }
+        // Recarregar templates após o seed
+        await refreshTemplates();
+      }
+    } catch (e) {
+      console.error('Erro no seed de templates:', e);
+    }
+  }, [refreshTemplates]);
+
   // Initial Fetch
   useEffect(() => {
     async function fetchData() {
@@ -1423,7 +1467,8 @@ const targetCategoryId =
                 isGlobal: true,
                 createdBy: currentUser.id,
               });
-              await refreshTemplates();
+        await refreshTemplates();
+        await seedTemplatesIfEmpty();
               toast.success('Modelo criado a partir do documento.');
             } catch (e: any) {
               console.error(e);

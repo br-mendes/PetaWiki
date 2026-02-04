@@ -39,14 +39,15 @@ const CATEGORY_LABELS: Record<string, string> = {
   FAQ: 'FAQ',
   MEETING_MINUTES: 'Atas de Reunião',
   KB_ARTICLE: 'Artigo de Conhecimento',
-  ONBOARDING: 'Onboarding'
+  ONBOARDING: 'Onboarding',
+  OFFBOARDING: 'Offboarding'
 };
 
 export const TemplateSelector: React.FC<TemplateSelectorProps> = ({ templates, onSelect, onCancel }) => {
   const [filter, setFilter] = useState<string>('ALL');
   const [search, setSearch] = useState('');
 
-  const categories: (TemplateCategory | 'ALL')[] = ['ALL', 'POLICY', 'SOP', 'FAQ', 'MEETING_MINUTES', 'KB_ARTICLE', 'ONBOARDING'];
+  const categories: (TemplateCategory | 'ALL')[] = ['ALL', 'POLICY', 'SOP', 'FAQ', 'MEETING_MINUTES', 'KB_ARTICLE', 'ONBOARDING', 'OFFBOARDING'];
 
   const filteredTemplates = templates.filter(t => {
     const matchesCategory = filter === 'ALL' || t.category === filter;
