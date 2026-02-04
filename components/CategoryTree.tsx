@@ -232,7 +232,6 @@ export const CategoryTree: React.FC<CategoryTreeProps> = ({
         }`}
       >
         <Folder size={16} />
-        <span className="text-sm font-medium">Todas as pastas</span>
       </button>
 
       <div className="space-y-0.5">
