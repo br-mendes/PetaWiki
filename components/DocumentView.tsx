@@ -305,17 +305,21 @@ setUserReactions(newReactions);
                 {canEdit && (
                     <>
                     <Button
-                      variant="secondary"
+                      variant="ghost"
                       onClick={async () => {
                         setIsHistoryModalOpen(true);
                         await loadVersions();
                       }}
+                      title="Ver histórico de versões"
                     >
-                        <History size={16} className="mr-2" /> Histórico
+                        <History size={20} />
                     </Button>
-                    <Button onClick={onEdit}>
-                        <Edit2 size={16} className="mr-2" />
-                        Editar
+                    <Button 
+                      variant="primary"
+                      onClick={onEdit}
+                      title="Editar documento"
+                    >
+                        <Edit2 size={20} />
                     </Button>
                     </>
                 )}
@@ -331,16 +335,15 @@ setUserReactions(newReactions);
                 
                 <div className="relative">
                     <Button 
-                    variant="secondary" 
+                    variant="ghost" 
                     onClick={(e) => {
                         e.stopPropagation();
                         setIsExportMenuOpen(!isExportMenuOpen);
                     }}
                     disabled={!canExport || isExporting}
-                    title={!canExport ? "Permissão negada (Publicação necessária para Leitores)" : "Exportar Documento"}
+                    title={!canExport ? "Permissão negada (Publicação necessária para Leitores)" : "Exportar documento"}
                     >
-                    <Download size={16} className="mr-2" />
-                    {isExporting ? '...' : 'Exportar'}
+                    <Download size={20} />
                     </Button>
 
                     {isExportMenuOpen && (
