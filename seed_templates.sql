@@ -1799,85 +1799,629 @@ INSERT INTO public.document_templates (
   'OFFBOARDING',
   'Checklist e processo para desligamento de colaboradores.',
   'user-plus',
-  '<h1>Processo de Offboarding</h1>
-<h2>Preparação para o Desligamento</h2>
-<p><strong>Colaborador:</strong> [Nome do colaborador]</p>
-<p><strong>Data de desligamento:</strong> [Data]</p>
-<p><strong>Motivo:</strong> [Motivo do desligamento]</p>
+  '<div style="background: linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 100%); color: white; padding: 30px; text-align: center; margin: 20px 0; border-radius: 10px;">
+  <h1 style="margin: 0; font-size: 2.5em;">👋 Processo de Offboarding</h1>
+  <p style="font-size: 1.2em; margin: 10px 0;">Gerenciamento profissional e humano de desligamento</p>
+  <p><strong>[Nome do Colaborador]</strong> | <strong>[Cargo]</strong> | <strong>[Departamento]</strong></p>
+</div>
 
-<h2>Checklist - 30 Dias Antes</h2>
-<ul>
-<li>[ ] Programar reunião de desligamento</li>
-<li>[ ] Preparar documentos necessários</li>
-<li>[ ] Planejar transferência de responsabilidades</li>
-<li>[ ] Agendar entrevista de desligamento</li>
-</ul>
+<div style="background: #f8f9fa; border: 1px solid #e9ecef; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h2 style="color: #495057; margin-top: 0;">📋 Informações do Desligamento</h2>
+  <table>
+    <tr><td><strong>Data de Aviso Prévio:</strong></td><td>[Data]</td></tr>
+    <tr><td><strong>Data Prevista de Desligamento:</strong></td><td>[Data]</td></tr>
+    <tr><td><strong>Motivo do Desligamento:</strong></td><td>[Pedido do colaborador / Dispensa sem justa causa / Fim de contrato]</td></tr>
+    <tr><td><strong>Período de Aviso:</strong></td><td>[X] dias ( conforme CLT)</td></tr>
+    <tr><td><strong>Tipo de Desligamento:</strong></td><td>[Voluntário / Involuntário / Mútuo acordo]</td></tr>
+    <tr><td><strong>Gestor Responsável:</strong></td><td>[Nome e contato]</td></tr>
+    <tr><td><strong>RH Business Partner:</strong></td><td>[Nome e contato]</td></tr>
+  </table>
+</div>
 
-<h2>Checklist - 7 Dias Antes</h2>
-<ul>
-<li>[ ] Verificar férias e saldo bancário</li>
-<li>[ ] Confirmar entrega de equipamentos</li>
-<li>[ ] Preparar cálculo de rescisão</li>
-<li>[ ] Informar equipe sobre a transição</li>
-</ul>
+<h2>🗓️ Cronograma do Processo de Offboarding</h2>
 
-<h2>Checklist - Dia do Desligamento</h2>
-<h3>Manhã</h3>
-<ul>
-<li>[ ] Entrevista de desligamento</li>
-<li>[ ] Devolução de crachá e acessos</li>
-<li>[ ] Entrega dos documentos finais</li>
-<li>[ ] Transferência de conhecimentos pendentes</li>
-</ul>
+<div style="background: #e3f2fd; border: 1px solid #bbdefb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #1565c0; margin-top: 0;">📅 Fase 1: 30 Dias Antes do Desligamento</h3>
+  
+  <h4>📋 Planejamento e Preparação</h4>
+  <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0;">
+    <table>
+      <tr><th>Tarefa</th><th>Responsável</th><th>Prazo</th><th>Status</th><th>Observações</th></tr>
+      <tr>
+        <td>[ ] Agendar reunião de desligamento</td>
+        <td>[Nome]</td>
+        <td>D+30</td>
+        <td>[ ]</td>
+        <td>Incluir gestor e RH BP</td>
+      </tr>
+      <tr>
+        <td>[ ] Elaborar plano de transferência</td>
+        <td>[Nome]</td>
+        <td>D+30</td>
+        <td>[ ]</td>
+        <td>Mapear todas as responsabilidades</td>
+      </tr>
+      <tr>
+        <td>[ ] Preparar documentos de desligamento</td>
+        <td>RH</td>
+        <td>D+25</td>
+        <td>[ ]</td>
+        <td>Termo, extratos, guias</td>
+      </tr>
+      <tr>
+        <td>[ ] Identificar sucessor(es)</td>
+        <td>[Gestor]</td>
+        <td>D+20</td>
+        <td>[ ]</td>
+        <td>Internos ou externos</td>
+      </tr>
+      <tr>
+        <td>[ ] Agendar entrevista de desligamento</td>
+        <td>RH</td>
+        <td>D+25</td>
+        <td>[ ]</td>
+        <td>Desligamento e feedback</td>
+      </tr>
+    </table>
+  </div>
+</div>
 
-<h3>Tarde</h3>
-<ul>
-<li>[ ] Devolução de equipamentos (notebook, celular)</li>
-<li>[ ] Desativação de acessos aos sistemas</li>
-<li>[ ] Assinatura do termo de rescisão</li>
-<li>[ ] Feedback final sobre o processo</li>
-</ul>
+<div style="background: #fff3e0; border: 1px solid #ffe0b2; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #e65100; margin-top: 0;">📅 Fase 2: 15 Dias Antes do Desligamento</h3>
+  
+  <h4>🔄 Início da Transferência</h4>
+  <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0;">
+    <table>
+      <tr><th>Tarefa</th><th>Responsável</th><th>Prazo</th><th>Status</th><th>Observações</th></tr>
+      <tr>
+        <td>[ ] Reunião com sucessor(es)</td>
+        <td>[Nome]</td>
+        <td>D+15</td>
+        <td>[ ]</td>
+        <td>Apresentação de processos</td>
+      </tr>
+      <tr>
+        <td>[ ] Iniciar transferência de projetos</td>
+        <td>[Nome]</td>
+        <td>D+14</td>
+        <td>[ ]</td>
+        <td>Documentar status atual</td>
+      </tr>
+      <tr>
+        <td>[ ] Compartilhar documentos e senhas</td>
+        <td>[Nome]</td>
+        <td>D+13</td>
+        <td>[ ]</td>
+        <td>Com gestor como testemunha</td>
+      </tr>
+      <tr>
+        <td>[ ] Organizar arquivos digitais</td>
+        <td>[Nome]</td>
+        <td>D+12</td>
+        <td>[ ]</td>
+        <td>Estruturar pasta de handover</td>
+      </tr>
+      <tr>
+        <td>[ ] Cancelar subscriptions/acessos futuros</td>
+        <td>[Nome]</td>
+        <td>D+10</td>
+        <td>[ ]</td>
+        <td>Softwares, eventos, treinamentos</td>
+      </tr>
+    </table>
+  </div>
+</div>
 
-<h2>Transferência de Responsabilidades</h2>
-<table>
-<tr><th>Tarefa/Responsabilidade</th><th>Responsável Atual</th><th>Novo Responsável</th><th>Status</th></tr>
-<tr><td>[Tarefa 1]</td><td>[Nome]</td><td>[Nome]</td><td>[Pendente/Concluído]</td></tr>
-</table>
+<div style="background: #e8f5e8; border: 1px solid #c3e6c3; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #2e7d32; margin-top: 0;">📅 Fase 3: 7 Dias Antes do Desligamento</h3>
+  
+  <h4>✅ Checklists de Finalização</h4>
+  <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0;">
+    
+    <h5>🏦 Financeiro e Benefícios</h5>
+    <ul>
+      <li>[ ] Calcular saldo de férias e horas extras</li>
+      <li>[ ] Verificar saldo de vale-transporte/refeição</li>
+      <li>[ ] Confirmar períodos aquisitivos</li>
+      <li>[ ] Preparar cálculo de rescisão</li>
+      <li>[ ] Verificar benefíciosativos (plano saúde, odonto, etc.)</li>
+    </ul>
 
-<h2>Documentos a Serem Entregues</h2>
-<ul>
-<li>[ ] Termo de Rescisão</li>
-<li>[ ] Certificados de períodos trabalhados</li>
-<li>[ ] Guia para saque do FGTS</li>
-<li>[ ] Requerimento de seguro-desemprego</li>
-<li>[ ] Extrato para Imposto de Renda</li>
-</ul>
+    <h5>👥 Equipe e Stakeholders</h5>
+    <ul>
+      <li>[ ] Comunicar time sobre o desligamento</li>
+      <li>[ ] Apresentar sucessor formalmente</li>
+      <li>[ ] Realizar treinamento do sucessor</li>
+      <li>[ ] Transferir contatos importantes</li>
+      <li>[ ] Desativar agendas e compromissos futuros</li>
+    </ul>
 
-<h2>Equipamentos a Devolver</h2>
-<ul>
-<li>[ ] Notebook/Computador</li>
-<li>[ ] Celular</li>
-<li>[ ] Crachá</li>
-<li>[ ] Cartões de acesso</li>
-<li>[ ] Materiais da empresa</li>
-</ul>
+    <h5>💻 Tecnologia e Acessos</h5>
+    <ul>
+      <li>[ ] Backup de arquivos pessoais importantes</li>
+      <li>[ ] Limpar arquivos sensíveis do computador</li>
+      <li>[ ] Verificar softwares pessoais instalados</li>
+      <li>[ ] Confirmar não há dados confidenciais pendentes</li>
+      <li>[ ] Verificar autenticação em dois fatores</li>
+    </ul>
+  </div>
+</div>
 
-<h2>Acesso aos Sistemas</h2>
-<ul>
-<li>[ ] Email corporativo</li>
-<li>[ ] Sistema ERP</li>
-<li>[ ] Sistema CRM</li>
-<li>[ ] Aplicações na nuvem</li>
-<li>[ ] Redes sociais corporativas</li>
-</ul>
+<div style="background: #fce4ec; border: 1px solid #f8bbd9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #c2185b; margin-top: 0;">📅 Fase 4: Semana Final</h3>
+  
+  <h4>🚀 Execução Final</h4>
+  <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0;">
+    
+    <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 10px 0;">
+      <h5 style="margin-top: 0;">📅 Dia -1 (Véspera)</h5>
+      <ul>
+        <li>[ ] Confirmação final com gestor</li>
+        <li>[ ] Revisão final das entregas</li>
+        <li>[ ] Últimos ajustes na documentação</li>
+        <li>[ ] Preparação dos documentos de desligamento</li>
+        <li>[ ] Confirmação de agendamento para dia D</li>
+      </ul>
+    </div>
 
-<h2>Pós-Desligamento</h2>
-<ul>
-<li>[ ] Confirmar desativação completa de acessos</li>
-<li>[ ] Atualizar organograma</li>
-<li>[ ] Arquivar documentos do colaborador</li>
-<li>[ ] Manter contato para networking</li>
-</ul>',
+    <div style="background: #d1ecf1; border-left: 4px solid #bee5eb; padding: 15px; margin: 10px 0;">
+      <h5 style="margin-top: 0;">📅 Dia D (Dia do Desligamento)</h5>
+      
+      <h6>🌅 Manhã (9:00 - 12:00)</h6>
+      <ul>
+        <li>[ ] <strong>Entrevista de Desligamento:</strong> RH BP (45 min)</li>
+        <li>[ ] <strong>Reunião com Gestor:</strong> Feedback final (30 min)</li>
+        <li>[ ] <strong>Entrega de Documentos:</strong> Termo, extratos, guias</li>
+        <li>[ ] <strong>Confirmação de Valores:</strong> Análise da rescisão</li>
+        <li>[ ] <strong>Assinatura do Termo:</strong> Via digital ou física</li>
+      </ul>
+
+      <h6>🌇️ Tarde (13:00 - 18:00)</h6>
+      <ul>
+        <li>[ ] <strong>Devolver Equipamentos:</strong> Notebook, celular, crachá</li>
+        <li>[ ] <strong>Devolver Materiais:</strong> Cartões de acesso, uniformes</li>
+        <li>[ ] <strong>Desativar Acessos:</strong> Email, sistemas, aplicações</li>
+        <li>[ ] <strong>Handover Final:</strong> Com gestor e sucessor</li>
+        <li>[ ] <strong>Mensagem de Despedida:</strong> Canais internos (opcional)</li>
+      </ul>
+    </div>
+
+    <div style="background: #d4edda; border-left: 4px solid #c3e6cb; padding: 15px; margin: 10px 0;">
+      <h5 style="margin-top: 0;">📅 Dia +1 (Pós-Desligamento)</h5>
+      <ul>
+        <li>[ ] <strong>Transferência de FGTS:</strong> Acompanhamento</li>
+        <li>[ ] <strong>Solicitação Seguro-Desemprego:</strong> Apoio se necessário</li>
+        <li>[ ] <strong>Ativação Plano Saúde:</strong> Se aplicável</li>
+        <li>[ ] <strong>Confirmação Pagamentos:</strong> Rescisão e horas extras</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<h2>📋 Matriz de Transferência de Responsabilidades</h2>
+
+<div style="background: #f8f9fa; border: 1px solid #e9ecef; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #495057; margin-top: 0;">🔄 Responsabilidades e Ativos</h3>
+  
+  <table style="width: 100%; border-collapse: collapse;">
+    <tr style="background: #e9ecef;">
+      <th style="padding: 10px; border: 1px solid #dee2e6; text-align: left;">Responsabilidade/Ativo</th>
+      <th style="padding: 10px; border: 1px solid #dee2e6; text-align: left;">Descrição Detalhada</th>
+      <th style="padding: 10px; border: 1px solid #dee2e6; text-align: left;">Responsável Atual</th>
+      <th style="padding: 10px; border: 1px solid #dee2e6; text-align: left;">Responsável Futuro</th>
+      <th style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">Transferência OK</th>
+      <th style="padding: 10px; border: 1px solid #dee2e6; text-align: left;">Observações</th>
+    </tr>
+    <tr>
+      <td style="padding: 10px; border: 1px solid #dee2e6;">[Projeto 1]</td>
+      <td style="padding: 10px; border: 1px solid #dee2e6;">[Descrição do projeto]</td>
+      <td style="padding: 10px; border: 1px solid #dee2e6;">[Nome]</td>
+      <td style="padding: 10px; border: 1px solid #dee2e6;">[Nome]</td>
+      <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">[ ]</td>
+      <td style="padding: 10px; border: 1px solid #dee2e6;">[Observações]</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px; border: 1px solid #dee2e6;">[Cliente 1]</td>
+      <td style="padding: 10px; border: 1px solid #dee2e6;">[Descrição do relacionamento]</td>
+      <td style="padding: 10px; border: 1px solid #dee2e6;">[Nome]</td>
+      <td style="padding: 10px; border: 1px solid #dee2e6;">[Nome]</td>
+      <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">[ ]</td>
+      <td style="padding: 10px; border: 1px solid #dee2e6;">[Observações]</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px; border: 1px solid #dee2e6;">[Sistema 1]</td>
+      <td style="padding: 10px; border: 1px solid #dee2e6;">[Descrição do acesso responsável]</td>
+      <td style="padding: 10px; border: 1px solid #dee2e6;">[Nome]</td>
+      <td style="padding: 10px; border: 1px solid #dee2e6;">[Nome]</td>
+      <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">[ ]</td>
+      <td style="padding: 10px; border: 1px solid #dee2e6;">[Observações]</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px; border: 1px solid #dee2e6;">[Documento/Processo]</td>
+      <td style="padding: 10px; border: 1px solid #dee2e6;">[Descrição da responsabilidade]</td>
+      <td style="padding: 10px; border: 1px solid #dee2e6;">[Nome]</td>
+      <td style="padding: 10px; border: 1px solid #dee2e6;">[Nome]</td>
+      <td style="padding: 10px; border: 1px solid #dee2e6; text-align: center;">[ ]</td>
+      <td style="padding: 10px; border: 1px solid #dee2e6;">[Observações]</td>
+    </tr>
+  </table>
+</div>
+
+<h2>📄 Documentos Essenciais</h2>
+
+<div style="background: #fff8e1; border: 1px solid #ffecb3; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #f57f17; margin-top: 0;">📑 Documentos para Entrega ao Colaborador</h3>
+  
+  <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0;">
+    <table>
+      <tr><th>Documento</th><th>Obrigatório?</th><th>Quando Entregar</th><th>Responsável</th><th>Observações</th></tr>
+      <tr>
+        <td>Termo de Rescisão do Contrato</td>
+        <td>✅ Sim</td>
+        <td>Dia D</td>
+        <td>RH</td>
+        <td>2 vias assinadas</td>
+      </tr>
+      <tr>
+        <td>Termo de Quitação</td>
+        <td>✅ Sim</td>
+        <td>Dia D</td>
+        <td>RH</td>
+        <td>Após pagamento da rescisão</td>
+      </tr>
+      <tr>
+        <td>Extrato Periódico FGTS</td>
+        <td>✅ Sim</td>
+        <td>Dia D</td>
+        <td>RH</td>
+        <td>Últimos 12 meses</td>
+      </tr>
+      <tr>
+        <td>Guia de Seguro-Desemprego</td>
+        <td>✅ Sim</td>
+        <td>Dia D</td>
+        <td>RH</td>
+        <td>3 vias com carimbo</td>
+      </tr>
+      <tr>
+        <td>Comprovante de Pagamentos</td>
+        <td>✅ Sim</td>
+        <td>Dia +1</td>
+        <td>RH</td>
+        <td>Últimos 3 meses</td>
+      </tr>
+      <tr>
+        <td>Certificados de Periódicos</td>
+        <td>✅ Sim</td>
+        <td>Dia +7</td>
+        <td>RH</td>
+        <td>Se aplicável</td>
+      </tr>
+      <tr>
+        <td>Declaração para Imposto de Renda</td>
+        <td>✅ Sim</td>
+        <td>Dia D</td>
+        <td>RH</td>
+        <td>Valores pagos no ano</td>
+      </tr>
+      <tr>
+        <td>Certificado de Tempo de Serviço</td>
+        <td>📝 Recomendado</td>
+        <td>Dia +15</td>
+        <td>RH</td>
+        <td>Para aposentadoria</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<h2>🔐 Checklist de Desativação de Acessos</h2>
+
+<div style="background: #f3e5f5; border: 1px solid #e1bee7; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #6a1b9a; margin-top: 0;">🔒 Acesso a Sistemas e Recursos</h3>
+  
+  <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0;">
+    <table>
+      <tr><th>Sistema/Recurso</th><th>Tipo de Acesso</th><th>Data Desativação</th><th>Responsável</th><th>Confirmado</th></tr>
+      <tr>
+        <td>E-mail Corporativo</td>
+        <td>Completo</td>
+        <td>Dia D, 18:00</td>
+        <td>TI</td>
+        <td>[ ]</td>
+      </tr>
+      <tr>
+        <td>VPN/Rede Corporativa</td>
+        <td>Completo</td>
+        <td>Dia D, 18:00</td>
+        <td>TI</td>
+        <td>[ ]</td>
+      </tr>
+      <tr>
+        <td>Sistema ERP</td>
+        <td>Completo</td>
+        <td>Dia D, 17:00</td>
+        <td>TI/Sistema</td>
+        <td>[ ]</td>
+      </tr>
+      <tr>
+        <td>Sistema CRM</td>
+        <td>Completo</td>
+        <td>Dia D, 17:00</td>
+        <td>TI/Vendas</td>
+        <td>[ ]</td>
+      </tr>
+      <tr>
+        <td>Plataformas Cloud (O365, Google)</td>
+        <td>Completo</td>
+        <td>Dia D, 18:00</td>
+        <td>TI</td>
+        <td>[ ]</td>
+      </tr>
+      <tr>
+        <td>Sistemas Específicos</td>
+        <td>Completo</td>
+        <td>Dia D, 17:00</td>
+        <td>TI/Departamento</td>
+        <td>[ ]</td>
+      </tr>
+      <tr>
+        <td>Aplicações Mobile</td>
+        <td>Completo</td>
+        <td>Dia D, 18:00</td>
+        <td>TI</td>
+        <td>[ ]</td>
+      </tr>
+      <tr>
+        <td>Cartão de Acesso Físico</td>
+        <td>Físico</td>
+        <td>Dia D</td>
+        <td>Facilities</td>
+        <td>[ ]</td>
+      </tr>
+      <tr>
+        <td>Sistema de Pontos</td>
+        <td>Físico/Digital</td>
+        <td>Dia D</td>
+        <td>RH</td>
+        <td>[ ]</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<h2>💻 Devolução de Equipamentos e Materiais</h2>
+
+<div style="background: #e0f2f1; border: 1px solid #b2dfdb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #00695c; margin-top: 0;">🖥️ Ativos da Empresa</h3>
+  
+  <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0;">
+    <table>
+      <tr><th>Equipamento/Material</th><th>Tag/ID</th><th>Estado na Devolução</th><th>Data Devolução</th><th>Responsável Recebimento</th><th>Assinatura</th></tr>
+      <tr>
+        <td>Notebook/Computador</td>
+        <td>[ID]</td>
+        <td>[ ] Excelente [ ] Bom [ ] Regular [ ] Danificado</td>
+        <td>Dia D</td>
+        <td>TI</td>
+        <td>_________________</td>
+      </tr>
+      <tr>
+        <td>Monitor Externo</td>
+        <td>[ID]</td>
+        <td>[ ] Excelente [ ] Bom [ ] Regular [ ] Danificado</td>
+        <td>Dia D</td>
+        <td>TI</td>
+        <td>_________________</td>
+      </tr>
+      <tr>
+        <td>Celular Corporativo</td>
+        <td>[ID]</td>
+        <td>[ ] Excelente [ ] Bom [ ] Regular [ ] Danificado</td>
+        <td>Dia D</td>
+        <td>TI</td>
+        <td>_________________</td>
+      </tr>
+      <tr>
+        <td>Crachá Funcional</td>
+        <td>[ID]</td>
+        <td>[ ] Excelente [ ] Bom [ ] Regular [ ] Danificado</td>
+        <td>Dia D</td>
+        <td>Facilities</td>
+        <td>_________________</td>
+      </tr>
+      <tr>
+        <td>Cartão de Acesso</td>
+        <td>[ID]</td>
+        <td>[ ] Excelente [ ] Bom [ ] Regular [ ] Danificado</td>
+        <td>Dia D</td>
+        <td>Facilities</td>
+        <td>_________________</td>
+      </tr>
+      <tr>
+        <td>Cartões Corporativos</td>
+        <td>[ID]</td>
+        <td>[ ] Excelente [ ] Bom [ ] Regular [ ] Danificado</td>
+        <td>Dia D</td>
+        <td>Financeiro</td>
+        <td>_________________</td>
+      </tr>
+      <tr>
+        <td>Uniformes/Acessórios</td>
+        <td>[ID]</td>
+        <td>[ ] Excelente [ ] Bom [ ] Regular [ ] Danificado</td>
+        <td>Dia D</td>
+        <td>Facilities</td>
+        <td>_________________</td>
+      </tr>
+      <tr>
+        <td>Outros Materiais</td>
+        <td>[ID]</td>
+        <td>[ ] Excelente [ ] Bom [ ] Regular [ ] Danificado</td>
+        <td>Dia D</td>
+        <td>[Departamento]</td>
+        <td>_________________</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<h2>📞 Contatos e Canais de Suporte</h2>
+
+<div style="background: #ffebee; border: 1px solid #ffcdd2; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #d32f2f; margin-top: 0;">📬 Suporte para o Colaborador</h3>
+  
+  <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0;">
+    <table>
+      <tr><th>Tipo de Suporte</th><th>Responsável</th><th>Contato</th><th>Quando Utilizar</th></tr>
+      <tr>
+        <td>Questões Trabalhistas</td>
+        <td>RH Business Partner</td>
+        <td>[Email/Telefone]</td>
+        <td>Dúvidas sobre direitos, rescisão, documentos</td>
+      </tr>
+      <tr>
+        <td>Questões Financeiras</td>
+        <td>Financeiro</td>
+        <td>[Email/Telefone]</td>
+        <td>Valores, pagamentos, benefícios</td>
+      </tr>
+      <tr>
+        <td>Tecnologia/Segurança</td>
+        <td>Help Desk TI</td>
+        <td>[Email/Telefone]</td>
+        <td>Problemas técnicos, acessos</td>
+      </tr>
+      <tr>
+        <td>Networking</td>
+        <td>Gestor Anterior</td>
+        <td>[Email/LinkedIn]</td>
+        <td>Referências, indicações</td>
+      </tr>
+      <tr>
+        <td>Saúde Mental</td>
+        <td>EAP (Programa Ajuda)</td>
+        <td>[Email/Telefone]</td>
+        <td>Apoio emocional, coaching</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<h2>✅ Checklist Final de Verificação</h2>
+
+<div style="background: #f1f8e9; border: 1px solid #c8e6c9; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #388e3c; margin-top: 0;">🎯 Verificação Final - Dia do Desligamento</h3>
+  
+  <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0;">
+    <h4>✅ Antes do Almoço</h4>
+    <ul>
+      <li>[ ] Documentação de desligamento assinada</li>
+      <li>[ ] Transferência de responsabilidades concluída</li>
+      <li>[ ] Entrevista de desligamento realizada</li>
+      <li>[ ] Handover técnico documentado</li>
+      <li>[ ] Arquivos pessoais backed up</li>
+    </ul>
+
+    <h4>✅ Após o Almoço</h4>
+    <ul>
+      <li>[ ] Todos os equipamentos devolvidos</li>
+      <li>[ ] Acessos a sistemas desativados</li>
+      <li>[ ] Crachás e cartões entregues</li>
+      <li>[ ] Materiais da empresa devolvidos</li>
+      <li>[ ] Comunicação interna de despedida (opcional)</li>
+    </ul>
+
+    <h4>✅ Tarefas Administrativas</h4>
+    <ul>
+      <li>[ ] Sistema de pontos encerrado</li>
+      <li>[ ] Benefícios cancelados ou transferidos</li>
+      <li>[ ] Email corporativo configurado para autoforward</li>
+      <li>[ ] Status em sistemas atualizado</li>
+      <li>[ ] Feedback sobre o processo fornecido</li>
+    </ul>
+  </div>
+</div>
+
+<h2>📅 Ações Pós-Desligamento</h2>
+
+<div style="background: #f8f9fa; border: 1px solid #e9ecef; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: #495057; margin-top: 0;">🔄 Follow-up (30 dias após)</h3>
+  
+  <div style="background: white; padding: 15px; border-radius: 5px; margin: 10px 0;">
+    <table>
+      <tr><th>Ação</th><th>Responsável</th><th>Prazo</th><th>Status</th><th>Observações</th></tr>
+      <tr>
+        <td>Confirmar desativação completa de acessos</td>
+        <td>TI Security</td>
+        <td>Dia +7</td>
+        <td>[ ]</td>
+        <td>Auditoria de segurança</td>
+      </tr>
+      <tr>
+        <td>Atualizar organograma da equipe</td>
+        <td>Gestor</td>
+        <td>Dia +5</td>
+        <td>[ ]</td>
+        <td>Comunicar mudanças</td>
+      </tr>
+      <tr>
+        <td>Arquivar documentos do colaborador</td>
+        <td>RH</td>
+        <td>Dia +10</td>
+        <td>[ ]</td>
+        <td>Respeito à LGPD</td>
+      </tr>
+      <tr>
+        <td>Remover de mailing lists e grupos</td>
+        <td>TI/RH</td>
+        <td>Dia +3</td>
+        <td>[ ]</td>
+        <td>Revisar todas as plataformas</td>
+      </tr>
+      <tr>
+        <td>Pesquisa de satisfação do processo</td>
+        <td>RH</td>
+        <td>Dia +15</td>
+        <td>[ ]</td>
+        <td>Se autorizado pelo ex-colaborador</td>
+      </tr>
+      <tr>
+        <td>Manter contato para networking</td>
+        <td>Gestor/RH</td>
+        <td>Dia +30</td>
+        <td>[ ]</td>
+        <td>Preservar relacionamento</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; margin: 20px 0; border-radius: 10px;">
+  <h2 style="margin: 0;">🤝 Agradecimento e Sucesso Futuro</h2>
+  <p style="font-size: 1.1em; margin: 10px 0;">Agradecemos imensamente sua contribuição para nossa equipe!</p>
+  <p>Desejamos muito sucesso em seus futuros projetos e caminhos profissionais!</p>
+  <p><strong>Manteremos as portas abertas para seu retorno!</strong> 🚀</p>
+  
+  <div style="margin: 20px 0;">
+    <h3>📞 Se precisar de algo futuro:</h3>
+    <ul style="text-align: left; display: inline-block;">
+      <li>CARTA DE RECOMENDAÇÃO: Solicitar via RH</li>
+      <li>REFERÊNCIAS TRABALHISTAS: Fornecida por gestor</li>
+      <li>REDE DE ALUNOS: Convidado para grupos de ex-colaboradores</li>
+      <li>FEEDBACK FUTURO: Sempre bem-vindo!</li>
+    </ul>
+  </div>
+</div>
+
+<hr>
+
+<div style="text-align: center; color: #666; font-style: italic; margin: 30px 0;">
+  <p><strong>Documento:</strong> Offboarding Checklist</p>
+  <p><strong>Versão:</strong> 3.0 | <strong>Data:</strong> [Data de geração]</p>
+  <p><strong>Elaborado por:</strong> [Setor de RH e TI] | <strong>Aprovado por:</strong> [Diretoria]</p>
+  <p>Confidencial - Uso Interno</p>
+</div>',
   ARRAY['offboarding', 'desligamento', 'saída'],
   true,
   null,
