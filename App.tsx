@@ -1864,29 +1864,11 @@ const toggleFavorites = () => {
 
           {currentView === 'TEMPLATE_SELECTION' && (
             <LazyWrapper>
-              <div className="p-6 max-w-6xl mx-auto">
-                <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <h3 className="font-bold text-yellow-800 mb-2">🔍 Debug - Informações dos Templates</h3>
-                  <div className="text-sm space-y-1">
-                    <p><strong>Usuário logado:</strong> {currentUser?.name} ({currentUser?.role})</p>
-                    <p><strong>Total de templates carregados:</strong> {templates.length}</p>
-                    <p><strong>Templates disponíveis para este usuário:</strong> {availableTemplates.length}</p>
-                    <p><strong>Mock templates disponíveis:</strong> {MOCK_TEMPLATES.length}</p>
-                    <details className="mt-2">
-                      <summary className="cursor-pointer text-blue-600">Ver detalhes dos templates</summary>
-                      <pre className="mt-2 text-xs bg-gray-100 p-2 rounded overflow-auto max-h-40">
-                        {JSON.stringify(availableTemplates, null, 2)}
-                      </pre>
-                    </details>
-                  </div>
-                </div>
-                
-                <TemplateSelector 
-                  templates={availableTemplates}
-                  onSelect={handleTemplateSelect}
-                  onCancel={() => activeCategoryId ? navigateToCategory(activeCategoryId) : navigateToHome()}
-                />
-              </div>
+              <TemplateSelector 
+                templates={availableTemplates}
+                onSelect={handleTemplateSelect}
+                onCancel={() => activeCategoryId ? navigateToCategory(activeCategoryId) : navigateToHome()}
+              />
             </LazyWrapper>
           )}
 
