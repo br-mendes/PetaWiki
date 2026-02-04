@@ -222,17 +222,7 @@ export const CategoryTree: React.FC<CategoryTreeProps> = ({
 
   return (
     <div className="py-2">
-      <button
-        type="button"
-        onClick={() => onCategorySelect?.(null)}
-        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors mb-1 ${
-          selectedId === null
-            ? "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-            : "hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400"
-        }`}
-      >
-        <Folder size={16} />
-      </button>
+
 
       <div className="space-y-0.5">
         {categories.map((category) => (
