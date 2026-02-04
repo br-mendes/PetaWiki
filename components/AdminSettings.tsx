@@ -486,8 +486,8 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                             accept="image/*"
                             onChange={(e) => handleFileUpload(e, setLogoCollapsedUrl)}
                           />
-                          <Button size="sm" variant="secondary" onClick={() => collapsedInputRef.current?.click()}>
-                            <Upload size={14} className="mr-2" /> Upload Ícone
+                          <Button size="sm" variant="secondary" onClick={() => collapsedInputRef.current?.click()} leftIcon={<Upload size={14} />}>
+                            Upload Ícone
                           </Button>
                         </div>
                      </div>
@@ -504,8 +504,8 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                             accept="image/*"
                             onChange={(e) => handleFileUpload(e, setLogoExpandedUrl)}
                           />
-                          <Button size="sm" variant="secondary" onClick={() => expandedInputRef.current?.click()}>
-                            <Upload size={14} className="mr-2" /> Upload Banner
+<Button size="sm" variant="secondary" onClick={() => expandedInputRef.current?.click()} leftIcon={<Upload size={14} />}>
+                            Upload Banner
                           </Button>
                         </div>
                      </div>
