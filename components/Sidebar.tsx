@@ -396,13 +396,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </h3>
           </div>
 
-          {/* Botão Principal de Adicionar Raiz */}
-          {isAdminOrEditor && (
-
-          )}
-          
-{/* Always show Category Tree */}
-          <CategoryTree
+          {/* Always show Category Tree */}
+           <CategoryTree
             categories={categories}
             selectedId={activeCategoryId}
             documents={documents}
