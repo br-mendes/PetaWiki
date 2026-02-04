@@ -16,8 +16,7 @@ INSERT INTO public.document_templates (
   is_global, 
   department_id, 
   usage_count, 
-  is_active, 
-  created_by,
+  is_active,
   created_at,
   updated_at
 ) VALUES (
@@ -54,7 +53,6 @@ INSERT INTO public.document_templates (
   null,
   30,
   true,
-  null,
   NOW(),
   NOW()
 ) ON CONFLICT (id) DO UPDATE SET
@@ -67,7 +65,7 @@ INSERT INTO public.document_templates (
 
 -- Inserir templates de Política Externa
 INSERT INTO public.document_templates (
-  id, name, category, description, icon, content, tags, is_global, department_id, usage_count, is_active, created_by, created_at, updated_at
+  id, name, category, description, icon, content, tags, is_global, department_id, usage_count, is_active, created_at, updated_at
 ) VALUES (
   'tpl_policy_external',
   'Política Externa',
@@ -100,7 +98,6 @@ INSERT INTO public.document_templates (
   null,
   25,
   true,
-  null,
   NOW(),
   NOW()
 ) ON CONFLICT (id) DO UPDATE SET
@@ -113,7 +110,7 @@ INSERT INTO public.document_templates (
 
 -- Inserir templates de POP
 INSERT INTO public.document_templates (
-  id, name, category, description, icon, content, tags, is_global, department_id, usage_count, is_active, created_by, created_at, updated_at
+  id, name, category, description, icon, content, tags, is_global, department_id, usage_count, is_active, created_at, updated_at
 ) VALUES (
   'tpl_sop',
   'Procedimento Operacional Padrão (POP)',
@@ -157,7 +154,6 @@ INSERT INTO public.document_templates (
   null,
   120,
   true,
-  null,
   NOW(),
   NOW()
 ) ON CONFLICT (id) DO UPDATE SET
@@ -170,7 +166,7 @@ INSERT INTO public.document_templates (
 
 -- Inserir templates de FAQ
 INSERT INTO public.document_templates (
-  id, name, category, description, icon, content, tags, is_global, department_id, usage_count, is_active, created_by, created_at, updated_at
+  id, name, category, description, icon, content, tags, is_global, department_id, usage_count, is_active, created_at, updated_at
 ) VALUES (
   'tpl_faq',
   'FAQ',
@@ -201,7 +197,6 @@ INSERT INTO public.document_templates (
   null,
   80,
   true,
-  null,
   NOW(),
   NOW()
 ) ON CONFLICT (id) DO UPDATE SET
@@ -214,7 +209,7 @@ INSERT INTO public.document_templates (
 
 -- Inserir templates de Ata de Reunião
 INSERT INTO public.document_templates (
-  id, name, category, description, icon, content, tags, is_global, department_id, usage_count, is_active, created_by, created_at, updated_at
+  id, name, category, description, icon, content, tags, is_global, department_id, usage_count, is_active, created_at, updated_at
 ) VALUES (
   'tpl_meeting',
   'Ata de Reunião',
@@ -266,7 +261,6 @@ INSERT INTO public.document_templates (
   null,
   200,
   true,
-  null,
   NOW(),
   NOW()
 ) ON CONFLICT (id) DO UPDATE SET
@@ -279,7 +273,7 @@ INSERT INTO public.document_templates (
 
 -- Inserir templates de Artigo de Conhecimento
 INSERT INTO public.document_templates (
-  id, name, category, description, icon, content, tags, is_global, department_id, usage_count, is_active, created_by, created_at, updated_at
+  id, name, category, description, icon, content, tags, is_global, department_id, usage_count, is_active, created_at, updated_at
 ) VALUES (
   'tpl_kb_article',
   'Artigo de Conhecimento',
@@ -328,7 +322,6 @@ INSERT INTO public.document_templates (
   null,
   150,
   true,
-  null,
   NOW(),
   NOW()
 ) ON CONFLICT (id) DO UPDATE SET
@@ -341,7 +334,7 @@ INSERT INTO public.document_templates (
 
 -- Inserir templates de Onboarding
 INSERT INTO public.document_templates (
-  id, name, category, description, icon, content, tags, is_global, department_id, usage_count, is_active, created_by, created_at, updated_at
+  id, name, category, description, icon, content, tags, is_global, department_id, usage_count, is_active, created_at, updated_at
 ) VALUES (
   'tpl_onboarding',
   'Onboarding',
@@ -413,7 +406,6 @@ INSERT INTO public.document_templates (
   null,
   90,
   true,
-  null,
   NOW(),
   NOW()
 ) ON CONFLICT (id) DO UPDATE SET
@@ -426,7 +418,7 @@ INSERT INTO public.document_templates (
 
 -- Inserir templates de Offboarding
 INSERT INTO public.document_templates (
-  id, name, category, description, icon, content, tags, is_global, department_id, usage_count, is_active, created_by, created_at, updated_at
+  id, name, category, description, icon, content, tags, is_global, department_id, usage_count, is_active, created_at, updated_at
 ) VALUES (
   'tpl_offboarding',
   'Offboarding',
@@ -517,7 +509,6 @@ INSERT INTO public.document_templates (
   null,
   60,
   true,
-  null,
   NOW(),
   NOW()
 ) ON CONFLICT (id) DO UPDATE SET
