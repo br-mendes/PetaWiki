@@ -148,6 +148,13 @@ const AppContent = () => {
   // New Document State
   const [newDocTemplate, setNewDocTemplate] = useState<{content: string, tags: string[], templateId?: string} | null>(null);
 
+  // Clear template when leaving DOCUMENT_CREATE view
+  useEffect(() => {
+    if (currentView !== 'DOCUMENT_CREATE' && newDocTemplate) {
+      setNewDocTemplate(null);
+    }
+  }, [currentView, newDocTemplate]);
+
   // Modal State
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
   const [categoryModalParentId, setCategoryModalParentId] = useState<string | null>(null);
@@ -1398,7 +1405,6 @@ const handleUpdateAvatar = async (base64: string) => {
     setTimeout(() => {
       navigateToCreate(activeCategoryId || undefined);
     }, 100);
-  };
   };
   
   const handleSaveDocument = async (data: Partial<Document> & { saveAsTemplate?: boolean; templateName?: string }) => {
