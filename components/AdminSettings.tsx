@@ -384,7 +384,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   };
 
   const body = (
-      <div className="flex flex-col md:flex-row gap-6 h-full overflow-hidden">
+      <div className="flex flex-col md:flex-row gap-6 h-full">
         {/* Sidebar */}
         <div className="w-full md:w-48 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 pr-0 md:pr-4 space-y-1 mb-4 md:mb-0 shrink-0 md:overflow-y-auto">
           <button
@@ -432,7 +432,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
         </div>
 
         {/* Content */}
-        <div className="flex-1 pr-2">
+        <div className="flex-1 pr-2 overflow-y-auto">
           {activeTab === 'BRANDING' && (
             <div className="space-y-6">
               {/* Branding Content */}
