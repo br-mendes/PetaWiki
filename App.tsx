@@ -104,7 +104,6 @@ const AppContent = () => {
   const [categories, setCategories] = useState<Category[]>([]); // Flat list
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasCompletedInitialLoad, setHasCompletedInitialLoad] = useState(false);
 
   // Favorites State
   type DocFilter = 'ALL' | 'FAVORITES';
@@ -944,7 +943,6 @@ const searchParams: any = {
         toast.error("Erro ao conectar ao banco de dados.");
       } finally {
         setIsLoading(false);
-        setHasCompletedInitialLoad(true);
       }
     }
     fetchData();
@@ -1577,8 +1575,10 @@ const targetCategoryId =
       });
   };
 
-  // Show loading only on very first app load, never again after that
-  if (isLoading && !hasCompletedInitialLoad) {
+  // Show loading only when we have no data yet (first load after login/refresh)
+  // Don't show loading if we already have documents or categories loaded
+  const hasAnyData = documents.length > 0 || categories.length > 0 || users.length > 0;
+  if (isLoading && !hasAnyData) {
     return (
         <div className="flex flex-col h-screen items-center justify-center bg-gray-50 dark:bg-gray-900 text-blue-600 gap-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -1645,8 +1645,8 @@ const toggleFavorites = () => {
       )}
 
       <div className="flex-1 flex flex-col h-full overflow-hidden">
-        {/* Subtle loading indicator for background refreshes after initial load */}
-        {isLoading && hasCompletedInitialLoad && (
+        {/* Subtle loading indicator for background refreshes */}
+        {isLoading && hasAnyData && (
           <div className="h-1 bg-blue-600 animate-pulse" />
         )}
         {!isNavbarMode && (
