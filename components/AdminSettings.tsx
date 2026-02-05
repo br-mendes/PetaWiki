@@ -457,14 +457,14 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                 
                 {/* Layout Selector */}
                 <div className="mb-6 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                   <label className="block text-[10px] font-medium text-gray-700 dark:text-gray-300 mb-3">Estilo do Menu de Navegação</label>
+                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Estilo do Menu de Navegação</label>
                    <div className="grid grid-cols-2 gap-4">
                       <button 
                         onClick={() => setLayoutMode('SIDEBAR')}
                         className={`flex flex-col items-center p-3 border-2 rounded-lg transition-all ${layoutMode === 'SIDEBAR' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'}`}
                       >
                          <SidebarIcon size={24} className={layoutMode === 'SIDEBAR' ? 'text-blue-600' : 'text-gray-400'} />
-                         <span className={`mt-2 text-[10px] font-medium ${layoutMode === 'SIDEBAR' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'}`}>Lateral (Sidebar)</span>
+                         <span className={`mt-2 text-sm font-medium ${layoutMode === 'SIDEBAR' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'}`}>Lateral (Sidebar)</span>
                       </button>
 
                       <button 
@@ -472,14 +472,14 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                         className={`flex flex-col items-center p-3 border-2 rounded-lg transition-all ${layoutMode === 'NAVBAR' ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20' : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'}`}
                       >
                          <PanelTop size={24} className={layoutMode === 'NAVBAR' ? 'text-blue-600' : 'text-gray-400'} />
-                         <span className={`mt-2 text-[10px] font-medium ${layoutMode === 'NAVBAR' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'}`}>Superior (Navbar)</span>
+                         <span className={`mt-2 text-sm font-medium ${layoutMode === 'NAVBAR' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-600 dark:text-gray-400'}`}>Superior (Navbar)</span>
                       </button>
                    </div>
                 </div>
 
                 <div className="space-y-6">
                    <div>
-                     <label className="block text-[10px] font-medium text-gray-700 dark:text-gray-300 mb-1">Nome da Aplicação</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome da Aplicação</label>
                      <input 
                        type="text" 
                        value={appName}
@@ -492,7 +492,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                      {/* Collapsed Logo */}
                      <div className="border border-gray-200 dark:border-gray-700 p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
-                        <label className="block text-[10px] font-medium text-gray-700 dark:text-gray-300 mb-2">Logo Recolhido (1:1)</label>
+                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Logo Recolhido (1:1)</label>
                         <div className="flex flex-col items-center gap-3">
                           <img src={logoCollapsedUrl} className="w-16 h-16 object-contain bg-white rounded border" />
                           <input 
@@ -510,7 +510,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
 
                      {/* Expanded Logo */}
                      <div className="border border-gray-200 dark:border-gray-700 p-4 rounded-lg bg-gray-50 dark:bg-gray-800">
-                        <label className="block text-[10px] font-medium text-gray-700 dark:text-gray-300 mb-2">Logo Expandido (16:9)</label>
+                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Logo Expandido (16:9)</label>
                         <div className="flex flex-col items-center gap-3">
                           <img src={logoExpandedUrl} className="w-full h-16 object-contain bg-white rounded border" />
                           <input 
@@ -542,7 +542,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                         <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
                             <div className="flex flex-col">
                                 <span className="font-medium text-gray-900 dark:text-white text-sm">Exibir Card de Boas-vindas</span>
-                                <span className="text-[10px] text-gray-500">Mostra o logo e mensagem centralizada no topo da home.</span>
+                                <span className="text-xs text-gray-500">Mostra o logo e mensagem centralizada no topo da home.</span>
                             </div>
                             <button 
                                 onClick={() => setShowWelcomeCard(!showWelcomeCard)}
@@ -555,7 +555,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                         {showWelcomeCard && (
                             <div className="space-y-3 pl-4 border-l-2 border-gray-200 dark:border-gray-700 animate-in fade-in slide-in-from-left-2 duration-300">
                                 <div>
-                                <label className="block text-[10px] font-medium text-gray-700 dark:text-gray-300 mb-1">Título de Boas-Vindas</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Título de Boas-Vindas</label>
                                 <input 
                                     type="text" 
                                     value={homeTitle}
@@ -565,7 +565,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                 />
                                 </div>
                                 <div>
-                                <label className="block text-[10px] font-medium text-gray-700 dark:text-gray-300 mb-1">Instrução Inicial</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Instrução Inicial</label>
                                 <textarea
                                     rows={2}
                                     value={homeDescription}
@@ -587,7 +587,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                     placeholder="Escreva aqui o conteúdo da página inicial (avisos, links rápidos, imagens...)"
                                 />
                             </div>
-                            <p className="text-[10px] text-gray-500 mt-2">
+                            <p className="text-xs text-gray-500 mt-2">
                                 Este conteúdo aparecerá abaixo do card de boas-vindas (ou no topo, se o card estiver oculto).
                             </p>
                         </div>
@@ -599,7 +599,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                      <h4 className="text-sm font-semibold text-gray-800 dark:text-gray-200 mb-3 uppercase tracking-wide">Página de Login (Pública)</h4>
                      <div className="space-y-4">
                         <div>
-                          <label className="block text-[10px] font-medium text-gray-700 dark:text-gray-300 mb-1">Título Principal (H1)</label>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Título Principal (H1)</label>
                           <input 
                             type="text" 
                             value={landingTitle}
@@ -608,7 +608,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                           />
                         </div>
                         <div>
-                          <label className="block text-[10px] font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição Hero</label>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descrição Hero</label>
                           <textarea
                             rows={2}
                             value={landingDescription}
@@ -618,7 +618,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                         </div>
 
                         <div>
-                            <label className="block text-[10px] font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                                 <Palette size={16} /> Tema de Cores (Gradiente de Fundo)
                             </label>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -626,7 +626,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                     <button
                                         key={opt.name}
                                         onClick={() => setLandingGradient(opt.class)}
-                                        className={`relative h-16 rounded-lg transition-all border-2 flex items-end justify-start p-2 text-white font-semibold text-[10px] shadow-sm hover:shadow-md ${opt.class} ${landingGradient === opt.class ? 'border-white ring-2 ring-blue-500 scale-105 z-10' : 'border-transparent hover:scale-105'}`}
+                                        className={`relative h-16 rounded-lg transition-all border-2 flex items-end justify-start p-2 text-white font-semibold text-xs shadow-sm hover:shadow-md ${opt.class} ${landingGradient === opt.class ? 'border-white ring-2 ring-blue-500 scale-105 z-10' : 'border-transparent hover:scale-105'}`}
                                     >
                                         <span className="drop-shadow-md">{opt.name}</span>
                                         {landingGradient === opt.class && (
@@ -641,7 +641,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
 
                         {/* Editor de Hero Tags */}
                         <div>
-                            <label className="block text-[10px] font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                                 <Tag size={16} /> Tags de Destaque (Hero)
                             </label>
                             <div className="space-y-2">
@@ -698,7 +698,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
 
                         {/* Editor de Landing Features */}
                         <div>
-                            <label className="block text-[10px] font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
                                 <Grid size={16} /> Blocos de Recursos (Features)
                             </label>
                             <div className="space-y-3">
@@ -793,7 +793,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                     {footerColumns.map((col, colIndex) => (
                       <div key={colIndex} className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <div className="mb-3">
-                          <label className="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+                          <label className="block text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
                             Título da Coluna {colIndex + 1}
                           </label>
                           <input 
@@ -830,7 +830,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                     value={link.url}
                                     placeholder="https://..."
                                     onChange={(e) => handleUpdateLink(colIndex, linkIndex, 'url', e.target.value)}
-                                    className="w-full text-[10px] bg-transparent border-none p-0 focus:ring-0 text-blue-600 dark:text-blue-400 placeholder-gray-400"
+                                    className="w-full text-xs bg-transparent border-none p-0 focus:ring-0 text-blue-600 dark:text-blue-400 placeholder-gray-400"
                                    />
                                 </div>
                              </div>
@@ -839,7 +839,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
 
                         <button 
                           onClick={() => handleAddLink(colIndex)}
-                          className="mt-3 w-full py-1.5 flex items-center justify-center gap-1 text-[10px] font-medium text-blue-600 dark:text-blue-400 border border-dashed border-blue-300 dark:border-blue-700 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                          className="mt-3 w-full py-1.5 flex items-center justify-center gap-1 text-sm font-medium text-blue-600 dark:text-blue-400 border border-dashed border-blue-300 dark:border-blue-700 rounded hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                         >
                            <Plus size={12} /> Adicionar Link
                         </button>
@@ -849,7 +849,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
 
                   {/* Texto Final */}
                   <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-                     <label className="block text-[10px] font-medium text-gray-700 dark:text-gray-300 mb-2">Texto de Rodapé (Copyright/Créditos)</label>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Texto de Rodapé (Copyright/Créditos)</label>
                      <input 
                         type="text"
                         value={footerBottomText}
@@ -896,7 +896,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                               )}
                               {allowedDomains.map(domain => (
                                   <div key={domain} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded border border-gray-100 dark:border-gray-600">
-                                      <span className="text-[10px] font-medium text-gray-700 dark:text-gray-200">@{domain}</span>
+                                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">@{domain}</span>
                                       <button onClick={() => handleRemoveDomain(domain)} className="text-red-500 hover:text-red-700 p-1">
                                           <X size={16} />
                                       </button>
@@ -969,9 +969,9 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-800">
                       <tr>
-                        <th className="px-4 py-3 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">Usuário</th>
-                        <th className="px-4 py-3 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">Função</th>
-                        <th className="px-4 py-3 text-right text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">Ação</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Usuário</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Função</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ação</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -980,13 +980,13 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                           <td className="px-4 py-3 whitespace-nowrap flex items-center gap-2">
                             <img src={u.avatar} className="w-6 h-6 rounded-full object-cover" />
                             <div className="flex flex-col">
-                              <span className="text-[10px] font-medium text-gray-900 dark:text-white">{u.name}</span>
-                              <span className="text-[10px] text-gray-500 dark:text-gray-400">{u.email || u.username}</span>
-                              <span className="text-[10px] text-gray-400 dark:text-gray-500">{u.department || 'Sem cargo'}</span>
+                              <span className="text-sm font-medium text-gray-900 dark:text-white">{u.name}</span>
+                              <span className="text-sm text-gray-500 dark:text-gray-400">{u.email || u.username}</span>
+                              <span className="text-sm text-gray-400 dark:text-gray-500">{u.department || 'Sem cargo'}</span>
                             </div>
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap">
-                            <span className={`px-2 inline-flex text-[10px] leading-5 font-semibold rounded-full ${
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                               u.role === 'ADMIN' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
                               u.role === 'EDITOR' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                             }`}>
@@ -1005,7 +1005,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                 <select 
                                 value={u.role}
                                 onChange={(e) => onUpdateUserRole(u.id, e.target.value as Role)}
-                                className="text-[10px] border-gray-300 dark:border-gray-600 rounded shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 bg-white dark:bg-gray-700 dark:text-white"
+                                className="text-sm border-gray-300 dark:border-gray-600 rounded shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 bg-white dark:bg-gray-700 dark:text-white"
                                 >
                                 <option value="READER">Leitor</option>
                                 <option value="EDITOR">Editor</option>
@@ -1036,7 +1036,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                   <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Fila de Aprovação</h3>
                   <button
                     onClick={loadPending}
-                    className="text-[10px] px-3 py-1 rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+                    className="text-sm px-3 py-1 rounded bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
                   >
                     Atualizar
                   </button>
@@ -1055,7 +1055,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                       >
                         <div className="min-w-0">
                           <div className="font-medium text-sm truncate">{d.title}</div>
-                          <div className="text-[10px] text-gray-500">
+                          <div className="text-sm text-gray-500">
                             {new Date(d.created_at).toLocaleString()}
                           </div>
                         </div>
@@ -1066,7 +1066,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                               if (mode === 'modal') onClose();
                               onOpenReviewCenter?.(d.id);
                             }}
-                            className="text-[10px] px-3 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100"
+                            className="text-sm px-3 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100"
                             title="Abrir tela de revisao com comentario e decisao"
                           >
                             Revisar
@@ -1090,7 +1090,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                 toast.error("Falha ao aprovar documento");
                               }
                             }}
-                            className="text-[10px] px-3 py-1 rounded bg-green-50 text-green-700 hover:bg-green-100"
+                            className="text-sm px-3 py-1 rounded bg-green-50 text-green-700 hover:bg-green-100"
                             title="Aprovar documento"
                           >
                             Aprovar
@@ -1118,7 +1118,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                 toast.error("Falha ao rejeitar documento");
                               }
                             }}
-                            className="text-[10px] px-3 py-1 rounded bg-red-50 text-red-700 hover:bg-red-100"
+                            className="text-sm px-3 py-1 rounded bg-red-50 text-red-700 hover:bg-red-100"
                             title="Rejeitar documento"
                           >
                             Rejeitar
@@ -1137,7 +1137,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
               {/* Categories Tab Content - Unchanged Logic */}
               <div className="flex justify-between items-center">
                 <h3 className="text-base font-medium text-gray-900 dark:text-white">Estrutura de Categorias</h3>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400">Use o botão (+) para adicionar subcategorias rapidamente.</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Use o botão (+) para adicionar subcategorias rapidamente.</p>
               </div>
 
               {/* Form de Inclusão no Topo */}
@@ -1198,13 +1198,13 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                 type="text" 
                                 value={cat.name}
                                 onChange={(e) => onUpdateCategory(cat.id, { name: e.target.value })}
-                                className="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none text-gray-900 dark:text-white text-[10px] font-medium"
+                                className="w-full bg-transparent border-b border-transparent focus:border-blue-500 outline-none text-gray-900 dark:text-white text-sm font-medium"
                               />
                             </div>
                           </td>
                           <td className="px-4 py-2 text-gray-500 dark:text-gray-400">
                             {cat.docCount > 0 ? (
-                              <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px]">
+                              <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">
                                 {cat.docCount} docs
                               </span>
                             ) : (
@@ -1265,9 +1265,9 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                        <thead className="bg-gray-50 dark:bg-gray-800">
                          <tr>
-                           <th className="px-4 py-3 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">Documento</th>
-                           <th className="px-4 py-3 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">Excluído Em</th>
-                           <th className="px-4 py-3 text-right text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">Ações</th>
+                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Documento</th>
+                           <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Excluído Em</th>
+                           <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ações</th>
                          </tr>
                        </thead>
                        <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -1275,7 +1275,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                              <tr key={doc.id} className="hover:bg-red-50 dark:hover:bg-red-900/10">
                                 <td className="px-4 py-3">
                                    <div className="font-medium text-gray-900 dark:text-white">{doc.title}</div>
-                                   <div className="text-[10px] text-gray-500">ID: {doc.id}</div>
+                                    <div className="text-xs text-gray-500">ID: {doc.id}</div>
                                 </td>
                                 <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
                                    {doc.deletedAt ? new Date(doc.deletedAt).toLocaleString() : '-'}
@@ -1337,7 +1337,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
     <Modal isOpen={!!editingUser} onClose={() => setEditingUser(null)} title="Editar Usuário" size="sm">
         <div className="space-y-4">
             <div>
-                <label className="block text-[10px] font-medium text-gray-700 dark:text-gray-300 mb-1">Nome de Exibição</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome de Exibição</label>
                 <input 
                     type="text" 
                     value={editName}
@@ -1346,7 +1346,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                 />
             </div>
             <div>
-                <label className="block text-[10px] font-medium text-gray-700 dark:text-gray-300 mb-1">E-mail (Login)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">E-mail (Login)</label>
                 <input 
                     type="email" 
                     value={editEmail}
@@ -1355,7 +1355,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                 />
             </div>
             <div>
-                <label className="block text-[10px] font-medium text-gray-700 dark:text-gray-300 mb-1">Departamento (Cargo)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Departamento (Cargo)</label>
                 <input 
                     type="text" 
                     value={editDepartment}

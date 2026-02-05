@@ -133,7 +133,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({ templates, o
               <div className="p-3 bg-gray-50 rounded-lg">
                 {getIcon(template.icon)}
               </div>
-              <span className="text-[10px] font-bold px-2 py-1 bg-gray-100 text-gray-600 rounded uppercase tracking-wider">
+              <span className="text-xs font-bold px-2 py-1 bg-gray-100 text-gray-600 rounded uppercase tracking-wider">
                 {CATEGORY_LABELS[template.category] || template.category}
               </span>
             </div>

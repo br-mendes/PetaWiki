@@ -126,7 +126,7 @@ const TreeNode: React.FC<{
         </span>
 
         {showBadge && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
+          <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400">
             {docCount}
           </span>
         )}
