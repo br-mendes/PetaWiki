@@ -36,16 +36,13 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
 }) => {
   const toast = useToast();
   const [title, setTitle] = useState(document?.title || '');
+
+  // Content state: inicializa com o conteúdo do documento (edit) ou do template (create)
   const [content, setContent] = useState(document?.content || initialContent);
 
-  // atualiza o conteúdo quando initialContent muda (somente para novos docs)
+  // Ao criar um novo documento, atualiza o conteúdo quando `initialContent` muda.
   useEffect(() => {
     if (!document) {
-      console.log('DocumentEditor - Carregando template content:', !!initialContent);
-      console.log('DocumentEditor - initialContent length:', initialContent?.length);
-      if (initialContent && initialContent.length > 0) {
-        console.log('DocumentEditor - Conteúdo do template:', initialContent.substring(0, 100) + '...');
-      }
       setContent(initialContent || '');
     }
   }, [initialContent, document]);
@@ -56,13 +53,12 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   
   useEffect(() => setCategoryId(document?.categoryId || initialCategoryId || ''), [document?.categoryId, initialCategoryId]);
   
-  // Tag State
+  // Estado das tags: inicializa com tags do documento ou do template
   const [tags, setTags] = useState<string[]>(document?.tags || initialTags || []);
 
-  // atualiza tags quando initialTags muda (somente para novos docs)
+  // Ao criar um novo documento, atualiza as tags se o template selecionado tiver tags
   useEffect(() => {
     if (!document && initialTags) {
-      console.log('DocumentEditor - Carregando template tags:', initialTags);
       setTags(initialTags);
     }
   }, [initialTags, document]);
