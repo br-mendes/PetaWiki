@@ -67,7 +67,9 @@ export const MOCK_USERS: User[] = [
     name: 'Admin',
     role: 'ADMIN',
     avatar: 'https://ui-avatars.com/api/?name=Admin&background=111827&color=fff',
-    department: 'Gestão'
+    department: 'Gestão',
+    // garante que o admin de desenvolvimento veja as abas restritas
+    isSuperAdmin: true
   }
 ];
 

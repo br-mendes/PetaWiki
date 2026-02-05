@@ -971,7 +971,9 @@ const searchParams: any = {
             role: u.role,
             department: u.department,
             avatar: u.avatar,
-            themePreference: u.theme_preference
+            themePreference: u.theme_preference,
+            // valor booleano convertido
+            isSuperAdmin: !!u.is_super_admin
         }));
         
         setDocuments(mappedDocs);
@@ -1036,7 +1038,11 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
           supabase.from('users').update({ theme_preference: 'light' }).eq('id', foundUser.id).then();
       }
 
-      const userWithSettings = { ...foundUser, themePreference: themePref };
+      const userWithSettings = {
+        ...foundUser,
+        themePreference: themePref,
+        isSuperAdmin: foundUser.isSuperAdmin
+      };
 
       setCurrentUser(userWithSettings);
       setIsAuthenticated(true);
@@ -1085,7 +1091,9 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
           role: 'READER',
           department: 'Geral',
           avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
-          themePreference: 'light'
+          themePreference: 'light',
+          // novos usuários não são super admin
+          isSuperAdmin: false
       };
 
       try {
@@ -1098,7 +1106,8 @@ const handleLogin = (usernameInput: string, passwordInput: string) => {
             role: newUser.role,
             department: newUser.department,
             avatar: newUser.avatar,
-            theme_preference: 'light'
+            theme_preference: 'light',
+            is_super_admin: false
           });
           if (error) throw error;
           setUsers([...users, newUser]);
@@ -1193,7 +1202,9 @@ const handleUpdateUserDetails = async (userId: string, data: Partial<User>) => {
       department: userData.department || 'Geral',
       avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=random`,
       password: '123',
-      themePreference: 'light'
+      themePreference: 'light',
+      // novos usuários não são super admin
+      isSuperAdmin: false
     };
     
     // Optimistic Update
@@ -1208,7 +1219,8 @@ const handleUpdateUserDetails = async (userId: string, data: Partial<User>) => {
         role: newUser.role,
         department: newUser.department,
         avatar: newUser.avatar,
-        theme_preference: 'light'
+        theme_preference: 'light',
+        is_super_admin: false
     });
 
     if (error) {

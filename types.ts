@@ -69,6 +69,13 @@ export interface User {
   avatar: string;
   department: string;
   themePreference?: 'light' | 'dark'; // Preference stored in DB
+
+  /**
+   * Flag que marca se o usuário possui privilégios de super administrador.
+   * Apenas usuários com `isSuperAdmin` verdadeiro poderão acessar e editar
+   * as seções Layout & Home, Rodapé e Segurança nas configurações.
+   */
+  isSuperAdmin?: boolean;
 }
 
 // Category type is now defined in lib/categories.ts to match database schema
