@@ -72,6 +72,17 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<'BRANDING' | 'FOOTER' | 'SECURITY' | 'USERS' | 'APPROVAL' | 'CATEGORIES' | 'TRASH'>('BRANDING');
 
+  // identifica o usuário logado
+  const actorUser = useMemo(() => users.find(u => u.id === actorUserId), [users, actorUserId]);
+  const isSuperAdmin = !!actorUser?.isSuperAdmin;
+
+  // se não for super admin e estiver numa aba restrita, troca para 'USERS'
+  useEffect(() => {
+    if (!isSuperAdmin && ['BRANDING', 'FOOTER', 'SECURITY'].includes(activeTab)) {
+      setActiveTab('USERS');
+    }
+  }, [isSuperAdmin, activeTab]);
+
   const [pendingDocs, setPendingDocs] = useState<any[]>([]);
   const [isLoadingPending, setIsLoadingPending] = useState(false);
 
@@ -386,45 +397,51 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
       <div className="flex flex-col md:flex-row gap-6 h-full">
         {/* Sidebar */}
         <div className="w-full md:w-48 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 pr-0 md:pr-4 space-y-1 mb-4 md:mb-0 shrink-0 md:overflow-y-auto">
-          <button
-            onClick={() => setActiveTab('BRANDING')}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-[10px] font-medium transition-colors ${activeTab === 'BRANDING' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
-          >
-            <Layout size={16} /> Layout & Home
-          </button>
-           <button
-            onClick={() => setActiveTab('FOOTER')}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-[10px] font-medium transition-colors ${activeTab === 'FOOTER' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
-          >
-            <Columns size={16} /> Rodapé
-          </button>
-          <button
-            onClick={() => setActiveTab('SECURITY')}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-[10px] font-medium transition-colors ${activeTab === 'SECURITY' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
-          >
-            <ShieldCheck size={16} /> Segurança
-          </button>
+          {isSuperAdmin && (
+            <button
+              onClick={() => setActiveTab('BRANDING')}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'BRANDING' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
+            >
+              <Layout size={16} /> Layout & Home
+            </button>
+          )}
+          {isSuperAdmin && (
+            <button
+              onClick={() => setActiveTab('FOOTER')}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'FOOTER' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
+            >
+              <Columns size={16} /> Rodapé
+            </button>
+          )}
+          {isSuperAdmin && (
+            <button
+              onClick={() => setActiveTab('SECURITY')}
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'SECURITY' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
+            >
+              <ShieldCheck size={16} /> Segurança
+            </button>
+          )}
           <button
             onClick={() => setActiveTab('USERS')}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-[10px] font-medium transition-colors ${activeTab === 'USERS' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'USERS' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
           >
             <UserCog size={16} /> Usuários
           </button>
           <button
             onClick={() => setActiveTab('APPROVAL')}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-[10px] font-medium transition-colors ${activeTab === 'APPROVAL' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'APPROVAL' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
           >
             <ShieldCheck size={16} /> Aprovação
           </button>
           <button
             onClick={() => setActiveTab('CATEGORIES')}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-[10px] font-medium transition-colors ${activeTab === 'CATEGORIES' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'CATEGORIES' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
           >
             <FolderTree size={16} /> Categorias
           </button>
           <button
             onClick={() => setActiveTab('TRASH')}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-[10px] font-medium transition-colors ${activeTab === 'TRASH' ? 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
+            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'TRASH' ? 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
           >
             <Trash2 size={16} /> Lixeira
           </button>
