@@ -38,24 +38,17 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   const [title, setTitle] = useState(document?.title || '');
   const [content, setContent] = useState(document?.content || initialContent);
 
-  // Debug para templates
+  // atualiza o conteúdo quando initialContent muda (somente para novos docs)
   useEffect(() => {
-    console.log('DocumentEditor - initialContent mudou:', !!initialContent);
-    console.log('DocumentEditor - initialContent length:', initialContent?.length);
-    console.log('DocumentEditor - content atual length:', content?.length);
-    
-    if (initialContent && initialContent.length > 0) {
-      console.log('DocumentEditor - initialContent recebido:', initialContent.substring(0, 200) + '...');
-      console.log('DocumentEditor - content atual após set:', content.substring(0, 200) + '...');
-    }
-    
-    // Verificar se o conteúdo foi atualizado quando o estado muda
-    useEffect(() => {
-      if (content && content.length > 0 && content !== initialContent) {
-        console.log('DocumentEditor - conteúdo atualizado pelo usuário ou pelo template');
+    if (!document) {
+      console.log('DocumentEditor - Carregando template content:', !!initialContent);
+      console.log('DocumentEditor - initialContent length:', initialContent?.length);
+      if (initialContent && initialContent.length > 0) {
+        console.log('DocumentEditor - Conteúdo do template:', initialContent.substring(0, 100) + '...');
       }
-    }, [content, initialContent]);
-  }, [initialContent, content]);
+      setContent(initialContent || '');
+    }
+  }, [initialContent, document]);
  const [categoryId, setCategoryId] = useState(document?.categoryId || initialCategoryId || '');
 
   const [saveAsTemplate, setSaveAsTemplate] = useState(false);
@@ -65,6 +58,14 @@ export const DocumentEditor: React.FC<DocumentEditorProps> = ({
   
   // Tag State
   const [tags, setTags] = useState<string[]>(document?.tags || initialTags || []);
+
+  // atualiza tags quando initialTags muda (somente para novos docs)
+  useEffect(() => {
+    if (!document && initialTags) {
+      console.log('DocumentEditor - Carregando template tags:', initialTags);
+      setTags(initialTags);
+    }
+  }, [initialTags, document]);
   const [tagInput, setTagInput] = useState('');
   
   // AI State
