@@ -401,7 +401,7 @@ const AppContent = () => {
                     // 2. Buscar dados frescos do usuário no banco (especialmente tema)
                     const { data: freshData } = await supabase
                         .from('users')
-                        .select('theme_preference, role, avatar, name, department')
+                        .select('theme_preference, role, avatar, name, department, is_super_admin')
                         .eq('id', user.id)
                         .single();
 
@@ -418,11 +418,17 @@ const AppContent = () => {
                             freshData.theme_preference = 'light';
                         }
                         
-                        // Atualizar usuário com dados do banco
-                        finalUser = { 
-                            ...user, 
-                            ...freshData,
-                            themePreference: freshData.theme_preference 
+                        // Atualizar usuário com dados do banco (mapeando snake_case -> camelCase)
+                        finalUser = {
+                            ...user,
+                            role: freshData.role ?? user.role,
+                            avatar: freshData.avatar ?? user.avatar,
+                            name: freshData.name ?? user.name,
+                            department: freshData.department ?? user.department,
+                            themePreference: freshData.theme_preference ?? (user.themePreference || 'light'),
+                            isSuperAdmin: typeof (freshData as any).is_super_admin === 'boolean'
+                              ? (freshData as any).is_super_admin
+                              : (user.isSuperAdmin ?? false),
                         };
                         setCurrentUser(finalUser);
                     }

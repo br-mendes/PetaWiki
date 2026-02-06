@@ -463,7 +463,13 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
 
         {/* Content */}
         <div className="flex-1 pr-2 overflow-y-auto">
-          {activeTab === 'BRANDING' && (
+          {!isSuperAdmin && (
+            <div className="mb-4 p-3 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100 text-sm">
+              <strong className="font-semibold">Acesso restrito:</strong> módulos <em>Layout &amp; Home</em>, <em>Rodapé</em> e <em>Segurança</em> são exibidos apenas para <strong>Super Admin</strong>.
+            </div>
+          )}
+          
+          {isSuperAdmin && activeTab === 'BRANDING' && (
             <div className="space-y-6">
               {/* Branding Content */}
                <div>
