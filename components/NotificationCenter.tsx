@@ -15,11 +15,17 @@ type NotificationItem = {
 };
 
 export const NotificationCenter: React.FC<{
+  /**
+   * ID do usuário atual. Necessário para chamar a RPC
+   * `mark_all_notifications_read` no Supabase.
+   */
+  userId: string;
   notifications: NotificationItem[];
   onMarkAsRead: (id: string) => void;
   onMarkAllAsRead: () => void;
   onRefresh: () => void;
 }> = ({ 
+  userId,
   notifications, 
   onMarkAsRead, 
   onMarkAllAsRead, 
@@ -79,8 +85,9 @@ export const NotificationCenter: React.FC<{
       setLoading(true);
       onMarkAllAsRead();
 
+      // Marca todas como lidas no Supabase para o usuário especificado
       const { error } = await supabase.rpc("mark_all_notifications_read", {
-        p_user_id: "current-user-id" // TODO: Get actual user ID
+        p_user_id: userId
       });
 
       if (error) {
@@ -164,14 +171,14 @@ export const NotificationCenter: React.FC<{
                             {notification.title}
                           </h3>
                           {notification.body && (
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                               {notification.body}
                             </p>
                           )}
                         </div>
                         
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                          <span className="text-sm text-gray-500 dark:text-gray-400">
                             {formatDate(notification.created_at)}
                           </span>
                           

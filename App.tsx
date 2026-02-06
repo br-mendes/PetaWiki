@@ -1884,6 +1884,7 @@ const toggleFavorites = () => {
           {currentView === 'NOTIFICATIONS' && (
             <LazyWrapper>
               <NotificationCenter 
+                userId={currentUser.id}
                 notifications={notifications}
                 onMarkAsRead={handleMarkNotificationAsRead}
                 onMarkAllAsRead={handleMarkAllNotificationsAsRead}
