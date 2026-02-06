@@ -502,7 +502,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                             accept="image/*"
                             onChange={(e) => handleFileUpload(e, setLogoCollapsedUrl)}
                           />
-                          <Button size="sm" variant="secondary" onClick={() => collapsedInputRef.current?.click()} leftIcon={<Upload size={14} />}>
+                          <Button size="sm" variant="secondary" onClick={() => collapsedInputRef.current?.click()} leftIcon={<Upload size={16} />}>
                             Upload Ícone
                           </Button>
                         </div>
@@ -520,7 +520,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                             accept="image/*"
                             onChange={(e) => handleFileUpload(e, setLogoExpandedUrl)}
                           />
-<Button size="sm" variant="secondary" onClick={() => expandedInputRef.current?.click()} leftIcon={<Upload size={14} />}>
+<Button size="sm" variant="secondary" onClick={() => expandedInputRef.current?.click()} leftIcon={<Upload size={16} />}>
                             Upload Banner
                           </Button>
                         </div>
@@ -691,7 +691,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                     </div>
                                 ))}
                                 <Button size="sm" variant="secondary" onClick={handleAddHeroTag}>
-                                    <Plus size={14} className="mr-1" /> Adicionar Tag
+                                    <Plus size={16} className="mr-1" /> Adicionar Tag
                                 </Button>
                             </div>
                         </div>
@@ -758,7 +758,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                         </div>
                                     </div>
                                 ))}
-                                <Button size="sm" variant="secondary" onClick={handleAddFeature} leftIcon={<Plus size={14} />}>
+                                <Button size="sm" variant="secondary" onClick={handleAddFeature} leftIcon={<Plus size={16} />}>
                                     Adicionar Recurso
                                 </Button>
                             </div>
@@ -812,7 +812,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                   className="absolute top-1 right-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                                   title="Remover Link"
                                 >
-                                  <X size={14} />
+                                  <X size={16} />
                                 </button>
                                 <div className="mb-1.5 pr-4">
                                   <input 
@@ -1191,7 +1191,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                               {/* Visual indent line */}
                               {depth > 0 && (
                                 <div style={{ width: depth * 24 }} className="flex justify-end mr-2">
-                                  <CornerDownRight size={14} className="text-gray-300" />
+                                  <CornerDownRight size={16} className="text-gray-300" />
                                 </div>
                               )}
                               <input 
@@ -1219,7 +1219,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                  className="text-blue-500 hover:text-blue-700 p-1 mr-2"
                                  title={`Adicionar subcategoria em ${cat.name}`}
                                >
-                                 <Plus size={14} />
+                                  <Plus size={16} />
                                </button>
                              )}
                              <button 
@@ -1227,7 +1227,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                className="text-red-500 hover:text-red-700 p-1"
                                title="Excluir"
                              >
-                               <Trash2 size={14} />
+                                <Trash size={16} />
                              </button>
                           </td>
                         </tr>
