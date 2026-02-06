@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
 import { User, Role } from '../types';
-import { Lock, Save, Camera, Upload, Eye, EyeOff, User as UserIcon, Briefcase } from 'lucide-react';
+import { Lock, Save, Camera, Upload, Eye, EyeOff, User as UserIcon, Briefcase, Sun, Moon } from 'lucide-react';
 import { compressImage } from '../lib/image';
 import { useToast } from './Toast';
 
@@ -45,6 +45,9 @@ export const UserProfile: React.FC<UserProfileProps> = ({
   // Profile Edit State
   const [editName, setEditName] = useState(user.name);
   const [editDepartment, setEditDepartment] = useState(user.department || '');
+  
+  // Theme preference state (light or dark)
+  const [editThemePreference, setEditThemePreference] = useState<'light' | 'dark'>(user.themePreference || 'light');
 
   const [msg, setMsg] = useState<{type: 'success'|'error', text: string} | null>(null);
   
@@ -115,7 +118,11 @@ export const UserProfile: React.FC<UserProfileProps> = ({
       e.preventDefault();
       setMsg(null);
       if (onUpdateUser) {
-          await onUpdateUser({ name: editName, department: editDepartment });
+          await onUpdateUser({ 
+            name: editName, 
+            department: editDepartment,
+            themePreference: editThemePreference
+          });
           setMsg({ type: 'success', text: 'Dados atualizados com sucesso.' });
           setTimeout(() => setMsg(null), 2000);
       }
@@ -206,10 +213,30 @@ export const UserProfile: React.FC<UserProfileProps> = ({
                       />
                       <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
                    </div>
-                   <p className="text-xs text-gray-500 mt-1">Este cargo será exibido em seus documentos.</p>
-                </div>
-                
-                {msg && (
+                    <p className="text-xs text-gray-500 mt-1">Este cargo será exibido em seus documentos.</p>
+                 </div>
+
+                 {/* Theme Preference Selector */}
+                 <div>
+                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                     Tema
+                   </label>
+                   <select
+                     value={editThemePreference}
+                     onChange={(e) =>
+                       setEditThemePreference(e.target.value as 'light' | 'dark')
+                     }
+                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-blue-500 outline-none"
+                   >
+                     <option value="light">Claro</option>
+                     <option value="dark">Escuro</option>
+                   </select>
+                   <p className="text-xs text-gray-500 mt-1">
+                     Escolha o modo de cor preferido da interface.
+                   </p>
+                 </div>
+                 
+                 {msg && (
                     <div className={`text-sm p-3 rounded-lg flex items-center gap-2 ${msg.type === 'success' ? 'bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
                         {msg.text}
                     </div>
