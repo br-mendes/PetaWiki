@@ -484,7 +484,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                        type="text" 
                        value={appName}
                        onChange={(e) => setAppName(e.target.value)}
-                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-[11px]"
+                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs"
                        placeholder="Deixe vazio para usar apenas o logo expandido"
                      />
                    </div>
@@ -751,7 +751,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                                     rows={2}
                                                     value={feat.description}
                                                     onChange={(e) => handleUpdateFeature(idx, 'description', e.target.value)}
-                                                    className="w-full px-2 py-1 bg-transparent border border-gray-200 dark:border-gray-700 rounded text-[11px] text-gray-600 dark:text-gray-400 resize-none"
+                                                     className="w-full px-2 py-1 bg-transparent border border-gray-200 dark:border-gray-700 rounded text-xs text-gray-600 dark:text-gray-400 resize-none"
                                                     placeholder="Descrição do recurso..."
                                                 />
                                              </div>
@@ -854,7 +854,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                         type="text"
                         value={footerBottomText}
                         onChange={(e) => setFooterBottomText(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-[11px]"
+                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs"
                         placeholder="Ex: Feito com ❤️ na Empresa."
                      />
                   </div>

@@ -121,7 +121,7 @@ const TreeNode: React.FC<{
           {isExpanded && hasChildren ? <FolderOpen size={15} /> : <Folder size={15} />}
         </span>
 
-        <span className="text-[13px] font-medium truncate flex-1">
+        <span className="text-sm font-medium truncate flex-1">
           {category.name}
         </span>
 
@@ -175,7 +175,7 @@ const TreeNode: React.FC<{
               style={{ paddingLeft: `${(level + 1) * 16 + 28}px` }}
             >
               <FileText size={13} />
-              <span className="text-[12px] truncate flex-1">{doc.title}</span>
+              <span className="text-xs truncate flex-1">{doc.title}</span>
               {doc.status !== 'PUBLISHED' && (
                 <span className={`w-1.5 h-1.5 rounded-full ${
                   doc.status === 'DRAFT' ? "bg-gray-400" : 
