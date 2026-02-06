@@ -86,6 +86,20 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   const [pendingDocs, setPendingDocs] = useState<any[]>([]);
   const [isLoadingPending, setIsLoadingPending] = useState(false);
 
+  // Filtragem do painel de usuários
+  const [userSearch, setUserSearch] = useState('');
+
+  // Calcula uma lista de usuários filtrada com base na busca por nome, email ou departamento
+  const filteredUsers = useMemo(() => {
+    const query = userSearch.toLowerCase();
+    return users.filter(u => {
+      const nameMatch = u.name?.toLowerCase().includes(query) || false;
+      const emailMatch = (u.email || u.username || '').toLowerCase().includes(query);
+      const deptMatch = (u.department || '').toLowerCase().includes(query);
+      return nameMatch || emailMatch || deptMatch;
+    });
+  }, [users, userSearch]);
+
   const loadPending = async () => {
     setIsLoadingPending(true);
     try {
@@ -965,6 +979,16 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                {/* User List & Tables ... (Unchanged logic) */}
                <div>
                 <h3 className="text-base font-medium text-gray-900 dark:text-white mb-4">Gerenciar Permissões</h3>
+                {/* Campo de busca para filtrar usuários */}
+                <div className="mb-3">
+                  <input
+                    type="text"
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    placeholder="Buscar por nome, e-mail ou cargo..."
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-blue-500 outline-none"
+                  />
+                </div>
                 <div className="border rounded-lg overflow-hidden dark:border-gray-600">
                   <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                     <thead className="bg-gray-50 dark:bg-gray-800">
@@ -975,7 +999,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                      {users.map(u => (
+                      {filteredUsers.map(u => (
                         <tr key={u.id}>
                           <td className="px-4 py-3 whitespace-nowrap flex items-center gap-2">
                             <img src={u.avatar} className="w-6 h-6 rounded-full object-cover" />
