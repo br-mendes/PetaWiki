@@ -1003,6 +1003,9 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Usuário</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Função</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                          Super Admin
+                        </th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ação</th>
                       </tr>
                     </thead>
@@ -1025,45 +1028,41 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                               {u.role}
                             </span>
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-right">
-                            <div className="flex items-center justify-end gap-2">
-                                <button
-                                    onClick={() => startEditingUser(u)}
-                                    className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                                    title="Editar Dados"
-                                >
-                                    <Edit size={16} />
-                                </button>
-                                {onToggleSuperAdmin && isSuperAdmin && (
-                                  <button
-                                    onClick={() => onToggleSuperAdmin(u.id, !u.isSuperAdmin)}
-                                    className={`p-1 transition-colors ${
-                                      u.isSuperAdmin 
-                                        ? 'text-red-500 hover:text-red-700' 
-                                        : 'text-green-500 hover:text-green-700'
-                                    }`}
-                                    title={u.isSuperAdmin ? 'Remover Super Admin' : 'Tornar Super Admin'}
-                                  >
-                                    {u.isSuperAdmin ? <ShieldCheck size={16} /> : <Shield size={16} />}
-                                  </button>
-                                )}
-                                <select 
-                                value={u.role}
-                                onChange={(e) => onUpdateUserRole(u.id, e.target.value as Role)}
-                                className="text-sm border-gray-300 dark:border-gray-600 rounded shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 bg-white dark:bg-gray-700 dark:text-white"
-                                >
-                                <option value="READER">Leitor</option>
-                                <option value="EDITOR">Editor</option>
-                                <option value="ADMIN">Admin</option>
-                                </select>
-                                <button 
-                                  onClick={() => onDeleteUser(u.id)}
-                                  className="p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                                  title="Excluir Usuário"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                            </div>
+                           <td className="px-4 py-3 whitespace-nowrap">
+                             {isSuperAdmin ? (
+                               <button
+                                 onClick={() => onToggleSuperAdmin(u.id, !u.isSuperAdmin)}
+                                 className="inline-flex items-center gap-2 px-2 py-1 rounded-md text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                 title="Alternar Super Admin"
+                               >
+                                 {u.isSuperAdmin ? (
+                                   <>
+                                     <ToggleRight size={16} className="text-blue-600" />
+                                     <span className="text-gray-900 dark:text-white">Sim</span>
+                                   </>
+                                 ) : (
+                                   <>
+                                     <ToggleLeft size={16} className="text-gray-400" />
+                                     <span className="text-gray-700 dark:text-gray-300">Não</span>
+                                   </>
+                                 )}
+                               </button>
+                             ) : (
+                               <span className="text-xs text-gray-500 dark:text-gray-400">
+                                 {u.isSuperAdmin ? 'Sim' : 'Não'}
+                               </span>
+                             )}
+                           </td>
+                           <td className="px-4 py-3 whitespace-nowrap text-right">
+                             <div className="flex items-center justify-end gap-2">
+                                 <button
+                                     onClick={() => startEditingUser(u)}
+                                     className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                     title="Editar Dados"
+                                 >
+                                     <Edit size={16} />
+                                 </button>
+                             </div>
                           </td>
                         </tr>
                       ))}
