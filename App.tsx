@@ -1165,9 +1165,30 @@ const handleToggleTheme = async () => {
   };
 
   const handleUpdateUserRole = async (userId: string, newRole: Role) => {
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
-    await supabase.from('users').update({ role: newRole }).eq('id', userId);
-    toast.success('Permissão atualizada.');
+    if (isMockUser(currentUser)) {
+      toast.info("Modo mock: edição de usuário desativada.");
+      return;
+    }
+    if (!currentUser) return;
+
+    try {
+      const { error } = await supabase.rpc('set_user_role', {
+        p_actor_id: currentUser.id,
+        p_target_id: userId,
+        p_role: newRole
+      });
+
+      if (error) throw error;
+
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+      toast.success('Perfil atualizado e salvo no banco.');
+    } catch (e: any) {
+      const msg =
+        e?.message === 'only_super_admin_can_grant_admin'
+          ? 'Somente Super Admin pode conceder perfil ADMIN.'
+          : 'Falha ao salvar perfil no banco.';
+      toast.error(msg);
+    }
   };
 
 const handleUpdateUserDetails = async (userId: string, data: Partial<User>) => {
@@ -1186,8 +1207,12 @@ const handleUpdateUserDetails = async (userId: string, data: Partial<User>) => {
   };
 
   const handleToggleSuperAdmin = async (targetUserId: string, newValue: boolean) => {
+    if (isMockUser(currentUser)) {
+      toast.info("Modo mock: edição de usuário desativada.");
+      return;
+    }
     if (!currentUser?.isSuperAdmin) {
-      toast.error('Apenas Super Admin pode alterar esta permissão.');
+      toast.error('Somente Super Admin pode alterar esta permissão.');
       return;
     }
 
@@ -1200,18 +1225,21 @@ const handleUpdateUserDetails = async (userId: string, data: Partial<User>) => {
 
       if (error) throw error;
 
-      // Atualiza lista local de usuários
-      setUsers((prev) =>
-        prev.map((u) => (u.id === targetUserId ? { ...u, isSuperAdmin: newValue } : u))
-      );
+      setUsers(prev => prev.map(u => {
+        if (u.id !== targetUserId) return u;
+        return {
+          ...u,
+          isSuperAdmin: newValue,
+          role: newValue ? 'ADMIN' : u.role, // ao promover, vira ADMIN; ao demover, mantém role original
+        };
+      }));
 
-      toast.success('Permissão de Super Admin atualizada.');
+      toast.success('Super Admin atualizado e salvo no banco.');
     } catch (e: any) {
       const msg =
         e?.message === 'cannot_remove_last_super_admin'
           ? 'Não é permitido remover o último Super Admin.'
-          : 'Erro ao atualizar Super Admin.';
-
+          : 'Falha ao salvar Super Admin no banco.';
       toast.error(msg);
     }
   };
