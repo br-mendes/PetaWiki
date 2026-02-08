@@ -77,6 +77,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   // identifica o usuário logado
   const actorUser = useMemo(() => users.find(u => u.id === actorUserId), [users, actorUserId]);
   const isSuperAdmin = !!actorUser?.isSuperAdmin;
+  const actorIsAdmin = actorUser?.role === 'ADMIN' || isSuperAdmin;
 
   // se não for super admin e estiver numa aba restrita, troca para 'USERS'
   useEffect(() => {
@@ -1020,14 +1021,26 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                               <span className="text-sm text-gray-400 dark:text-gray-500">{u.department || 'Sem cargo'}</span>
                             </div>
                           </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              u.role === 'ADMIN' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
-                              u.role === 'EDITOR' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                            }`}>
-                              {u.role}
-                            </span>
-                          </td>
+                           <td className="px-4 py-3 whitespace-nowrap">
+                             <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                               u.role === 'ADMIN' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
+                               u.role === 'EDITOR' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                             }`}>
+                               {u.role}
+                             </span>
+                           </td>
+                           <td className="px-4 py-3 whitespace-nowrap">
+                             <select
+                                value={u.role}
+                                disabled={!actorIsAdmin || (!isSuperAdmin && u.role === 'ADMIN')}
+                                onChange={(e) => onUpdateUserRole(u.id, e.target.value as Role)}
+                                className="text-xs border-gray-300 dark:border-gray-600 rounded shadow-sm bg-white dark:bg-gray-700 dark:text-white px-2 py-1 disabled:opacity-50"
+                             >
+                                <option value="READER">Leitor</option>
+                                <option value="EDITOR">Editor</option>
+                                {actorIsAdmin && <option value="ADMIN">Admin</option>}
+                             </select>
+                           </td>
                            <td className="px-4 py-3 whitespace-nowrap">
                              {isSuperAdmin ? (
                                <button
