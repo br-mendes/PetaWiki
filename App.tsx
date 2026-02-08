@@ -1183,10 +1183,12 @@ const handleToggleTheme = async () => {
       setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
       toast.success('Perfil atualizado e salvo no banco.');
     } catch (e: any) {
+      // Mostra mensagem real do Postgres/RPC (isso vai te dizer o motivo exato)
+      console.error('set_user_role error:', e);
       const msg =
         e?.message === 'only_super_admin_can_grant_admin'
           ? 'Somente Super Admin pode conceder perfil ADMIN.'
-          : 'Falha ao salvar perfil no banco.';
+          : (e?.message || 'Falha ao salvar perfil no banco.');
       toast.error(msg);
     }
   };
@@ -1212,7 +1214,7 @@ const handleUpdateUserDetails = async (userId: string, data: Partial<User>) => {
       return;
     }
     if (!currentUser?.isSuperAdmin) {
-      toast.error('Somente Super Admin pode alterar esta permissão.');
+      toast.error('Apenas Super Admin pode alterar esta permissão.');
       return;
     }
 
@@ -1232,6 +1234,18 @@ const handleUpdateUserDetails = async (userId: string, data: Partial<User>) => {
           isSuperAdmin: newValue,
           role: newValue ? 'ADMIN' : u.role, // ao promover, vira ADMIN; ao demover, mantém role original
         };
+      }));
+
+      toast.success('Super Admin atualizado e salvo no banco.');
+    } catch (e: any) {
+      console.error('set_user_super_admin error:', e);
+      const msg =
+        e?.message === 'cannot_remove_last_super_admin'
+          ? 'Não é permitido remover o último Super Admin.'
+          : (e?.message || 'Falha ao salvar Super Admin no banco.');
+      toast.error(msg);
+    }
+  };
       }));
 
       toast.success('Super Admin atualizado e salvo no banco.');
