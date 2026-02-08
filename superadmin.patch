@@ -1,0 +1,146 @@
+--- a/types.ts
++++ b/types.ts
+@@ -66,6 +66,7 @@
+   password?: string; // New field for mock auth logic
+   name: string;
+   role: Role;
++  isSuperAdmin?: boolean; // Apenas para Super Admin
+   avatar: string;
+   department: string;
+   themePreference?: 'light' | 'dark'; // Preference stored in DB
+--- a/constants.ts
++++ b/constants.ts
+@@ -66,6 +66,7 @@
+     password: 'admin',
+     name: 'Admin',
+     role: 'ADMIN',
++    isSuperAdmin: true,
+     avatar: 'https://ui-avatars.com/api/?name=Admin&background=111827&color=fff',
+     department: 'Gestão'
+   }
+--- a/App.tsx
++++ b/App.tsx
+@@ -394,7 +394,7 @@
+                     // 2. Buscar dados frescos do usuário no banco (especialmente tema)
+                     const { data: freshData } = await supabase
+                         .from('users')
+-                        .select('theme_preference, role, avatar, name, department')
++                        .select('theme_preference, role, avatar, name, department, is_super_admin')
+                         .eq('id', user.id)
+                         .single();
+@@ -411,11 +411,17 @@
+-                        // Atualizar usuário com dados do banco
+-                        finalUser = { 
+-                            ...user, 
+-                            ...freshData,
+-                            themePreference: freshData.theme_preference 
+-                        };
++                        // Atualizar usuário com dados do banco (mapeando snake_case -> camelCase)
++                        finalUser = {
++                            ...user,
++                            role: freshData.role ?? user.role,
++                            avatar: freshData.avatar ?? user.avatar,
++                            name: freshData.name ?? user.name,
++                            department: freshData.department ?? user.department,
++                            themePreference: freshData.theme_preference ?? (user.themePreference || 'light'),
++                            isSuperAdmin: typeof (freshData as any).is_super_admin === 'boolean'
++                              ? (freshData as any).is_super_admin
++                              : (user.isSuperAdmin ?? false),
++                        };
+                         setCurrentUser(finalUser);
+                     }
+@@ -964,7 +970,8 @@
+             role: u.role,
+             department: u.department,
+             avatar: u.avatar,
+-            themePreference: u.theme_preference
++            themePreference: u.theme_preference,
++            isSuperAdmin: !!u.is_super_admin
+         }));
+@@ -1091,7 +1098,8 @@
+             role: newUser.role,
+             department: newUser.department,
+             avatar: newUser.avatar,
+-            theme_preference: 'light'
++            theme_preference: 'light',
++            is_super_admin: false
+           });
+@@ -1201,7 +1209,8 @@
+         role: newUser.role,
+         department: newUser.department,
+         avatar: newUser.avatar,
+-        theme_preference: 'light'
++        theme_preference: 'light',
++        is_super_admin: false
+     });
+--- a/components/AdminSettings.tsx
++++ b/components/AdminSettings.tsx
+@@ -71,6 +71,16 @@
+ }) => {
+   const toast = useToast();
+   const [activeTab, setActiveTab] = useState<'BRANDING' | 'FOOTER' | 'SECURITY' | 'USERS' | 'APPROVAL' | 'CATEGORIES' | 'TRASH'>('BRANDING');
++  const actorUser = useMemo(() => users.find(u => u.id === actorUserId), [users, actorUserId]);
++  const isSuperAdmin = !!actorUser?.isSuperAdmin;
++
++  // Garante que tabs restritas não fiquem selecionadas para quem não é Super Admin
++  useEffect(() => {
++    if (!isSuperAdmin && (activeTab === 'BRANDING' || activeTab === 'FOOTER' || activeTab === 'SECURITY')) {
++      setActiveTab('USERS');
++    }
++  }, [isSuperAdmin, activeTab]);
+ 
+   const [pendingDocs, setPendingDocs] = useState<any[]>([]);
+   const [isLoadingPending, setIsLoadingPending] = useState(false);
+@@ -386,24 +396,30 @@
+       <div className="flex flex-col md:flex-row gap-6 h-full">
+         {/* Sidebar */}
+         <div className="w-full md:w-48 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 pr-0 md:pr-4 space-y-1 mb-4 md:mb-0 shrink-0 md:overflow-y-auto">
++         {isSuperAdmin && (
+           <button
+             onClick={() => setActiveTab('BRANDING')}
+             className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-[10px] font-medium transition-colors ${activeTab === 'BRANDING' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
+           >
+             <Layout size={16} /> Layout & Home
+           </button>
++         )}
++         {isSuperAdmin && (
+            <button
+             onClick={() => setActiveTab('FOOTER')}
+             className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-[10px] font-medium transition-colors ${activeTab === 'FOOTER' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
+           >
+             <Columns size={16} /> Rodapé
+           </button>
++         )}
++         {isSuperAdmin && (
+            <button
+             onClick={() => setActiveTab('SECURITY')}
+             className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-[10px] font-medium transition-colors ${activeTab === 'SECURITY' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
+           >
+             <ShieldCheck size={16} /> Segurança
+           </button>
++         )}
+           <button
+             onClick={() => setActiveTab('USERS')}
+             className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-[10px] font-medium transition-colors ${activeTab === 'USERS' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
+           >
+             <UserCog size={16} /> Usuários
+           </button>
+@@ -432,7 +458,13 @@
+         {/* Content */}
+         <div className="flex-1 pr-2 overflow-y-auto">
++         {!isSuperAdmin && (
++            <div className="mb-4 p-3 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100 text-sm">
++              <strong className="font-semibold">Acesso restrito:</strong> módulos <em>Layout &amp; Home</em>, <em>Rodapé</em> e <em>Segurança</em> são exibidos apenas para <strong>Super Admin</strong>.
++            </div>
++         )}
++
++         {isSuperAdmin && activeTab === 'BRANDING' && (
+             <div className="space-y-6">
+@@ -761,7 +787,7 @@
+           {/* ... (Footer, Security, Users Tabs Content - Similar structure) ... */}
++         {isSuperAdmin && activeTab === 'FOOTER' && (
+             <div className="space-y-6">
+@@ -851,7 +877,7 @@
+           {/* ... (Users Tab Content - Similar structure) ... */}
++         {isSuperAdmin && activeTab === 'SECURITY' && (
+             <div className="space-y-6">

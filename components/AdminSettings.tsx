@@ -26,7 +26,8 @@ interface AdminSettingsProps {
   onUpdateUserDetails: (userId: string, data: Partial<User>) => void; // Updated signature
   onDeleteUser: (userId: string) => void; 
   onAddUser: (user: Partial<User>) => void;
-  categories: Category[]; 
+  onToggleSuperAdmin?: (userId: string, newValue: boolean) => void;
+  categories: Category[];
   onUpdateCategory: (id: string, data: Partial<Category>) => void;
   onDeleteCategory: (id: string) => void;
   onAddCategory: (data: Partial<Category>) => void;
@@ -61,6 +62,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   onUpdateUserDetails,
   onDeleteUser,
   onAddUser,
+  onToggleSuperAdmin,
   categories,
   onUpdateCategory,
   onDeleteCategory,
@@ -1032,6 +1034,19 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                 >
                                     <Edit size={16} />
                                 </button>
+                                {onToggleSuperAdmin && isSuperAdmin && (
+                                  <button
+                                    onClick={() => onToggleSuperAdmin(u.id, !u.isSuperAdmin)}
+                                    className={`p-1 transition-colors ${
+                                      u.isSuperAdmin 
+                                        ? 'text-red-500 hover:text-red-700' 
+                                        : 'text-green-500 hover:text-green-700'
+                                    }`}
+                                    title={u.isSuperAdmin ? 'Remover Super Admin' : 'Tornar Super Admin'}
+                                  >
+                                    {u.isSuperAdmin ? <ShieldCheck size={16} /> : <Shield size={16} />}
+                                  </button>
+                                )}
                                 <select 
                                 value={u.role}
                                 onChange={(e) => onUpdateUserRole(u.id, e.target.value as Role)}

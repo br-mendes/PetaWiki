@@ -1185,6 +1185,37 @@ const handleUpdateUserDetails = async (userId: string, data: Partial<User>) => {
     toast.success('Dados atualizados.');
   };
 
+  const handleToggleSuperAdmin = async (targetUserId: string, newValue: boolean) => {
+    if (!currentUser?.isSuperAdmin) {
+      toast.error('Apenas Super Admin pode alterar esta permissão.');
+      return;
+    }
+
+    try {
+      const { error } = await supabase.rpc('set_user_super_admin', {
+        p_actor_id: currentUser.id,
+        p_target_id: targetUserId,
+        p_value: newValue
+      });
+
+      if (error) throw error;
+
+      // Atualiza lista local de usuários
+      setUsers((prev) =>
+        prev.map((u) => (u.id === targetUserId ? { ...u, isSuperAdmin: newValue } : u))
+      );
+
+      toast.success('Permissão de Super Admin atualizada.');
+    } catch (e: any) {
+      const msg =
+        e?.message === 'cannot_remove_last_super_admin'
+          ? 'Não é permitido remover o último Super Admin.'
+          : 'Erro ao atualizar Super Admin.';
+
+      toast.error(msg);
+    }
+  };
+
   const handleDeleteUser = async (userId: string) => {
     setConfirmModal({
         isOpen: true,
@@ -1874,6 +1905,7 @@ const toggleFavorites = () => {
                 onUpdateUserDetails={handleUpdateUserDetails}
                 onDeleteUser={handleDeleteUser}
                 onAddUser={handleAddUser}
+                onToggleSuperAdmin={handleToggleSuperAdmin}
                 categories={categories}
                 onUpdateCategory={handleUpdateCategory}
                 onDeleteCategory={handleDeleteCategory}
