@@ -1005,9 +1005,10 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Usuário</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Função</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Super Admin
+                           Super Admin
                         </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ação</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                          Ação</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -1030,16 +1031,17 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                              </span>
                            </td>
                            <td className="px-4 py-3 whitespace-nowrap">
-                             <select
+                              <select
                                 value={u.role}
                                 disabled={!actorIsAdmin || (!isSuperAdmin && u.role === 'ADMIN')}
-                                onChange={(e) => onUpdateUserRole(u.id, e.target.value as Role)}
-                                className="text-xs border-gray-300 dark:border-gray-600 rounded shadow-sm bg-white dark:bg-gray-700 dark:text-white px-2 py-1 disabled:opacity-50"
-                             >
+                                onChange={(e) => onUpdateRoleId(u.id, e.target.value as Role)}
+                                className="text-xs border-gray-300 dark:border-gray-600 rounded shadow-sm bg-white dark:bg-gray-700 dark:text-white px-2 py-1"
+                              >
                                 <option value="READER">Leitor</option>
                                 <option value="EDITOR">Editor</option>
                                 {actorIsAdmin && <option value="ADMIN">Admin</option>}
-                             </select>
+                              </select>
+                            </td>
                            </td>
                            <td className="px-4 py-3 whitespace-nowrap">
                              {isSuperAdmin ? (
