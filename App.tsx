@@ -1209,31 +1209,42 @@ const handleUpdateUserDetails = async (userId: string, data: Partial<User>) => {
   };
 
   const handleToggleSuperAdmin = async (targetUserId: string, newValue: boolean) => {
-    if (isMockUser(currentUser)) {
-      toast.info("Modo mock: edição de usuário desativada.");
-      return;
+    if (!currentUser) return;
+
+  // Regra local (UX)
+  if (!currentUser.isSuperAdmin) {
+    toast.error('Apenas Super Admin pode alterar esta permissão.');
+    return;
+  }
+
+  try {
+    const { error } = await supabase.rpc('set_user_super_admin', {
+      p_actor_id: String(currentUser.id),
+      p_target_id: String(targetUserId),
+      p_value: Boolean(newValue),
+    });
+
+    if (error) throw error;
+
+    // versão "à prova de parênteses": não usa bloco { } no map
+    setUsers(prev =>
+      prev.map(u =>
+        u.id === targetUserId
+          ? { ...u, isSuperAdmin: newValue, role: newValue ? 'ADMIN' : u.role }
+          : u
+      )
+    );
+
+    toast.success('Super Admin atualizado e salvo no banco.');
+  } catch (e: any) {
+      console.error('set_user_super_admin error:', e);
+      const msg =
+        e?.message === 'cannot_remove_last_super_admin'
+          ? 'Não é permitido remover o último Super Admin.'
+          : (e?.message || 'Falha ao salvar Super Admin no banco.');
+      toast.error(msg);
     }
-    if (!currentUser?.isSuperAdmin) {
-      toast.error('Apenas Super Admin pode alterar esta permissão.');
-      return;
-    }
-
-    try {
-      const { error } = await supabase.rpc('set_user_super_admin', {
-        p_actor_id: currentUser.id,
-        p_target_id: targetUserId,
-        p_value: newValue
-      });
-
-      if (error) throw error;
-
-      setUsers(prev => prev.map(u => {
-        if (u.id !== targetUserId) return u;
-        return {
-          ...u,
-          isSuperAdmin: newValue,
-          role: newValue ? 'ADMIN' : u.role, // ao promover, vira ADMIN; ao demover, mantém role original
-        };
+  };
       }));
 
       toast.success('Super Admin atualizado e salvo no banco.');
