@@ -1242,22 +1242,9 @@ const handleUpdateUserDetails = async (userId: string, data: Partial<User>) => {
         e?.message === 'cannot_remove_last_super_admin'
           ? 'Não é permitido remover o último Super Admin.'
           : (e?.message || 'Falha ao salvar Super Admin no banco.');
-      toast.error(msg);
-    }
-  };
-      }));
-
-      toast.success('Super Admin atualizado e salvo no banco.');
-    } catch (e: any) {
-      console.error('set_user_super_admin error:', e);
-      const msg =
-        e?.message === 'cannot_remove_last_super_admin'
-          ? 'Não é permitido remover o último Super Admin.'
-          : (e?.message || 'Falha ao salvar Super Admin no banco.');
-      toast.error(msg);
-    }
-  };
-      }));
+       toast.error(msg);
+     }
+   };
 
       toast.success('Super Admin atualizado e salvo no banco.');
     } catch (e: any) {
