@@ -1067,26 +1067,62 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                  {u.isSuperAdmin ? 'Sim' : 'Não'}
                                </span>
                              )}
-                           </td>
-                           <td className="px-4 py-3 whitespace-nowrap text-right">
-                             <div className="flex items-center justify-end gap-2">
-                                 <button
+                            </td>
+                           <td className="px-4 py-3 whitespace-nowrap">
+                            <td className="px-4 py-3 whitespace-nowrap text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <button
                                      onClick={() => startEditingUser(u)}
                                      className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
                                      title="Editar Dados"
                                  >
                                      <Edit size={16} />
                                  </button>
-                             </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-               </div>
-            </div>
-          )}
+                                 {isSuperAdmin ? (
+                                  <button
+                                    onClick={() => onToggleSuperAdmin(u.id, !u.isSuperAdmin)}
+                                    className="inline-flex items-center gap-2 px-2 py-1 rounded-md text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                    title="Alternar Super Admin"
+                                  >
+                                    {u.isSuperAdmin ? (
+                                      <ToggleRight size={16} className="text-blue-600" />
+                                      <span className="text-gray-900 dark:text-white">Sim</span>
+                                    </>
+                                  ) : (
+                                      <ToggleLeft size={16} className="text-gray-400" />
+                                      <span className="text-gray-700 dark:text-gray-300">Não</span>
+                                    </>
+                                  )}                                
+                                <button
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  {u.isSuperAdmin ? 'Sim' : 'Não'}
+                                </span>
+                            )}
+                            </div>
+                           </td>
+                           <td className="px-4 py-3 whitespace-nowrap">
+                            <td className="px-4 py-3 whitespace-nowrap text-center">
+                              <strong>Ação</strong>
+                            </td>
+                           </td>
+                           <td className="px-4 py-3 whitespace-nowrap text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                      onClick={() => startEditingUser(u)}
+                                      className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                      title="Editar Dados"
+                                >
+                                      <Edit size={16} />
+                                </button>
+                                <button
+                                      onClick={() => onDeleteUser(u.id)}
+                                      className="p-1 text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                                      title="Excluir Usuário"
+                                >
+                                      <Trash2 size={16} />
+                                </button>
+                              </div>
+                           </td>
 
           {activeTab === 'APPROVAL' && (
             <div className="space-y-6">
