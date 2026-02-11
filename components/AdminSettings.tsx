@@ -1398,35 +1398,35 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                              </tr>
                           ))}
                        </tbody>
-                    </table>
-                  </div>
-                )}
-             </div>
-          )}
+</table>
+                   </div>
+                 )}
+              </div>
+           )}
         </div>
       </div>
    };
 
   if (mode === 'page') {
-     return (
-       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-         <div className="max-w-7xl mx-auto h-[calc(100vh-3rem)]">
-           <div className="flex items-center justify-between mb-6">
-             <div>
-               <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Configurações de Admin</h1>
-               <p className="text-gray-600 dark:text-gray-400">Gerencie as configurações do sistema</p>
-             </div>
-             <Button variant="secondary" onClick={onClose}>Fechar</Button>
-           </div>
-           {body}
-         </div>
-       </div>
-     );
-   }
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+        <div className="max-w-7xl mx-auto h-[calc(100vh-3rem)]">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Configurações de Admin</h1>
+              <p className="text-gray-600 dark:text-gray-400">Gerencie as configurações do sistema</p>
+            </div>
+            <Button variant="secondary" onClick={onClose}>Fechar</Button>
+          </div>
+          {body}
+        </div>
+      </div>
+    );
+  }
 
-   return (
-     <Modal isOpen={isOpen} onClose={onClose}>
-       {body}
-     </Modal>
-   );
- };
+  return (
+    <Modal isOpen={isOpen} onClose={onClose}>
+      {body}
+    </Modal>
+  );
+};
