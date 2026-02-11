@@ -1103,10 +1103,10 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                  </span>
 )}
                              </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-center">
-                               <strong>Ação</strong>
-                            </td>
-                           <td className="px-4 py-3 whitespace-nowrap text-right">
+                             <td className="px-4 py-3 whitespace-nowrap text-center">
+                                <strong>Ação</strong>
+                             </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-right">
                               <div className="flex items-center justify-end gap-2">
                                 <button
                                       onClick={() => startEditingUser(u)}
@@ -1404,12 +1404,13 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
           )}
         </div>
 </div>
-   );
+     );
+  };
 
-   if (mode === 'page') {
-     return (
-       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-         <div className="max-w-7xl mx-auto h-[calc(100vh-3rem)]">
+  if (mode === 'page') {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+        <div className="max-w-7xl mx-auto h-[calc(100vh-3rem)]">
            <div className="flex items-center justify-between mb-6">
              <div>
                <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Configurações de Admin</h1>
