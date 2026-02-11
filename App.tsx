@@ -1213,7 +1213,7 @@ const handleUpdateUserDetails = async (userId: string, data: Partial<User>) => {
 
     // Regra local (UX)
     if (!currentUser.isSuperAdmin) {
-      toast.error('Apenas Super Admin pode alterar esta permissão.');
+      toast.error('Somente Super Admin pode alterar esta permissão.');
       return;
     }
 
@@ -1221,18 +1221,15 @@ const handleUpdateUserDetails = async (userId: string, data: Partial<User>) => {
       const { error } = await supabase.rpc('set_user_super_admin', {
         p_actor_id: String(currentUser.id),
         p_target_id: String(targetUserId),
-        p_value: Boolean(newValue),
+        p_value: Boolean(newValue)
       });
 
       if (error) throw error;
 
-      setUsers(prev =>
-        prev.map(u =>
-          u.id === targetUserId
-            ? { ...u, isSuperAdmin: newValue, role: newValue ? 'ADMIN' : u.role }
-            : u
-        )
-      );
+      // atualização do state (sem blocos desnecessários)
+      setUsers(prev => prev.map(u =>
+        u.id === targetUserId ? { ...u, isSuperAdmin: newValue, role: newValue ? 'ADMIN' : u.role } : u
+      ));
 
       toast.success('Super Admin atualizado e salvo no banco.');
     } catch (e: any) {
