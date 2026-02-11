@@ -1068,8 +1068,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                </span>
                              )}
                             </td>
-                           <td className="px-4 py-3 whitespace-nowrap">
-                            <td className="px-4 py-3 whitespace-nowrap text-right">
+                           <td className="px-4 py-3 whitespace-nowrap text-right">
                               <div className="flex items-center justify-end gap-2">
                                 <button
                                      onClick={() => startEditingUser(u)}
