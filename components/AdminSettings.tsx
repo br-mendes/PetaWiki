@@ -1405,68 +1405,29 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
              </div>
           )}
         </div>
-      </div>
-  );
+</div>
+   );
 
-  return (
-    <>
-    {mode === 'page' ? (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-        <div className="max-w-7xl mx-auto h-[calc(100vh-3rem)]">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Configurações de Admin</h1>
-              <p className="text-gray-600 dark:text-gray-400">Gerencie as configurações do sistema</p>
-            </div>
-            <Button variant="secondary" onClick={onClose}>Fechar</Button>
-          </div>
-          <div className="h-[calc(100%-6rem)]">
-            {body}
-          </div>
-        </div>
-      </div>
-    ) : (
-      <Modal isOpen={isOpen} onClose={onClose} title="Configurações de Admin" size="lg">
-        {body}
-      </Modal>
-    )}
+   if (mode === 'page') {
+     return (
+       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+         <div className="max-w-7xl mx-auto h-[calc(100vh-3rem)]">
+           <div className="flex items-center justify-between mb-6">
+             <div>
+               <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Configurações de Admin</h1>
+               <p className="text-gray-600 dark:text-gray-400">Gerencie as configurações do sistema</p>
+             </div>
+             <Button variant="secondary" onClick={onClose}>Fechar</Button>
+           </div>
+           {body}
+         </div>
+       </div>
+     );
+   }
 
-    {/* User Edit Modal */}
-    <Modal isOpen={!!editingUser} onClose={() => setEditingUser(null)} title="Editar Usuário" size="sm">
-        <div className="space-y-4">
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome de Exibição</label>
-                <input 
-                    type="text" 
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-blue-500 outline-none"
-                />
-            </div>
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">E-mail (Login)</label>
-                <input 
-                    type="email" 
-                    value={editEmail}
-                    onChange={(e) => setEditEmail(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-blue-500 outline-none"
-                />
-            </div>
-            <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Departamento (Cargo)</label>
-                <input 
-                    type="text" 
-                    value={editDepartment}
-                    onChange={(e) => setEditDepartment(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-blue-500 outline-none"
-                />
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-                <Button variant="ghost" onClick={() => setEditingUser(null)}>Cancelar</Button>
-                <Button onClick={saveEditedUser}>Salvar Alterações</Button>
-            </div>
-        </div>
-    </Modal>
-    </>
-  );
-};
+   return (
+     <Modal isOpen={isOpen} onClose={onClose}>
+       {body}
+     </Modal>
+   );
+ };
