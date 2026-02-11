@@ -1404,7 +1404,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                 )}
              </div>
           )}
-</div>
+        </div>
       </div>
    };
 
