@@ -1404,11 +1404,11 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                 )}
              </div>
           )}
-        </div>
 </div>
-   );
+      </div>
+   };
 
-   if (mode === 'page') {
+  if (mode === 'page') {
      return (
        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
          <div className="max-w-7xl mx-auto h-[calc(100vh-3rem)]">
