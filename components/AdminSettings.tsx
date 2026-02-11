@@ -1079,25 +1079,29 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                  >
                                      <Edit size={16} />
                                  </button>
-                                 {isSuperAdmin ? (
-                                  <button
-                                    onClick={() => onToggleSuperAdmin(u.id, !u.isSuperAdmin)}
-                                    className="inline-flex items-center gap-2 px-2 py-1 rounded-md text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
-                                    title="Alternar Super Admin"
-                                  >
-                                    {u.isSuperAdmin ? (
-                                      <ToggleRight size={16} className="text-blue-600" />
-                                      <span className="text-gray-900 dark:text-white">Sim</span>
-                                    </>
-                                  ) : (
-                                      <ToggleLeft size={16} className="text-gray-400" />
-                                      <span className="text-gray-700 dark:text-gray-300">Não</span>
-                                    </>
-                                  )}                                
-                                <button
-                                <span className="text-xs text-gray-500 dark:text-gray-400">
-                                  {u.isSuperAdmin ? 'Sim' : 'Não'}
-                                </span>
+{isSuperAdmin ? (
+                                   <button
+                                     onClick={() => onToggleSuperAdmin(u.id, !u.isSuperAdmin)}
+                                     className="inline-flex items-center gap-2 px-2 py-1 rounded-md text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
+                                     title="Alternar Super Admin"
+                                   >
+                                     {u.isSuperAdmin ? (
+                                       <>
+                                         <ToggleRight size={16} className="text-blue-600" />
+                                         <span className="text-gray-900 dark:text-white">Sim</span>
+                                       </>
+                                   ) : (
+                                       <>
+                                         <ToggleLeft size={16} className="text-gray-400" />
+                                         <span className="text-gray-700 dark:text-gray-300">Não</span>
+                                       </>
+                                   )}
+                                 </button>
+                               ) : (
+                                 <span className="text-xs text-gray-500 dark:text-gray-400">
+                                   {u.isSuperAdmin ? 'Sim' : 'Não'}
+                                 </span>
+                               )}
                             )}
                             </div>
                            </td>
