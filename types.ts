@@ -9,6 +9,16 @@ export type SupportedLanguage = 'pt' | 'en' | 'es' | 'fr' | 'de' | 'it';
 
 export type TranslationStatus = 'SYNCED' | 'OUT_OF_SYNC' | 'ERROR';
 
+export interface NotificationItem {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  is_read: boolean;
+  created_at: string;
+  user_id: string;
+}
+
 export interface FooterLink {
   label: string;
   url: string;

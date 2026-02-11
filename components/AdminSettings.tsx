@@ -12,6 +12,7 @@ import { DEFAULT_SYSTEM_SETTINGS } from '../constants';
 import { RichTextEditor } from './RichTextEditor';
 import { ICON_MAP, IconRenderer } from './IconRenderer';
 import { supabase } from '../lib/supabase';
+import { useNotifications } from '../hooks/useNotifications';
 
 interface AdminSettingsProps {
   mode?: 'modal' | 'page';
@@ -72,6 +73,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   onPermanentDeleteDocument
 }) => {
   const toast = useToast();
+  const { notifications, markAllAsRead, clearNotifications, addNotification } = useNotifications();
   const [activeTab, setActiveTab] = useState<'BRANDING' | 'FOOTER' | 'SECURITY' | 'USERS' | 'APPROVAL' | 'CATEGORIES' | 'TRASH'>('BRANDING');
 
   // identifica o usuário logado
