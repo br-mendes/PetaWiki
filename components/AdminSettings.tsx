@@ -420,7 +420,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
               onClick={() => setActiveTab('BRANDING')}
               className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'BRANDING' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
             >
-              <Layout size={16} /> Layout & Home
+              <Layout size={16} /> Layout &amp; Home
             </button>
           )}
           {isSuperAdmin && (
