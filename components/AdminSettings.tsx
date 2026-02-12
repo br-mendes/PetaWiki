@@ -1085,21 +1085,22 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                     title="Alternar Super Admin"
                                   >
 {u.isSuperAdmin ? (
-                                       <>
-                                         <ToggleRight size={16} className="text-blue-600" />
-                                         <span className="text-gray-900 dark:text-white">Sim</span>
-                                       </>
-                                   ) : (
-                                       <>
-                                         <ToggleLeft size={16} className="text-gray-400" />
-                                         <span className="text-gray-700 dark:text-gray-300">Não</span>
-                                       </>
-)}
-                                 </button>
-                                 <span className="text-xs text-gray-500 dark:text-gray-400">
-                                   {u.isSuperAdmin ? 'Sim' : 'Não'}
-                                 </span>
-                             )}
+                                        <>
+                                          <ToggleRight size={16} className="text-blue-600" />
+                                          <span className="text-gray-900 dark:text-white">Sim</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                          <ToggleLeft size={16} className="text-gray-400" />
+                                          <span className="text-gray-700 dark:text-gray-300">Não</span>
+                                        </>
+                                    )}
+                                  </button>
+                                ) : (
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                                    {u.isSuperAdmin ? 'Sim' : 'Não'}
+                                  </span>
+                                )}
                             </div>
                            </td>
                            <td className="px-4 py-3 whitespace-nowrap">
