@@ -1404,11 +1404,10 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
           )}
         </div>
       </div>
-  );
+);
 
-  return (
-    <>
-    {mode === 'page' ? (
+  if (mode === 'page') {
+    return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
         <div className="max-w-7xl mx-auto h-[calc(100vh-3rem)]">
           <div className="flex items-center justify-between mb-6">
@@ -1418,19 +1417,18 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
             </div>
             <Button variant="secondary" onClick={onClose}>Fechar</Button>
           </div>
-          <div className="h-[calc(100%-6rem)]">
-            {body}
-          </div>
+          {body}
         </div>
       </div>
-    ) : (
-      <Modal isOpen={isOpen} onClose={onClose} title="Configurações de Admin" size="lg">
-        {body}
-      </Modal>
-    )}
+    );
+  }
 
-    {/* User Edit Modal */}
-    <Modal isOpen={!!editingUser} onClose={() => setEditingUser(null)} title="Editar Usuário" size="sm">
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Configurações de Admin" size="lg">
+      {body}
+    </Modal>
+  );
+};
         <div className="space-y-4">
             <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome de Exibição</label>
