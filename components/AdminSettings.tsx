@@ -1121,9 +1121,11 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                       title="Excluir Usuário"
                                 >
                                       <Trash2 size={16} />
-                                </button>
-                              </div>
-                           </td>
+</button>
+                               </div>
+                            </td>
+                         </tr>
+           ))}
 
           {activeTab === 'APPROVAL' && (
             <div className="space-y-6">
