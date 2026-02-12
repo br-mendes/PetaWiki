@@ -1065,9 +1065,9 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                    </button>
                                <span className="text-xs text-gray-500 dark:text-gray-400">
                                  {u.isSuperAdmin ? 'Sim' : 'Não'}
-                               </span>
-                             )}
-                            </td>
+</span>
+)}
+                             </td>
                            <td className="px-4 py-3 whitespace-nowrap">
                             <td className="px-4 py-3 whitespace-nowrap text-right">
                               <div className="flex items-center justify-end gap-2">
