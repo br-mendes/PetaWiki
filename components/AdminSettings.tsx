@@ -1398,7 +1398,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                              </tr>
                           ))}
                        </tbody>
-</table>
+                     </table>
                    </div>
                  )}
               </div>
