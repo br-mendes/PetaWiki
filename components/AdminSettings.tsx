@@ -1042,9 +1042,10 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                 <option value="EDITOR">Editor</option>
                                 {actorIsAdmin && <option value="ADMIN">Admin</option>}
                               </select>
-                            </td>
-                           </td>
-                           <td className="px-4 py-3 whitespace-nowrap">
+</td>
+                            <td className="px-4 py-3 whitespace-nowrap text-center">
+                               <strong>Ação</strong>
+                             </td>
                              {isSuperAdmin ? (
                                <button
                                  onClick={() => onToggleSuperAdmin(u.id, !u.isSuperAdmin)}
