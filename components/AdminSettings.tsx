@@ -420,7 +420,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
               onClick={() => setActiveTab('BRANDING')}
               className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'BRANDING' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
             >
-              <Layout size={16} /> Layout &amp; Home
+              <Layout size={16} /> Layout & Home
             </button>
           )}
           {isSuperAdmin && (
@@ -1041,9 +1041,10 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                 <option value="READER">Leitor</option>
                                 <option value="EDITOR">Editor</option>
                                 {actorIsAdmin && <option value="ADMIN">Admin</option>}
-</select>
-                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
+                              </select>
+                            </td>
+                           </td>
+                           <td className="px-4 py-3 whitespace-nowrap">
                              {isSuperAdmin ? (
                                <button
                                  onClick={() => onToggleSuperAdmin(u.id, !u.isSuperAdmin)}
@@ -1061,12 +1062,12 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                      <span className="text-gray-700 dark:text-gray-300">Não</span>
                                    </>
                                  )}
-</button>
-                                ) : (
-                                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                                    {u.isSuperAdmin ? 'Sim' : 'Não'}
-                                  </span>
-                                )}
+                               </button>
+                             ) : (
+                               <span className="text-xs text-gray-500 dark:text-gray-400">
+                                 {u.isSuperAdmin ? 'Sim' : 'Não'}
+                               </span>
+                             )}
                             </td>
                            <td className="px-4 py-3 whitespace-nowrap">
                             <td className="px-4 py-3 whitespace-nowrap text-right">
@@ -1084,29 +1085,28 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                     className="inline-flex items-center gap-2 px-2 py-1 rounded-md text-xs bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700"
                                     title="Alternar Super Admin"
                                   >
-{u.isSuperAdmin ? (
-                                        <>
-                                          <ToggleRight size={16} className="text-blue-600" />
-                                          <span className="text-gray-900 dark:text-white">Sim</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                          <ToggleLeft size={16} className="text-gray-400" />
-                                          <span className="text-gray-700 dark:text-gray-300">Não</span>
-                                        </>
-                                    )}
-                                  </button>
-                                ) : (
-                                  <span className="text-xs text-gray-500 dark:text-gray-400">
-                                    {u.isSuperAdmin ? 'Sim' : 'Não'}
-                                  </span>
-)}
-                              </td>
-                              </td>
+                                    {u.isSuperAdmin ? (
+                                      <ToggleRight size={16} className="text-blue-600" />
+                                      <span className="text-gray-900 dark:text-white">Sim</span>
+                                    </>
+                                  ) : (
+                                      <ToggleLeft size={16} className="text-gray-400" />
+                                      <span className="text-gray-700 dark:text-gray-300">Não</span>
+                                    </>
+                                  )}                                
+                                <button
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  {u.isSuperAdmin ? 'Sim' : 'Não'}
+                                </span>
+                            )}
+                            </div>
+                           </td>
+                           <td className="px-4 py-3 whitespace-nowrap">
                             <td className="px-4 py-3 whitespace-nowrap text-center">
-                               <strong>Ação</strong>
-                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-right">
+                              <strong>Ação</strong>
+                            </td>
+                           </td>
+                           <td className="px-4 py-3 whitespace-nowrap text-right">
                               <div className="flex items-center justify-end gap-2">
                                 <button
                                       onClick={() => startEditingUser(u)}
@@ -1121,11 +1121,9 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                       title="Excluir Usuário"
                                 >
                                       <Trash2 size={16} />
-</button>
-                               </div>
-                            </td>
-                         </tr>
-           ))}
+                                </button>
+                              </div>
+                           </td>
 
           {activeTab === 'APPROVAL' && (
             <div className="space-y-6">
@@ -1406,10 +1404,11 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
           )}
         </div>
       </div>
-);
+  );
 
-  if (mode === 'page') {
-    return (
+  return (
+    <>
+    {mode === 'page' ? (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
         <div className="max-w-7xl mx-auto h-[calc(100vh-3rem)]">
           <div className="flex items-center justify-between mb-6">
@@ -1419,18 +1418,19 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
             </div>
             <Button variant="secondary" onClick={onClose}>Fechar</Button>
           </div>
-          {body}
+          <div className="h-[calc(100%-6rem)]">
+            {body}
+          </div>
         </div>
       </div>
-    );
-  }
+    ) : (
+      <Modal isOpen={isOpen} onClose={onClose} title="Configurações de Admin" size="lg">
+        {body}
+      </Modal>
+    )}
 
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Configurações de Admin" size="lg">
-      {body}
-    </Modal>
-  );
-};
+    {/* User Edit Modal */}
+    <Modal isOpen={!!editingUser} onClose={() => setEditingUser(null)} title="Editar Usuário" size="sm">
         <div className="space-y-4">
             <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome de Exibição</label>
