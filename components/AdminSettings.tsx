@@ -1101,9 +1101,8 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                     {u.isSuperAdmin ? 'Sim' : 'Não'}
                                   </span>
 )}
-                              )}
                              </td>
-                            </td>
+                             </td>
                             <td className="px-4 py-3 whitespace-nowrap text-center">
                                <strong>Ação</strong>
                              </td>
