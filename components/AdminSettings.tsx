@@ -1061,12 +1061,12 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                                      <span className="text-gray-700 dark:text-gray-300">Não</span>
                                    </>
                                  )}
-                               </button>
-                             ) : (
-                               <span className="text-xs text-gray-500 dark:text-gray-400">
-                                 {u.isSuperAdmin ? 'Sim' : 'Não'}
-                               </span>
-                             )}
+</button>
+                                ) : (
+                                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                                    {u.isSuperAdmin ? 'Sim' : 'Não'}
+                                  </span>
+                                )}
                             </td>
                            <td className="px-4 py-3 whitespace-nowrap">
                             <td className="px-4 py-3 whitespace-nowrap text-right">
