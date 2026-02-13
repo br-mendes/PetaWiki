@@ -2084,46 +2084,16 @@ const App = () => {
     <BrowserRouter>
       <ToastProvider>
         <Routes>
-          {/* Core Routes */}
-          <Route path="/" element={<AppContent />} />
-          <Route path="/categoria/:categoryId" element={<CategoryViewRoute />} />
-          <Route path="/documento/:docId" element={<DocumentViewRoute />} />
-          <Route path="/documento/:docId/:action" element={<DocumentViewRoute />} />
-          <Route path="/documento/:docId/comentarios" element={<DocumentCommentsRoute />} />
-          <Route path="/documento/:docId/exportar" element={<DocumentExportRoute />} />
-          <Route path="/documento/:docId/exportar/:format" element={<DocumentExportRoute />} />
-          <Route path="/novo" element={<NewDocumentRoute />} />
-          
-          {/* Organization Structure */}
-          <Route path="/departamentos" element={<DepartmentsRoute />} />
-          <Route path="/departamento/:id" element={<DepartmentViewRoute />} />
-          <Route path="/areas" element={<AreasRoute />} />
-          <Route path="/area/:id" element={<AreaViewRoute />} />
-          
-          {/* User Features */}
-          <Route path="/favoritos" element={<FavoritesRoute />} />
-          <Route path="/notificacoes" element={<NotificationsRoute />} />
-          <Route path="/perfil" element={<ProfileRoute />} />
-          <Route path="/perfil/:id" element={<UserProfileRoute />} />
-          
-          {/* Templates */}
-          <Route path="/templates" element={<TemplatesRoute />} />
-          <Route path="/template/:id" element={<TemplateViewRoute />} />
-          
-          {/* Admin & Analytics */}
-          <Route path="/analytics" element={<AnalyticsRoute />} />
-          <Route path="/admin" element={<AdminRoute />} />
-          <Route path="/revisoes" element={<ReviewRoute />} />
-          <Route path="/revisoes/:docId" element={<ReviewRoute />} />
-          <Route path="/exports" element={<ExportsRoute />} />
-          
-          {/* 404 */}
-          <Route path="*" element={<NotFoundPage />} />
+          {/* (Opcional) página 404 dedicada */}
+          <Route path="/404" element={<NotFoundPage />} />
+
+          {/*  AppContent único: evita remount e tela branca ao navegar */}
+          <Route path="/*" element={<AppContent />} />
         </Routes>
       </ToastProvider>
     </BrowserRouter>
   );
 };
 
-export { AppContent, NotificationsRoute };
+export { AppContent };
 export default App;
