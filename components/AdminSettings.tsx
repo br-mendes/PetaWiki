@@ -13,10 +13,12 @@ import { useNotifications } from '../hooks/useNotifications';
 interface AdminSettingsProps {
   isOpen: boolean;
   onClose: () => void;
+  actorUserId: string;
   settings: SystemSettings;
   onSaveSettings: (settings: SystemSettings) => void;
   users: User[];
   onUpdateUserRole: (userId: string, newRole: Role) => void;
+  onUpdateUserSuperAdmin: (userId: string, isSuperAdmin: boolean) => void;
   onDeleteUser: (userId: string) => void; // New prop
   onAddUser: (user: Partial<User>) => void;
   categories: Category[]; 
@@ -32,10 +34,12 @@ interface AdminSettingsProps {
 export const AdminSettings: React.FC<AdminSettingsProps> = ({
   isOpen,
   onClose,
+  actorUserId,
   settings,
   onSaveSettings,
   users,
   onUpdateUserRole,
+  onUpdateUserSuperAdmin,
   onDeleteUser,
   onAddUser,
   categories,
@@ -47,7 +51,16 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   onPermanentDeleteDocument
 }) => {
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<'BRANDING' | 'SECURITY' | 'USERS' | 'CATEGORIES' | 'TRASH'>('BRANDING');
+  const [activeTab, setActiveTab] = useState<'BRANDING' | 'FOOTER' | 'SECURITY' | 'USERS' | 'CATEGORIES' | 'TRASH'>('BRANDING');
+
+  const actorUser = useMemo(() => users.find(u => u.id === actorUserId) || null, [users, actorUserId]);
+  const isActorSuperAdmin = !!actorUser?.isSuperAdmin;
+
+  useEffect(() => {
+    if (!isActorSuperAdmin && (activeTab === 'BRANDING' || activeTab === 'FOOTER' || activeTab === 'SECURITY')) {
+      setActiveTab('USERS');
+    }
+  }, [isActorSuperAdmin, activeTab]);
   
   // Branding State
   const [appName, setAppName] = useState(settings.appName);
@@ -191,18 +204,30 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
       <div className="flex flex-col md:flex-row gap-6 min-h-[500px]">
         {/* Sidebar */}
         <div className="w-full md:w-48 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 pr-0 md:pr-4 space-y-1 mb-4 md:mb-0 shrink-0">
-          <button
-            onClick={() => setActiveTab('BRANDING')}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'BRANDING' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
-          >
-            <Layout size={16} /> Layout & Home
-          </button>
-          <button
-            onClick={() => setActiveTab('SECURITY')}
-            className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'SECURITY' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
-          >
-            <ShieldCheck size={16} /> Segurança
-          </button>
+          {isActorSuperAdmin && (
+            <>
+              <button
+                onClick={() => setActiveTab('BRANDING')}
+                className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'BRANDING' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
+              >
+                <Layout size={16} /> Layout & Home
+              </button>
+
+              <button
+                onClick={() => setActiveTab('FOOTER')}
+                className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'FOOTER' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
+              >
+                <Columns size={16} /> Rodapé
+              </button>
+
+              <button
+                onClick={() => setActiveTab('SECURITY')}
+                className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'SECURITY' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
+              >
+                <ShieldCheck size={16} /> Segurança
+              </button>
+            </>
+          )}
           <button
             onClick={() => setActiveTab('USERS')}
             className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'USERS' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700'}`}
@@ -476,8 +501,9 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                     <thead className="bg-gray-50 dark:bg-gray-800">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Usuário</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Função</th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ação</th>
+<th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Função</th>
+                         <th className="px-4 py-3 text-left text-[10px] font-medium text-gray-500 dark:text-gray-400 uppercase">Super Admin</th>
+                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Ação</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -496,13 +522,28 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                               u.role === 'EDITOR' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                             }`}>
                               {u.role}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-right">
-                            <div className="flex items-center justify-end gap-2">
-                                <select 
-                                value={u.role}
-                                onChange={(e) => onUpdateUserRole(u.id, e.target.value as Role)}
+</span>
+                           </td>
+                           <td className="px-4 py-3 whitespace-nowrap">
+                             {isActorSuperAdmin ? (
+                               <button
+                                 onClick={() => onUpdateUserSuperAdmin(u.id, !u.isSuperAdmin)}
+                                 className={`px-2 py-1 rounded text-[10px] border ${
+                                   u.isSuperAdmin ? 'bg-blue-600 text-white border-blue-600' : 'bg-gray-700 text-white border-gray-600'
+                                 }`}
+                                 title="Alternar Super Admin"
+                               >
+                                 {u.isSuperAdmin ? 'Sim' : 'Não'}
+                               </button>
+                             ) : (
+                               <span className="text-[10px] text-gray-400">{u.isSuperAdmin ? 'Sim' : 'Não'}</span>
+                             )}
+                           </td>
+                           <td className="px-4 py-3 whitespace-nowrap text-right">
+                             <div className="flex items-center justify-end gap-2">
+                                 <select 
+                                 value={u.role}
+                                 onChange={(e) => onUpdateUserRole(u.id, e.target.value as Role)}
                                 className="text-xs border-gray-300 dark:border-gray-600 rounded shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50 bg-white dark:bg-gray-700 dark:text-white"
                                 >
                                 <option value="READER">Leitor</option>
