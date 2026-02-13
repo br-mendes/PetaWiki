@@ -27,13 +27,21 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const [fontSize, setFontSize] = useState('3');
   const toast = useToast();
 
-  // Sync initial value only once to prevent cursor jumping
   useEffect(() => {
-    if (contentRef.current && contentRef.current.innerHTML !== value) {
-      if (value === '' && contentRef.current.innerHTML === '<br>') return;
-      contentRef.current.innerHTML = value;
+    const el = contentRef.current;
+    if (!el) return;
+
+
+    // evita quebrar o cursor enquanto usuário digita
+    const isFocused = document.activeElement === el;
+    if (isFocused) return;
+
+
+    const next = value || '';
+    if (el.innerHTML !== next) {
+      el.innerHTML = next;
     }
-  }, []); 
+  }, [value]);
 
   const handleInput = () => {
     if (contentRef.current) {
