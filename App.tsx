@@ -1986,7 +1986,7 @@ const toggleFavorites = () => {
             </LazyWrapper>
           )}
 
-          {currentView === 'ADMIN_SETTINGS' && currentUser && currentUser.role === 'ADMIN' && (
+{currentView === 'ADMIN_SETTINGS' && currentUser && (currentUser.role === 'ADMIN' || currentUser.isSuperAdmin) && (
             <LazyWrapper>
               <AdminSettings
                 mode="page"
@@ -1995,7 +1995,7 @@ const toggleFavorites = () => {
                 settings={systemSettings}
                 onSaveSettings={handleSaveSettingsGlobal}
                 users={users}
-onUpdateUserRole={handleUpdateUserRole}
+                onUpdateUserRole={handleUpdateUserRole}
                 onUpdateUserSuperAdmin={handleUpdateUserSuperAdmin}
                 onUpdateUserDetails={handleUpdateUserDetails}
                 onDeleteUser={handleDeleteUser}
@@ -2011,6 +2011,12 @@ onUpdateUserRole={handleUpdateUserRole}
                 onOpenReviewCenter={(docId) => openReviewCenter(docId)}
               />
             </LazyWrapper>
+          )}
+
+          {currentView === 'ADMIN_SETTINGS' && currentUser && !(currentUser.role === 'ADMIN' || currentUser.isSuperAdmin) && (
+            <div className="p-6 text-sm text-gray-700 dark:text-gray-200">
+              Acesso restrito. Você não tem permissão para abrir o painel administrativo.
+            </div>
           )}
 
           {currentView === 'NOTIFICATIONS' && (
