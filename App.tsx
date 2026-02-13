@@ -1,6 +1,14 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback, memo } from 'react';
-import { BrowserRouter, Routes, Route, useNavigate, useParams, useSearchParams, Navigate } from 'react-router-dom';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useNavigate,
+  useSearchParams,
+  useLocation,
+  matchPath,
+} from 'react-router-dom';
 import { listCategories, createCategory, renameCategory, deleteCategory, type Category } from "./lib/categories";
 import { CategoryTree } from "./components/CategoryTree";
 import { Sidebar } from './components/Sidebar';
@@ -164,10 +172,24 @@ const AppContent = () => {
   // Notifications State
   const [notifications, setNotifications] = useState([]);
 
-  // ========== ROUTING HOOKS ==========
+// ========== ROUTING HOOKS ==========
   const navigate = useNavigate();
-  const params = useParams<{ categoryId?: string; docId?: string; action?: string }>();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+
+
+  const path = location.pathname;
+
+
+  const categoryMatch = matchPath('/categoria/:categoryId', path);
+  const docMatch = matchPath('/documento/:docId/:action?', path);
+  const reviewMatch = matchPath('/revisoes/:docId', path);
+
+
+  const categoryIdFromUrl = categoryMatch?.params?.categoryId;
+  const docIdFromUrl = docMatch?.params?.docId;
+  const docActionFromUrl = docMatch?.params?.action;
+  const reviewDocIdFromUrl = reviewMatch?.params?.docId;
 
   // Single unified useEffect for all URL handling - simplified without flags
   useEffect(() => {
@@ -197,15 +219,15 @@ const AppContent = () => {
 
       if (path === '/revisoes' || path.startsWith('/revisoes')) {
         setCurrentView('REVIEW_CENTER');
-        if (params.docId) {
-          setReviewCenterDocId(params.docId);
+        if (docIdFromUrl) {
+          setReviewCenterDocId(docIdFromUrl);
         }
         return;
       }
 
       // Handle category view
-      if (params.categoryId) {
-        console.log('Category ID from URL:', params.categoryId);
+      if (categoryIdFromUrl) {
+        console.log('Category ID from URL:', categoryIdFromUrl);
         
         // Wait for data to load before checking
         if (isLoading) {
@@ -213,12 +235,12 @@ const AppContent = () => {
           return;
         }
         
-        const category = findCategoryById(categories, params.categoryId);
+        const category = findCategoryById(categories, categoryIdFromUrl);
         console.log('Found category:', category);
         
         if (category) {
           console.log('Setting active category');
-          setActiveCategoryId(params.categoryId);
+          setActiveCategoryId(categoryIdFromUrl);
           setCurrentView('CATEGORY_VIEW');
           // Documents will be filtered by activeCategoryId in useMemo
         } else {
@@ -229,8 +251,8 @@ const AppContent = () => {
       }
 
       // Handle document view/edit
-      if (params.docId) {
-        console.log('Document ID from URL:', params.docId);
+      if (docIdFromUrl) {
+        console.log('Document ID from URL:', docIdFromUrl);
         
         // Wait for data to load before checking
         if (isLoading) {
@@ -239,7 +261,7 @@ const AppContent = () => {
         }
         
         // Check if document is in cache
-        const existingDoc = documents.find(d => d.id === params.docId);
+        const existingDoc = documents.find(d => d.id === docIdFromUrl);
         
           if (!existingDoc) {
             console.log('Document not found after loading, redirecting to home');
@@ -247,9 +269,9 @@ const AppContent = () => {
             return;
         } else {
           console.log('Document found in cache');
-          setSelectedDocId(params.docId);
+          setSelectedDocId(docIdFromUrl);
           setActiveCategoryId(existingDoc.categoryId || null);
-          setCurrentView(params.action === 'editar' ? 'DOCUMENT_EDIT' : 'DOCUMENT_VIEW');
+          setCurrentView(docActionFromUrl === 'editar' ? 'DOCUMENT_EDIT' : 'DOCUMENT_VIEW');
         }
         return;
       }
@@ -261,7 +283,7 @@ const AppContent = () => {
       }
 
       // Handle root path (/)
-      if (!params.categoryId && !params.docId && (path === '/' || path === '')) {
+      if (!categoryIdFromUrl && !docIdFromUrl && (path === '/' || path === '')) {
         console.log('Setting to HOME');
         setCurrentView('HOME');
         setActiveCategoryId(null);
