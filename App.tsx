@@ -223,11 +223,11 @@ const AppContent = () => {
 
 
     //  /admin (admin)
-    if (currentPath === '/admin' || currentPath.startsWith('/admin')) {
-      const canAccess = !!currentUser && (currentUser.role === 'ADMIN' || currentUser.isSuperAdmin);
-      if (!canAccess) {
+    if (path === '/admin' || path.startsWith('/admin')) {
+      if (!isAdminUser) {
         toast.error('Acesso restrito.');
         navigate('/');
+        setCurrentView('HOME');
         return;
       }
       setCurrentView('ADMIN_SETTINGS');
@@ -1797,6 +1797,9 @@ const targetCategoryId =
     return <LoginPage onLogin={handleLogin} onSignUp={handleSignUp} settings={systemSettings} />;
   }
 
+const isAdminUser =
+  (String(currentUser.role || '').toUpperCase() === 'ADMIN') || !!currentUser.isSuperAdmin;
+
 const toggleFavorites = () => {
   setDocFilter(prev => (prev === 'FAVORITES' ? 'ALL' : 'FAVORITES'));
   setCurrentView('HOME');
@@ -1986,7 +1989,7 @@ const toggleFavorites = () => {
             </LazyWrapper>
           )}
 
-{currentView === 'ADMIN_SETTINGS' && currentUser && (currentUser.role === 'ADMIN' || currentUser.isSuperAdmin) && (
+{currentView === 'ADMIN_SETTINGS' && currentUser && isAdminUser && (
             <LazyWrapper>
               <AdminSettings
                 mode="page"
@@ -2013,7 +2016,7 @@ const toggleFavorites = () => {
             </LazyWrapper>
           )}
 
-          {currentView === 'ADMIN_SETTINGS' && currentUser && !(currentUser.role === 'ADMIN' || currentUser.isSuperAdmin) && (
+          {currentView === 'ADMIN_SETTINGS' && currentUser && !isAdminUser && (
             <div className="p-6 text-sm text-gray-700 dark:text-gray-200">
               Acesso restrito. Você não tem permissão para abrir o painel administrativo.
             </div>
