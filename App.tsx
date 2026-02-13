@@ -193,108 +193,130 @@ const AppContent = () => {
 
   // Single unified useEffect for all URL handling - simplified without flags
   useEffect(() => {
-    if (!isAuthenticated || !params) return;
+  if (!isAuthenticated) return;
 
-    const processUrl = async () => {
-      const path = window.location.pathname;
-      console.log('Processing URL:', path, 'params:', params);
 
-      // Handle special routes first
-      if (path === '/novo' || path.startsWith('/novo')) {
-        setCurrentView('DOCUMENT_CREATE');
-        const catParam = searchParams.get('categoria');
-        if (catParam) setActiveCategoryId(catParam);
+  const processUrl = async () => {
+    const currentPath = location.pathname;
+
+
+    // /novo
+    if (currentPath === '/novo' || currentPath.startsWith('/novo')) {
+      setCurrentView('DOCUMENT_CREATE');
+      const catParam = searchParams.get('categoria');
+      if (catParam) setActiveCategoryId(catParam);
+      return;
+    }
+
+
+    // /analytics (admin)
+    if (currentPath === '/analytics' || currentPath.startsWith('/analytics')) {
+      const canAccess = !!currentUser && (currentUser.role === 'ADMIN' || currentUser.isSuperAdmin);
+      if (!canAccess) {
+        toast.error('Acesso restrito.');
+        navigate('/');
+        return;
+      }
+      setCurrentView('ANALYTICS');
+      return;
+    }
+
+
+    //  /admin (admin)
+    if (currentPath === '/admin' || currentPath.startsWith('/admin')) {
+      const canAccess = !!currentUser && (currentUser.role === 'ADMIN' || currentUser.isSuperAdmin);
+      if (!canAccess) {
+        toast.error('Acesso restrito.');
+        navigate('/');
+        return;
+      }
+      setCurrentView('ADMIN_SETTINGS');
+      return;
+    }
+
+
+    // /revisoes (admin)
+    if (currentPath === '/revisoes' || currentPath.startsWith('/revisoes')) {
+      const canAccess = !!currentUser && (currentUser.role === 'ADMIN' || currentUser.isSuperAdmin);
+      if (!canAccess) {
+        toast.error('Acesso restrito.');
+        navigate('/');
+        return;
+      }
+      setCurrentView('REVIEW_CENTER');
+      setReviewCenterDocId(reviewDocIdFromUrl ?? null);
+      return;
+    }
+
+
+    //  /categoria/:categoryId
+    if (categoryIdFromUrl) {
+      if (isLoading) return;
+
+
+      const category = findCategoryById(categories, categoryIdFromUrl);
+      if (category) {
+        setActiveCategoryId(categoryIdFromUrl);
+        setCurrentView('CATEGORY_VIEW');
+      } else {
+        navigate('/404');
+      }
+      return;
+    }
+
+
+    //  /documento/:docId/:action?
+    if (docIdFromUrl) {
+      if (isLoading) return;
+
+
+      const existingDoc = documents.find(d => d.id === docIdFromUrl);
+      if (!existingDoc) {
+        navigate('/404');
         return;
       }
 
-      if (path === '/analytics' || path.startsWith('/analytics')) {
-        setCurrentView('ANALYTICS');
-        return;
-      }
 
-      if (path === '/admin' || path.startsWith('/admin')) {
-        setCurrentView('ADMIN_SETTINGS');
-        return;
-      }
+      setSelectedDocId(docIdFromUrl);
+      setActiveCategoryId(existingDoc.categoryId || null);
+      setCurrentView(docActionFromUrl === 'editar' ? 'DOCUMENT_EDIT' : 'DOCUMENT_VIEW');
+      return;
+    }
 
-      if (path === '/revisoes' || path.startsWith('/revisoes')) {
-        setCurrentView('REVIEW_CENTER');
-        if (docIdFromUrl) {
-          setReviewCenterDocId(docIdFromUrl);
-        }
-        return;
-      }
 
-      // Handle category view
-      if (categoryIdFromUrl) {
-        console.log('Category ID from URL:', categoryIdFromUrl);
-        
-        // Wait for data to load before checking
-        if (isLoading) {
-          console.log('Data still loading, waiting...');
-          return;
-        }
-        
-        const category = findCategoryById(categories, categoryIdFromUrl);
-        console.log('Found category:', category);
-        
-        if (category) {
-          console.log('Setting active category');
-          setActiveCategoryId(categoryIdFromUrl);
-          setCurrentView('CATEGORY_VIEW');
-          // Documents will be filtered by activeCategoryId in useMemo
-        } else {
-          console.log('Category not found after loading, redirecting to home');
-          navigate('/');
-        }
-        return;
-      }
+    // /notificacoes
+    if (currentPath === '/notificacoes' || currentPath.startsWith('/notificacoes')) {
+      setCurrentView('NOTIFICATIONS');
+      return;
+    }
 
-      // Handle document view/edit
-      if (docIdFromUrl) {
-        console.log('Document ID from URL:', docIdFromUrl);
-        
-        // Wait for data to load before checking
-        if (isLoading) {
-          console.log('Data still loading, waiting...');
-          return;
-        }
-        
-        // Check if document is in cache
-        const existingDoc = documents.find(d => d.id === docIdFromUrl);
-        
-          if (!existingDoc) {
-            console.log('Document not found after loading, redirecting to home');
-            navigate('/');
-            return;
-        } else {
-          console.log('Document found in cache');
-          setSelectedDocId(docIdFromUrl);
-          setActiveCategoryId(existingDoc.categoryId || null);
-          setCurrentView(docActionFromUrl === 'editar' ? 'DOCUMENT_EDIT' : 'DOCUMENT_VIEW');
-        }
-        return;
-      }
 
-      // Handle notifications route
-      if (path === '/notificacoes' || path.startsWith('/notificacoes')) {
-        setCurrentView('NOTIFICATIONS');
-        return;
-      }
+    // /
+    if (currentPath === '/' || currentPath === '') {
+      setCurrentView('HOME');
+      setActiveCategoryId(null);
+      setSelectedDocId(null);
+      return;
+    }
 
-      // Handle root path (/)
-      if (!categoryIdFromUrl && !docIdFromUrl && (path === '/' || path === '')) {
-        console.log('Setting to HOME');
-        setCurrentView('HOME');
-        setActiveCategoryId(null);
-        setSelectedDocId(null);
-        return;
-      }
-    };
 
-    // Process immediately
-    processUrl();
-  }, [params, isAuthenticated, categories, documents, isLoading]); // Added isLoading to prevent redirects before data is ready
+    // fallback
+    navigate('/404');
+  };
+
+
+  processUrl();
+}, [
+  isAuthenticated,
+  currentUser?.id,
+  currentUser?.role,
+  currentUser?.isSuperAdmin,
+  location.pathname,
+  searchParams,
+  categories,
+  documents,
+  isLoading,
+]);
 
   // Removed redundant useEffect to prevent race conditions
   // Document view is now handled in the main URL processing effect
