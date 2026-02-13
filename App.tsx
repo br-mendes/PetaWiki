@@ -855,11 +855,11 @@ const searchParams: any = {
       
       if (count === 0) {
         console.log('Iniciando seed de templates - nenhum template encontrado no banco...');
-        for (const template of MOCK_TEMPLATES) {
+for (const template of MOCK_TEMPLATES) {
           const { error } = await supabase
             .from('document_templates')
-            .upsert({
-              id: template.id,
+            .insert({
+              //  não enviar id (evita quebrar se a coluna for uuid)
               name: template.name,
               category: template.category,
               description: template.description,
@@ -868,20 +868,17 @@ const searchParams: any = {
               tags: template.tags,
               is_global: template.isGlobal,
               department_id: null,
-              usage_count: template.usageCount,
-              is_active: true
-            }, {
-              onConflict: 'id'
+              usage_count: template.usageCount ?? 0,
+              is_active: true,
             });
-          
-          if (error) {
-            console.error(`Erro ao inserir template ${template.name}:`, error);
-          } else {
-            console.log(`Template ${template.name} inserido com sucesso`);
-          }
+
+          if (error) console.error(`Erro ao inserir template ${template.name}:`, error);
         }
         // Recarregar templates após o seed
         await refreshTemplates();
+        // fallback se ainda vier vazio
+        const loaded = await dbListTemplates();
+        setTemplates(loaded.length ? loaded : MOCK_TEMPLATES);
       }
     } catch (e) {
       console.error('Erro no seed de templates:', e);
@@ -1164,34 +1161,61 @@ const handleToggleTheme = async () => {
       }
   };
 
-  const handleUpdateUserRole = async (userId: string, newRole: Role) => {
-    if (isMockUser(currentUser)) {
-      toast.info("Modo mock: edição de usuário desativada.");
-      return;
-    }
-    if (!currentUser) return;
+const handleUpdateUserRole = async (userId: string, newRole: Role) => {
+  if (!currentUser) return;
 
-    try {
-      const { error } = await supabase.rpc('set_user_role', {
-        p_actor_id: currentUser.id,
-        p_target_id: userId,
-        p_role: newRole
-      });
+  const prev = [...users];
+  setUsers(prevState => prevState.map(u => (u.id === userId ? { ...u, role: newRole } : u)));
 
+  try {
+    const { error: rpcErr } = await supabase.rpc('set_user_role', {
+      p_actor_user_id: currentUser.id,
+      p_target_user_id: userId,
+      p_new_role: newRole,
+    });
+
+    if (rpcErr) {
+      // fallback
+      const { error } = await supabase.from('users').update({ role: newRole }).eq('id', userId);
       if (error) throw error;
-
-      setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
-      toast.success('Perfil atualizado e salvo no banco.');
-    } catch (e: any) {
-      // Mostra mensagem real do Postgres/RPC (isso vai te dizer o motivo exato)
-      console.error('set_user_role error:', e);
-      const msg =
-        e?.message === 'only_super_admin_can_grant_admin'
-          ? 'Somente Super Admin pode conceder perfil ADMIN.'
-          : (e?.message || 'Falha ao salvar perfil no banco.');
-      toast.error(msg);
     }
-  };
+
+    toast.success('Permissão atualizada e salva no banco.');
+  } catch (e) {
+    console.error(e);
+    setUsers(prev);
+    toast.error('Falha ao salvar permissão no banco.');
+  }
+};
+
+const handleUpdateUserSuperAdmin = async (userId: string, isSuperAdmin: boolean) => {
+  if (!currentUser) return;
+
+  const prev = [...users];
+  setUsers(prevState =>
+    prevState.map(u => (u.id === userId ? { ...u, isSuperAdmin } : u))
+  );
+
+  try {
+    const { error: rpcErr } = await supabase.rpc('set_user_super_admin', {
+      p_actor_user_id: currentUser.id,
+      p_target_user_id: userId,
+      p_is_super_admin: isSuperAdmin,
+    });
+
+    if (rpcErr) {
+      // fallback
+      const { error } = await supabase.from('users').update({ is_super_admin: isSuperAdmin }).eq('id', userId);
+      if (error) throw error;
+    }
+
+    toast.success('Super Admin atualizado e salvo no banco.');
+  } catch (e) {
+    console.error(e);
+    setUsers(prev);
+    toast.error('Falha ao salvar Super Admin no banco.');
+  }
+};
 
 const handleUpdateUserDetails = async (userId: string, data: Partial<User>) => {
     if (isMockUser(currentUser)) {
@@ -1927,11 +1951,11 @@ const toggleFavorites = () => {
                 settings={systemSettings}
                 onSaveSettings={handleSaveSettingsGlobal}
                 users={users}
-                onUpdateUserRole={handleUpdateUserRole}
+onUpdateUserRole={handleUpdateUserRole}
+                onUpdateUserSuperAdmin={handleUpdateUserSuperAdmin}
                 onUpdateUserDetails={handleUpdateUserDetails}
                 onDeleteUser={handleDeleteUser}
                 onAddUser={handleAddUser}
-                onToggleSuperAdmin={handleToggleSuperAdmin}
                 categories={categories}
                 onUpdateCategory={handleUpdateCategory}
                 onDeleteCategory={handleDeleteCategory}
