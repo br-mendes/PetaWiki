@@ -194,6 +194,7 @@ const AppContent = () => {
 
   // Single unified useEffect for all URL handling - simplified without flags
   useEffect(() => {
+  console.log('[ROUTE] useEffect running, currentUser:', currentUser, 'path:', location.pathname);
   if (!currentUser) return;
 
 
@@ -225,7 +226,9 @@ const AppContent = () => {
 
     //  /admin (admin)
     if (path === '/admin' || path.startsWith('/admin')) {
+      console.log('[ROUTE] /admin check - currentUser:', currentUser);
       const isAdmin = currentUser && (String(currentUser.role || '').toUpperCase() === 'ADMIN' || !!currentUser.isSuperAdmin);
+      console.log('[ROUTE] isAdmin:', isAdmin, 'role:', currentUser?.role, 'isSuperAdmin:', currentUser?.isSuperAdmin);
       if (!isAdmin) {
         toast.error('Acesso restrito.');
         navigate('/');
@@ -424,7 +427,9 @@ const AppContent = () => {
 // --- SESSÃO E INATIVIDADE ---
   useEffect(() => {
     const restoreSession = async () => {
+        console.log('[SESSION] restoreSession starting...');
         const savedSession = localStorage.getItem(SESSION_KEY);
+        console.log('[SESSION] savedSession:', savedSession ? 'found' : 'not found');
         if (savedSession) {
             try {
                 const { user, lastActive } = JSON.parse(savedSession);
@@ -437,6 +442,7 @@ const AppContent = () => {
                       localStorage.setItem(SESSION_KEY, JSON.stringify(refreshedSession));
                       setCurrentUser(user);
                       setIsAuthenticated(true);
+                      console.log('[SESSION] Mock user restored:', user);
                       return;
                     }
                     
@@ -1796,8 +1802,11 @@ const targetCategoryId =
   }
 
   if (!currentUser) {
+    console.log('[RENDER] Showing LoginPage - currentUser is null');
     return <LoginPage onLogin={handleLogin} onSignUp={handleSignUp} settings={systemSettings} />;
   }
+
+  console.log('[RENDER] currentUser:', currentUser?.username, 'role:', currentUser?.role, 'currentView:', currentView);
 
 const isAdminUser = currentUser
   ? (String(currentUser.role || '').toUpperCase() === 'ADMIN') || !!currentUser.isSuperAdmin
