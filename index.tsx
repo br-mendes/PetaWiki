@@ -1,6 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 import { ConfigError } from "./components/ConfigError";
+import { AuthProvider } from "./contexts/AuthContext";
+import App from "./App";
 import "./index.css";
 
 const rootElement = document.getElementById("root");
@@ -15,16 +18,19 @@ const root = ReactDOM.createRoot(rootElement);
 if (missing.length) {
   root.render(
     <React.StrictMode>
-      <ConfigError missing={missing} />
+      <BrowserRouter>
+        <ConfigError missing={missing} />
+      </BrowserRouter>
     </React.StrictMode>
   );
 } else {
-  // Importa o App somente depois de validar env
-  import("./App").then(({ default: App }) => {
-    root.render(
-      <React.StrictMode>
-        <App />
-      </React.StrictMode>
-    );
-  });
+  root.render(
+    <React.StrictMode>
+      <BrowserRouter>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </BrowserRouter>
+    </React.StrictMode>
+  );
 }

@@ -1,14 +1,30 @@
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AppContent } from '../App';
+import React from 'react';
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { AdminSettings } from '../components/AdminSettings';
 
 export const AdminRoute: React.FC = () => {
-  const navigate = useNavigate();
+  const { currentUser, isAuthenticated, loading } = useAuth();
 
-  useEffect(() => {
-    // Check if user has admin privileges
-    // AppContent will handle authorization
-  }, [navigate]);
+  if (loading) {
+    return <div className="p-10">Carregando...</div>;
+  }
 
-  return <AppContent />;
+  if (!isAuthenticated || !currentUser) {
+    return <Navigate to="/login" replace />;
+  }
+
+  const isAdmin =
+    String(currentUser.role || "").toUpperCase() === "ADMIN" ||
+    currentUser.isSuperAdmin === true;
+
+  if (!isAdmin) {
+    return (
+      <div className="p-10 text-red-600">
+        Acesso restrito ao painel administrativo.
+      </div>
+    );
+  }
+
+  return <AdminSettings />;
 };
