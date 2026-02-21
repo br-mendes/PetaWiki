@@ -9,6 +9,7 @@ import {
   useLocation,
   matchPath,
 } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
 import { listCategories, createCategory, renameCategory, deleteCategory, type Category } from "./lib/categories";
 import { CategoryTree } from "./components/CategoryTree";
 import { Sidebar } from './components/Sidebar';
@@ -129,7 +130,7 @@ const AppContent = () => {
 
   useEffect(() => {
     const loadFavorites = async () => {
-      if (!isAuthenticated || !currentUser) return;
+      if (!currentUser) return;
 
       if (isMockUser(currentUser)) {
         setFavoriteDocIds([]);
@@ -151,7 +152,7 @@ const AppContent = () => {
     };
 
     loadFavorites();
-  }, [isAuthenticated, currentUser?.id]);
+  }, [currentUser?.id]);
 
   // New Document State
   const [newDocTemplate, setNewDocTemplate] = useState<{content: string, tags: string[], templateId?: string} | null>(null);
@@ -193,7 +194,7 @@ const AppContent = () => {
 
   // Single unified useEffect for all URL handling - simplified without flags
   useEffect(() => {
-  if (!isAuthenticated) return;
+  if (!currentUser) return;
 
 
   const processUrl = async () => {
@@ -224,7 +225,8 @@ const AppContent = () => {
 
     //  /admin (admin)
     if (path === '/admin' || path.startsWith('/admin')) {
-      if (!isAdminUser) {
+      const isAdmin = currentUser && (String(currentUser.role || '').toUpperCase() === 'ADMIN' || !!currentUser.isSuperAdmin);
+      if (!isAdmin) {
         toast.error('Acesso restrito.');
         navigate('/');
         setCurrentView('HOME');
@@ -307,7 +309,7 @@ const AppContent = () => {
 
   processUrl();
 }, [
-  isAuthenticated,
+  currentUser,
   currentUser?.id,
   currentUser?.role,
   currentUser?.isSuperAdmin,
@@ -493,7 +495,7 @@ const AppContent = () => {
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!currentUser) return;
 
     let inactivityTimer: ReturnType<typeof setTimeout>;
     
@@ -530,7 +532,7 @@ const AppContent = () => {
         window.removeEventListener('scroll', updateActivity);
         clearInterval(intervalId);
     };
-  }, [isAuthenticated]);
+  }, [currentUser]);
 
   const categoryTree = useMemo(() => buildCategoryTree(categories), [categories]);
 
@@ -1793,7 +1795,7 @@ const targetCategoryId =
     );
   }
 
-  if (!isAuthenticated || !currentUser) {
+  if (!currentUser) {
     return <LoginPage onLogin={handleLogin} onSignUp={handleSignUp} settings={systemSettings} />;
   }
 
