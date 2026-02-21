@@ -1797,8 +1797,9 @@ const targetCategoryId =
     return <LoginPage onLogin={handleLogin} onSignUp={handleSignUp} settings={systemSettings} />;
   }
 
-const isAdminUser =
-  (String(currentUser.role || '').toUpperCase() === 'ADMIN') || !!currentUser.isSuperAdmin;
+const isAdminUser = currentUser
+  ? (String(currentUser.role || '').toUpperCase() === 'ADMIN') || !!currentUser.isSuperAdmin
+  : false;
 
 const toggleFavorites = () => {
   setDocFilter(prev => (prev === 'FAVORITES' ? 'ALL' : 'FAVORITES'));
@@ -2140,9 +2141,6 @@ const App = () => {
       <ToastProvider>
         <AuthProvider>
           <Routes>
-            {/* Rota específica para admin */}
-            <Route path="/admin" element={<AdminRoute />} />
-
             {/* (Opcional) página 404 dedicada */}
             <Route path="/404" element={<NotFoundPage />} />
 
