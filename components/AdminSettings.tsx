@@ -2,7 +2,7 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
-import { User, SystemSettings, Role, Category, Document } from '../types';
+import { User, SystemSettings, Role, Category, Document, FooterColumn } from '../types';
 import { Image, Save, UserCog, UserPlus, FolderTree, Upload, Trash2, Plus, CornerDownRight, ShieldCheck, X, Layout, Sidebar as SidebarIcon, PanelTop, RotateCcw, FileX, Columns } from 'lucide-react';
 import { generateSlug } from '../lib/hierarchy';
 import { sendWelcomeEmail } from '../lib/email';
@@ -80,6 +80,10 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   const [allowedDomains, setAllowedDomains] = useState<string[]>(settings.allowedDomains || []);
   const [newDomain, setNewDomain] = useState('');
 
+  // Footer State
+  const [footerColumns, setFooterColumns] = useState<FooterColumn[]>(settings.footerColumns || []);
+  const [footerBottomText, setFooterBottomText] = useState(settings.footerBottomText || '');
+
   // User State
   const [newUser, setNewUser] = useState({ name: '', email: '', department: 'Geral', role: 'READER' as Role });
   const [isSendingEmail, setIsSendingEmail] = useState(false);
@@ -125,7 +129,9 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
         homeTitle,
         homeDescription,
         landingTitle,
-        landingDescription
+        landingDescription,
+        footerColumns,
+        footerBottomText
     });
     toast.success('Configurações do sistema atualizadas!');
   };
@@ -443,6 +449,124 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                       </div>
                   </div>
               </div>
+          )}
+
+          {activeTab === 'FOOTER' && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Configurações do Rodapé</h3>
+                
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Texto Inferior (Copyright)</label>
+                  <textarea
+                    rows={2}
+                    value={footerBottomText}
+                    onChange={(e) => setFooterBottomText(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 outline-none bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    placeholder="© 2024 Empresa. Todos os direitos reservados."
+                  />
+                </div>
+
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200">Colunas do Rodapé</h4>
+                    <Button 
+                      size="sm" 
+                      variant="secondary"
+                      onClick={() => setFooterColumns([...footerColumns, { title: 'Nova Coluna', links: [] }])}
+                    >
+                      <Plus size={14} className="mr-1" /> Adicionar Coluna
+                    </Button>
+                  </div>
+
+                  {footerColumns.length === 0 && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Nenhuma coluna configurada. Clique em "Adicionar Coluna" para criar.</p>
+                  )}
+
+                  <div className="space-y-4">
+                    {footerColumns.map((column, colIndex) => (
+                      <div key={colIndex} className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <div className="flex justify-between items-start mb-3">
+                          <input
+                            type="text"
+                            value={column.title}
+                            onChange={(e) => {
+                              const updated = [...footerColumns];
+                              updated[colIndex].title = e.target.value;
+                              setFooterColumns(updated);
+                            }}
+                            className="px-2 py-1 text-sm font-medium border rounded bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            placeholder="Título da Coluna"
+                          />
+                          <button
+                            onClick={() => setFooterColumns(footerColumns.filter((_, i) => i !== colIndex))}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+
+                        <div className="ml-4 space-y-2">
+                          {column.links.map((link, linkIndex) => (
+                            <div key={linkIndex} className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={link.label}
+                                onChange={(e) => {
+                                  const updated = [...footerColumns];
+                                  updated[colIndex].links[linkIndex].label = e.target.value;
+                                  setFooterColumns(updated);
+                                }}
+                                className="flex-1 px-2 py-1 text-sm border rounded bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                placeholder="Label"
+                              />
+                              <input
+                                type="text"
+                                value={link.url}
+                                onChange={(e) => {
+                                  const updated = [...footerColumns];
+                                  updated[colIndex].links[linkIndex].url = e.target.value;
+                                  setFooterColumns(updated);
+                                }}
+                                className="flex-1 px-2 py-1 text-sm border rounded bg-white dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                placeholder="URL"
+                              />
+                              <button
+                                onClick={() => {
+                                  const updated = [...footerColumns];
+                                  updated[colIndex].links = updated[colIndex].links.filter((_, i) => i !== linkIndex);
+                                  setFooterColumns(updated);
+                                }}
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <X size={14} />
+                              </button>
+                            </div>
+                          ))}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              const updated = [...footerColumns];
+                              updated[colIndex].links = [...updated[colIndex].links, { label: '', url: '' }];
+                              setFooterColumns(updated);
+                            }}
+                          >
+                            <Plus size={12} className="mr-1" /> Adicionar Link
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <Button onClick={handleSaveSettings}>
+                    <Save size={16} className="mr-2" /> Salvar Configurações do Rodapé
+                  </Button>
+                </div>
+              </div>
+            </div>
           )}
 
           {activeTab === 'USERS' && (
