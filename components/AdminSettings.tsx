@@ -19,7 +19,7 @@ interface AdminSettingsProps {
   users: User[];
   onUpdateUserRole: (userId: string, newRole: Role) => void;
   onUpdateUserSuperAdmin: (userId: string, isSuperAdmin: boolean) => void;
-  onDeleteUser: (userId: string) => void;
+  onDeleteUser: (userId: string) => void; // New prop
   onAddUser: (user: Partial<User>) => void;
   categories: Category[]; 
   onUpdateCategory: (id: string, data: Partial<Category>) => void;
@@ -862,12 +862,11 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                        </tbody>
                     </table>
                   </div>
-               )}
+                )}
               </div>
            )}
         </div>
       </div>
-    </div>
   );
 
   if (mode === 'page') {
