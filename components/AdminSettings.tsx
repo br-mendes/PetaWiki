@@ -19,16 +19,16 @@ interface AdminSettingsProps {
   users: User[];
   onUpdateUserRole: (userId: string, newRole: Role) => void;
   onUpdateUserSuperAdmin: (userId: string, isSuperAdmin: boolean) => void;
-  onDeleteUser: (userId: string) => void; // New prop
+  onDeleteUser: (userId: string) => void;
   onAddUser: (user: Partial<User>) => void;
   categories: Category[]; 
   onUpdateCategory: (id: string, data: Partial<Category>) => void;
   onDeleteCategory: (id: string) => void;
   onAddCategory: (data: Partial<Category>) => void;
-  // Trash Management Props
   trashDocuments: Document[];
   onRestoreDocument: (doc: Document) => void;
   onPermanentDeleteDocument: (doc: Document) => void;
+  mode?: 'modal' | 'page';
 }
 
 export const AdminSettings: React.FC<AdminSettingsProps> = ({
@@ -48,7 +48,8 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
   onAddCategory,
   trashDocuments,
   onRestoreDocument,
-  onPermanentDeleteDocument
+  onPermanentDeleteDocument,
+  mode = 'modal'
 }) => {
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<'BRANDING' | 'FOOTER' | 'SECURITY' | 'USERS' | 'CATEGORIES' | 'TRASH'>('BRANDING');
@@ -205,11 +206,10 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
     }
   };
 
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Configurações de Admin" size="lg">
-      <div className="flex flex-col md:flex-row gap-6 min-h-[500px]">
-        {/* Sidebar */}
-        <div className="w-full md:w-48 border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 pr-0 md:pr-4 space-y-1 mb-4 md:mb-0 shrink-0">
+  const content = (
+    <div className={`flex flex-col md:flex-row gap-6 ${mode === 'page' ? 'min-h-0 flex-1' : 'min-h-[500px]'}`}>
+      {/* Sidebar */}
+      <div className={`${mode === 'page' ? 'w-48' : 'w-full md:w-48'} border-b md:border-b-0 md:border-r border-gray-200 dark:border-gray-700 pr-0 md:pr-4 ${mode === 'page' ? '' : 'mb-4 md:mb-0'} space-y-1 shrink-0`}>
           {isActorSuperAdmin && (
             <>
               <button
@@ -862,11 +862,30 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({
                        </tbody>
                     </table>
                   </div>
-                )}
-             </div>
-          )}
+               )}
+              </div>
+           )}
         </div>
       </div>
+    </div>
+  );
+
+  if (mode === 'page') {
+    return (
+      <div className="flex-1 overflow-hidden flex flex-col">
+        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Configurações de Admin</h1>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6">
+          {content}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title="Configurações de Admin" size="lg">
+      {content}
     </Modal>
   );
 };
