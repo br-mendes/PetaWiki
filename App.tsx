@@ -9,7 +9,6 @@ import {
   useLocation,
   matchPath,
 } from 'react-router-dom';
-import { useAuth } from './contexts/AuthContext';
 import { listCategories, createCategory, renameCategory, deleteCategory, type Category } from "./lib/categories";
 import { CategoryTree } from "./components/CategoryTree";
 import { Sidebar } from './components/Sidebar';
@@ -33,20 +32,6 @@ import { Modal } from './components/Modal';
 import { Button } from './components/Button';
 import { NotFoundPage } from './components/NotFoundPage';
 import { NotificationCenter } from './components/NotificationCenter';
-import { DocumentViewRoute } from './routes/DocumentViewRoute';
-import { CategoryViewRoute } from './routes/CategoryViewRoute';
-import { NewDocumentRoute } from './routes/NewDocumentRoute';
-import { AnalyticsRoute } from './routes/AnalyticsRoute';
-import { AdminRoute } from './routes/AdminRoute';
-import { ReviewRoute } from './routes/ReviewRoute';
-import { DepartmentsRoute, DepartmentViewRoute } from './routes/DepartmentsRoute';
-import { AreasRoute, AreaViewRoute } from './routes/AreasRoute';
-import { FavoritesRoute } from './routes/FavoritesRoute';
-import { NotificationsRoute } from './routes/NotificationsRoute';
-import { ProfileRoute, UserProfileRoute } from './routes/ProfileRoute';
-import { DocumentCommentsRoute } from './routes/DocumentCommentsRoute';
-import { DocumentExportRoute, ExportsRoute } from './routes/ExportsRoute';
-import { TemplatesRoute, TemplateViewRoute } from './routes/TemplatesRoute';
 import { AlertTriangle, FileText } from 'lucide-react';
 import { sanitizeHtml } from './lib/sanitize';
 import { createTemplate as dbCreateTemplate, listTemplates as dbListTemplates, incrementTemplateUsage } from './lib/templates';
